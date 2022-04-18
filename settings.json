@@ -3,8 +3,6 @@
   "files.autoSave": "afterDelay",
   "editor.tabSize": 2,
   "editor.renderWhitespace": "all",
-  // Configure glob patterns to exclude files and folders from the explorer. This means these files cannot
-  // be opened via the quick browser / command palette. This can be useful in helping to speed up vscode.
   "files.exclude": {
     "**/.git": true,
     "**/.DS_Store": true,
@@ -24,7 +22,6 @@
   "diffEditor.codeLens": true,
   "files.trimFinalNewlines": true,
   "files.trimTrailingWhitespace": true,
-  // Configure glob patterns of paths to exclude from file watching (this is different to the explorer)
   "files.watcherExclude": {
     "**/.git/objects/**": true,
     "**/.git/subtree-cache/**": true,
