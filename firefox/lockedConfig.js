@@ -1,3 +1,28 @@
+/**
+ * alexogeny's firefox configuration
+ *
+ * ! please note that if you choose to use this, lots of stuff will break
+ * ! namely: google meet, netflix, etc.
+ * ! proceed with caution
+ *
+ * * personally I keep a separate browser just for google meet
+ *
+ * most of my commonly used sites seem to still work
+ * (reddit, youtube, hacker news, google, stackoverflow)
+ *
+ * ! there's also some dangerous stuff in here, but as long as you're not the kind
+ * ! of person to go actively looking for malware then it'll be fine
+ *
+ * recommended extensions:
+ * - ublock origin
+ *   - all fitlers on and updated
+ * - localcdn
+ * - multi account containers
+ *
+ * TODO: add more config settings. I know there are a heap more that I'm missing
+ *       gonna leave this here until I've explored further
+*/
+
 /** set my homepage */
 lockPref('browser.startup.homepage', 'https://home.alexogeny.dev');
 lockPref('browser.startup.homepage_override.mstone', 'ignore');
@@ -159,7 +184,9 @@ lockPref('media.gmp-widevinecdm.enabled', false);
 lockPref('media.gmp-widevinecdm.visible', false);
 lockPref('media.navigator.enabled', false);
 
-/** this will break meet software; keep a backup browser */
+/**
+ * ! this will break meet software; keep a backup browser
+ */
 lockPref('media.peerconnection.enabled', false);
 lockPref('media.peerconnection.identity.enabled', false);
 lockPref('media.peerconnection.simulcast', false);
@@ -190,7 +217,9 @@ lockPref('network.predictor.enabled', false);
 lockPref('network.prefetch-next', false);
 lockPref('network.stricttransportsecurity.preloadlist', false);
 
-/** tighten up some http screws */
+/**
+ * ! tighten up some http screws
+ */
 lockPref('network.http.referer.sendRefererHeader', 1);
 lockPref('network.http.referer.trimmingPolicy', 1);
 lockPref('network.http.referer.XOriginPolicy', 1);
@@ -234,11 +263,13 @@ lockPref('datareporting.policy.dataSubmissionEnabled', false);
 /** disable crash reporting */
 lockPref('toolkit.crashreporter.enabled', false);
 
-/** dangerous stuff here (but only if you search for malware) */
+/**
+ * ! dangerous stuff here (but only if you search for malware)
+ */
 lockPref('browser.safebrowsing.enabled', false);
 lockPref('browser.safebrowsing.phishing.enabled', false);
 lockPref('browser.safebrowsing.malware.enabled', false);
-lockPref('browser.safebrowsing.downloads,enabled', false);
+lockPref('browser.safebrowsing.downloads.enabled', false);
 lockPref('browser.safebrowsing.provider.google4.dataSharing.enabled', false);
 lockPref('browser.safebrowsing.provider.google4.dataSharing', '');
 lockPref('browser.safebrowsing.provider.google4.updateURL', '');
