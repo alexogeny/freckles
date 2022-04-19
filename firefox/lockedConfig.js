@@ -21,286 +21,293 @@
  *
  * TODO: add more config settings. I know there are a heap more that I'm missing
  *       gonna leave this here until I've explored further
-*/
-
-/** set my homepage */
-lockPref('browser.startup.homepage', 'https://home.alexogeny.dev');
-lockPref('browser.startup.homepage_override.mstone', 'ignore');
-
-/** open page source in vscode */
-lockPref('view_source.editor.external', true);
-lockPref('view_source.editor.path', '/usr/bin/code');
-
-/** if I wanted a beta browser I would have downloaded a beta browser */
-lockPref('app.normandy.enabled', false);
-lockPref('app.normandy.optoutstudies.enabled', false);
-
-/** give me back context menus */
-lockPref('dom.event.contextmenu.enabled', false);
-
-/** prevent clipboard spying */
-lockPref('dom.event.clipboardevents.enabled', false);
-
-/** stop people from reading plugin list */
-lockPref('plugins.enumerable_names', '');
-
-/** esni: https://www.cloudflare.com/ssl/encrypted-sni/ */
-lockPref('network.security.esni.enabled', true);
-
-/** don't recommend me things */
-lockPref('browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons', false);
-lockPref('browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features', false);
-lockPref('browser.newtabpage.activity-stream.feeds.topsites', false);
-
-/** et phone... home? */
-lockPref('beacon.enabled', false);
-
-/** move the cache into a ramdisk */
-lockPref('browser.cache.disk.parent_directory', '/run/user/1000/firefox');
-lockPref('browser.cache.memory.capacity', 512000);
-
-/** hiding the download panel was stupid but I never used it anyway */
-lockPref('browser.download.panel.shown', true);
-
-/** use a password manager for filling forms */
-lockPref('browser.formfill.enable', false);
-
-/** this shits me on ios to no end */
-lockPref('browser.meta_refresh_when_inactive.disabled', true);
-
-/** new tab stuff is gross */
-lockPref('browser.newtab.preload', false);
-lockPref('browser.newtabpage.activity-stream.discoverystream.enabled', false);
-lockPref('browser.newtabpage.activity-stream.feeds.discoverystreamfeed', false);
-lockPref('browser.newtabpage.activity-stream.feeds.section.topstories', false);
-lockPref('browser.newtabpage.activity-stream.feeds.telemetry', false);
-lockPref('browser.newtabpage.activity-stream.section.highlights.includePocket', false);
-lockPref('browser.newtabpage.activity-stream.showSponsored', false);
-lockPref('browser.newtabpage.activity-stream.showSponsoredTopSites', false);
-lockPref('browser.newtabpage.activity-stream.telemetry', false);
-
-/** my care factor for AU search results is zero */
-lockPref('browser.search.suggest.enabled', false);
-lockPref('browser.search.region', 'US');
-lockPref('browser.search.geoip.url', '');
-
-/** prevent autoplay */
-lockPref('media.autoplay.enabled', false);
-
-/** do not collapse urls */
-lockPref('browser.urlbar.trimURLs', false);
-
-/** just no. */
-lockPref('browser.send_pings.require_same_host', true);
-lockPref('browser.send_pings', false);
-
-/** make session store stuff a little less aggressive */
-lockPref('browser.sessionstore.interval', 900000);
-lockPref('browser.sessionstore.max_tabs_undo', 3);
-lockPref('browser.sessionstore.privacy_level', 1);
-lockPref('browser.sessionstore.resume_from_crash', false);
-
-/** make restore more imperative */
-lockPref('browser.sessionstore.restore_on_demand', false);
-lockPref('browser.sessionstore.restore_tabs_lazily', false);
-
-/** let me install any extension */
-lockPref('xpinstall.signature.required', false);
-
-/** do not autoupdate my extensions */
-lockPref('extensions.update.autoUpdateDefault', false);
-
-/** disable the updater service */
-lockPref('app.update.enabled', false);
-lockPref('app.update.auto', false);
-lockPref('app.update.mode', 0);
-lockPref('app.update.service.enabled', false);
-
-/** just let me close the damn tab already */
-lockPref('browser.showQuitWarning', false);
-lockPref('browser.warnOnQuit', false);
-lockPref('browser.tabs.warnOnClose', false);
-lockPref('browser.tabs.warnOnCloseOtherTabs', false);
-
-/** firefox should always be the default */
-lockPref('browser.defaultbrowser.notificationbar', false);
-lockPref('browser.shell.checkDefaultBrowser', false);
-lockPref('browser.shell.skipDefaultBrowserCheck', true);
-
-/** Don't do web stuff when I am typing into the url bar... pretty please? */
-lockPref('browser.urlbar.speculativeConnect.enabled', false);
-lockPref('browser.urlbar.sponsoredTopSites', false);
-lockPref('browser.urlbar.suggest.engines', false);
-lockPref('browser.urlbar.suggest.history', false);
-lockPref('browser.urlbar.suggest.searches', false);
-lockPref('browser.urlbar.suggest.topsites', false);
-
-/** Instead of zooming the full page, just zoom the text. */
-lockPref('browser.zoom.full', false);
-
-/** Don't need this junk. */
-lockPref('device.sensors.enabled', false);
-
-/** Prevent devtools from doing any wifi scans. This sounds icky. */
-lockPref('devtools.remote.wifi.scan', false);
-lockPref('dom.block_reload_from_resize_event_handler', true);
-lockPref('dom.delay.block_external_protocol_in_iframes.enabled', true);
-
-/** I don't play gamepad enabled games in the browser. */
-lockPref('dom.gamepad.enabled', false);
-lockPref('dom.gamepad.extensions.enabled', false);
-
-/** make all the things HTTPS. */
-lockPref('dom.security.https_only_mode_ever_enabled', true);
-lockPref('dom.security.https_only_mode.upgrade_local', true);
-lockPref('dom.security.https_only_mode', true);
-
-/** didn't know you could attach a vibrator to firefox */
-lockPref('dom.vibrator.enabled', false);
-lockPref('dom.vr.enabled', false);
-lockPref('dom.vr.oculus.enabled', false);
-lockPref('dom.webaudio.enabled', false);
-lockPref('dom.battery.enabled', false);
-
-/** blocklists are just more web requests I don't need */
-lockPref('extensions.blocklist.enabled', false);
-
-/** why use pocket when you can just use bookmarks */
-lockPref('extensions.pocket.enabled', false);
-
-/** containerise all websites a la Facebook conatiner */
-lockPref('fission.autostart', true);
-
-/** isn't this what address fields are for */
-lockPref('geo.enabled', false);
-lockPref('geo.provider.ms-windows-location', false);
-lockPref('geo.wifi.uri', '');
-
-/** might break r/place in 5 years but who cares */
-lockPref('gfx.canvas.remote', false);
-
-/** will break netflix, but don't use it anyways */
-lockPref('media.eme.enabled', false);
-lockPref('media.gmp-widevinecdm.enabled', false);
-lockPref('media.gmp-widevinecdm.visible', false);
-lockPref('media.navigator.enabled', false);
-
-/**
- * ! this will break meet software; keep a backup browser
  */
-lockPref('media.peerconnection.enabled', false);
-lockPref('media.peerconnection.identity.enabled', false);
-lockPref('media.peerconnection.simulcast', false);
-lockPref('media.peerconnection.turn.disable', true);
-lockPref('media.peerconnection.use_document_iceservers', false);
-lockPref('media.peerconnection.video.enabled', false);
 
-/** most annoying thing ever */
-lockPref('media.videocontrols.picture-in-picture.video-toggle.enabled', false);
+function config () {
+  lockPref('browser.startup.homepage', 'https://home.alexogeny.dev');
+  lockPref('browser.startup.homepage_override.mstone', 'ignore');
+}
+config()
 
-/** what even does this do */
-lockPref('media.webspeech.synth.enabled', false);
 
-/** dunno what this does either */
-lockPref('messaging-system.rsexperimentloader.enabled', false);
+function developer () {
+  lockPref('view_source.editor.external', true);
+  lockPref('view_source.editor.path', '/usr/bin/code');
+}
+developer()
 
-/** disabled since I have a habit of not looking up malware */
-lockPref('network.captive-portal-service.enabled', false);
-lockPref('network.connectivity-service.enabled', false);
 
-/** nobody uses ipv6 anyways, right */
-lockPref('network.dns.disableIPv6', true);
+function warnings () {
+  lockPref('browser.aboutConfig.showWarning', false);
+  lockPref('browser.showQuitWarning', false);
+  lockPref('browser.tabs.warnOnClose', false);
+  lockPref('browser.tabs.warnOnCloseOtherTabs', false);
+  lockPref('browser.warnOnQuit', false);
+}
+warnings()
 
-/** prefetching is yuck */
-lockPref('network.dns.disablePrefetch', true);
-lockPref('network.dns.offline-localhost', false);
-lockPref('network.predictor.enabled', false);
-lockPref('network.prefetch-next', false);
-lockPref('network.stricttransportsecurity.preloadlist', false);
 
-/**
- * ! tighten up some http screws
- */
-lockPref('network.http.referer.sendRefererHeader', 1);
-lockPref('network.http.referer.trimmingPolicy', 1);
-lockPref('network.http.referer.XOriginPolicy', 1);
-lockPref('network.http.speculative-parallel-limit', 0);
-lockPref('privacy.donottrackheader.enabled', true);
-lockPref('privacy.resistFingerprinting', true);
-lockPref('privacy.trackingprotection.enabled', true);
+function networking () {
+  /** esni: https://www.cloudflare.com/ssl/encrypted-sni/ */
+  lockPref('browser.meta_refresh_when_inactive.disabled', true);
+  lockPref('gfx.canvas.remote', false);
+  lockPref('network.dns.disableIPv6', true);
+  lockPref('network.dns.echconfig.enabled', true);
+  lockPref('network.dns.use_https_rr_as_altsvc', true);
+  lockPref('network.trr.mode', 2);
+}
+networking();
 
-/** obviously */
-lockPref('network.IDN_show_punycode', true);
-lockPref('security.insecure_connection_text.enabled', true);
 
-/** opinion: save a bookmark if you find an important page */
-lockPref('places.history.enabled', false);
+function behaviour () {
+  lockPref('browser.download.panel.shown', true);
+  lockPref('browser.formfill.enable', false);
+  lockPref('browser.pagethumbnails.capturing_disabled', true);
+  lockPref('browser.rights.3.shown', true);
+  lockPref('browser.uitour.enabled', false);
+  lockPref('browser.urlbar.trimURLs', false);
+  lockPref('browser.zoom.full', false);
+  lockPref('media.autoplay.enabled', false);
+  lockPref('media.webspeech.synth.enabled', false);
+  lockPref('narrate.enabled', false);
+  lockPref('places.history.enabled', false);
+  lockPref('trailhead.firstrun.didSeeAboutWelcome', true);
+  lockPref('webgl.force-enabled', true);
+}
+behaviour();
 
-/** like the idea of telemetry but hate it in practice */
-lockPref('toolkit.telemetry.enabled', false);
-lockPref('toolkit.telemetry.archive.enabled', false);
-lockPref('toolkit.telemetry.firstShutdownPing.enabled', false);
-lockPref('toolkit.telemetry.newProfilePing.enabled', false);
-lockPref('toolkit.telemetry.pioneer-new-studies-available', false);
-lockPref('toolkit.telemetry.shutdownPingSender.enabled', false);
-lockPref('toolkit.telemetry.updatePing.enabled', false);
-lockPref('toolkit.telemetry.unified', false);
-lockPref('toolkit.telemetry.bhrPing.enabled', false);
-lockPref('toolkit.telemetry.server', '');
-lockPref('breakpad.reportUrl', '');
 
-/** don't save thumbnails of pages */
-lockPref('browser.pagethumbnails.capturing_disabled', true);
+function DOM () {
+  lockPref('dom.battery.enabled', false);
+  lockPref('dom.block_reload_from_resize_event_handler', true);
+  lockPref('dom.delay.block_external_protocol_in_iframes.enabled', true);
+  lockPref('dom.event.clipboardevents.enabled', false);
+  lockPref('dom.event.contextmenu.enabled', false);
+  lockPref('dom.gamepad.enabled', false);
+  lockPref('dom.gamepad.extensions.enabled', false);
+  lockPref('dom.push.enabled', false);
+  lockPref('dom.security.https_only_mode_ever_enabled', true);
+  lockPref('dom.security.https_only_mode.upgrade_local', true);
+  lockPref('dom.security.https_only_mode', true);
+  lockPref('dom.vibrator.enabled', false);
+  lockPref('dom.vr.enabled', false);
+  lockPref('dom.vr.oculus.enabled', false);
+  lockPref('dom.webaudio.enabled', false);
+}
+DOM()
 
-/** get rid of that silly welcome screen */
-lockPref('trailhead.firstrun.didSeeAboutWelcome', true);
 
-/** I know my rights */
-lockPref('browser.rights.3.shown', true);
+function extensions () {
+  lockPref('browser.discovery.enabled', false);
+  lockPref('extensions.blocklist.enabled', false);
+  lockPref('extensions.pocket.enabled', false);
+  lockPref('extensions.update.autoUpdateDefault', false);
+  lockPref('xpinstall.signature.required', false);
+}
+extensions()
 
-/** disable health report */
-lockPref('datareporting.healthreport.service.enabled', false);
-lockPref('datareporting.policy.dataSubmissionEnabled', false);
 
-/** disable crash reporting */
-lockPref('toolkit.crashreporter.enabled', false);
+function studies () {
+  lockPref('app.normandy.enabled', false);
+  lockPref('app.normandy.optoutstudies.enabled', false);
+  lockPref('app.shield.optoutstudies.enabled', false);
+  lockPref('messaging-system.rsexperimentloader.enabled', false);
+}
+studies();
 
-/**
- * ! dangerous stuff here (but only if you search for malware)
- */
-lockPref('browser.safebrowsing.enabled', false);
-lockPref('browser.safebrowsing.phishing.enabled', false);
-lockPref('browser.safebrowsing.malware.enabled', false);
-lockPref('browser.safebrowsing.downloads.enabled', false);
-lockPref('browser.safebrowsing.provider.google4.dataSharing.enabled', false);
-lockPref('browser.safebrowsing.provider.google4.dataSharing', '');
-lockPref('browser.safebrowsing.provider.google4.updateURL', '');
-lockPref('browser.safebrowsing.provider.google4.reportURL', '');
-lockPref('browser.safebrowsing.provider.google4.reportPhishMistakeURL', '');
-lockPref('browser.safebrowsing.provider.google4.reportMalwareMistakeURL', '');
-lockPref('browser.safebrowsing.provider.google4.lists', '');
-lockPref('browser.safebrowsing.provider.google4.gethashURL', '');
-lockPref('browser.safebrowsing.provider.google4.dataSharingURL', '');
-lockPref('browser.safebrowsing.provider.google4.advisoryURL', '');
-lockPref('browser.safebrowsing.provider.google4.advisoryName', '');
-lockPref('browser.safebrowsing.provider.google.updateURL', '');
-lockPref('browser.safebrowsing.provider.google.reportURL', '');
-lockPref('browser.safebrowsing.provider.google.reportPhishMistakeURL', '');
-lockPref('browser.safebrowsing.provider.google.reportMalwareMistakeURL', '');
-lockPref('browser.safebrowsing.provider.google.pver', '');
-lockPref('browser.safebrowsing.provider.google.lists', '');
-lockPref('browser.safebrowsing.provider.google.gethashURL', '');
-lockPref('browser.safebrowsing.provider.google.advisoryURL', '');
-lockPref('browser.safebrowsing.downloads.remote.url', '');
 
-/** forced ui tours are lame */
-lockPref('browser.uitour.enabled', false);
+function captivePortal () {
+  lockPref('captivedetect.canonicalURL', '');
+  lockPref('network.captive-portal-service.enabled', false);
+  lockPref('network.connectivity-service.enabled', false);
+}
+captivePortal();
 
-/** as if I want notifications from the browser */
-lockPref('dom.push.enabled', false);
 
-/** what exactly is to be narrated */
-lockPref('narrate.enabled', false);
+function caching () {
+  lockPref('browser.cache.disk.parent_directory', '/run/user/1000/firefox');
+  lockPref('browser.cache.memory.capacity', 512000);
+}
+caching()
 
-/** force enable webgl */
-lockPref('webgl.force-enabled', true);
+
+function newTab () {
+  lockPref('browser.newtab.preload', false);
+  lockPref('browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons', false);
+  lockPref('browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features', false);
+  lockPref('browser.newtabpage.activity-stream.discoverystream.enabled', false);
+  lockPref('browser.newtabpage.activity-stream.feeds.discoverystreamfeed', false);
+  lockPref('browser.newtabpage.activity-stream.feeds.section.topstories', false);
+  lockPref('browser.newtabpage.activity-stream.feeds.telemetry', false);
+  lockPref('browser.newtabpage.activity-stream.feeds.topsites', false);
+  lockPref('browser.newtabpage.activity-stream.section.highlights.includePocket', false);
+  lockPref('browser.newtabpage.activity-stream.showSponsored', false);
+  lockPref('browser.newtabpage.activity-stream.showSponsoredTopSites', false);
+  lockPref('browser.newtabpage.activity-stream.telemetry', false);
+}
+newTab()
+
+
+function search () {
+  lockPref('browser.search.geoip.url', '');
+  lockPref('browser.search.region', 'US');
+  lockPref('browser.search.suggest.enabled', false);
+}
+search()
+
+
+function session () {
+  lockPref('browser.sessionstore.interval', 900000);
+  lockPref('browser.sessionstore.max_tabs_undo', 3);
+  lockPref('browser.sessionstore.privacy_level', 1);
+  lockPref('browser.sessionstore.restore_on_demand', false);
+  lockPref('browser.sessionstore.restore_tabs_lazily', false);
+  lockPref('browser.sessionstore.resume_from_crash', false);
+}
+session()
+
+
+function browserUpdates () {
+  lockPref('app.update.auto', false);
+  lockPref('app.update.enabled', false);
+  lockPref('app.update.mode', 0);
+  lockPref('app.update.service.enabled', false);
+}
+browserUpdates()
+
+
+function defaultBrowser () {
+  lockPref('browser.defaultbrowser.notificationbar', false);
+  lockPref('browser.shell.checkDefaultBrowser', false);
+  lockPref('browser.shell.skipDefaultBrowserCheck', true);
+}
+defaultBrowser()
+
+
+function omnibar () {
+  lockPref('browser.urlbar.speculativeConnect.enabled', false);
+  lockPref('browser.urlbar.sponsoredTopSites', false);
+  lockPref('browser.urlbar.suggest.engines', false);
+  lockPref('browser.urlbar.suggest.history', false);
+  lockPref('browser.urlbar.suggest.searches', false);
+  lockPref('browser.urlbar.suggest.topsites', false);
+}
+omnibar();
+
+
+function security () {
+  lockPref('device.sensors.enabled', false);
+  lockPref('devtools.remote.wifi.scan', false);
+  lockPref('fission.autostart', true);
+  lockPref('network.IDN_show_punycode', true);
+  lockPref('plugins.enumerable_names', '');
+  lockPref('security.insecure_connection_text.enabled', true);
+}
+security()
+
+
+function geolocation () {
+  lockPref('browser.region.network.url', '');
+  lockPref('browser.region.update.enabled', false);
+  lockPref('geo.enabled', false);
+  lockPref('geo.provider.ms-windows-location', false);
+  lockPref('geo.use_corelocation', false);
+  lockPref('geo.use_gpsd', false);
+  lockPref('geo.wifi.uri', '');
+  lockPref('intl.accept_languages', 'en-US, en');
+  lockPref('javascript.use_us_english_locale', true);
+}
+geolocation()
+
+
+function mediaPlayback () {
+  lockPref('media.eme.enabled', false);
+  lockPref('media.gmp-widevinecdm.enabled', false);
+  lockPref('media.gmp-widevinecdm.visible', false);
+  lockPref('media.navigator.enabled', false);
+  lockPref('media.videocontrols.picture-in-picture.video-toggle.enabled', false);
+}
+mediaPlayback()
+
+
+function peerToPeer () {
+  lockPref('media.peerconnection.enabled', false);
+  lockPref('media.peerconnection.identity.enabled', false);
+  lockPref('media.peerconnection.simulcast', false);
+  lockPref('media.peerconnection.turn.disable', true);
+  lockPref('media.peerconnection.use_document_iceservers', false);
+  lockPref('media.peerconnection.video.enabled', false);
+}
+peerToPeer()
+
+
+function prefetching () {
+  lockPref('network.dns.disablePrefetch', true);
+  lockPref('network.dns.offline-localhost', false);
+  lockPref('network.predictor.enabled', false);
+  lockPref('network.prefetch-next', false);
+  lockPref('network.stricttransportsecurity.preloadlist', false);
+}
+prefetching()
+
+
+function fingerPrinting () {
+  lockPref('network.http.referer.sendRefererHeader', 1);
+  lockPref('network.http.referer.trimmingPolicy', 1);
+  lockPref('network.http.referer.XOriginPolicy', 1);
+  lockPref('network.http.speculative-parallel-limit', 0);
+  lockPref('privacy.donottrackheader.enabled', true);
+  lockPref('privacy.resistFingerprinting', true);
+  lockPref('privacy.trackingprotection.enabled', true);
+}
+fingerPrinting()
+
+
+function telemetry () {
+  lockPref('beacon.enabled', false);
+  lockPref('breakpad.reportUrl', '');
+  lockPref('browser.send_pings.require_same_host', true);
+  lockPref('browser.send_pings', false);
+  lockPref('datareporting.healthreport.service.enabled', false);
+  lockPref('datareporting.policy.dataSubmissionEnabled', false);
+  lockPref('toolkit.crashreporter.enabled', false);
+  lockPref('toolkit.telemetry.archive.enabled', false);
+  lockPref('toolkit.telemetry.bhrPing.enabled', false);
+  lockPref('toolkit.telemetry.enabled', false);
+  lockPref('toolkit.telemetry.firstShutdownPing.enabled', false);
+  lockPref('toolkit.telemetry.newProfilePing.enabled', false);
+  lockPref('toolkit.telemetry.pioneer-new-studies-available', false);
+  lockPref('toolkit.telemetry.server', '');
+  lockPref('toolkit.telemetry.shutdownPingSender.enabled', false);
+  lockPref('toolkit.telemetry.unified', false);
+  lockPref('toolkit.telemetry.updatePing.enabled', false);
+}
+
+
+function safeBrowsing () {
+  lockPref('browser.safebrowsing.enabled', false);
+  lockPref('browser.safebrowsing.phishing.enabled', false);
+  lockPref('browser.safebrowsing.malware.enabled', false);
+  lockPref('browser.safebrowsing.downloads.enabled', false);
+  lockPref('browser.safebrowsing.provider.google4.dataSharing.enabled', false);
+  lockPref('browser.safebrowsing.provider.google4.dataSharing', '');
+  lockPref('browser.safebrowsing.provider.google4.updateURL', '');
+  lockPref('browser.safebrowsing.provider.google4.reportURL', '');
+  lockPref('browser.safebrowsing.provider.google4.reportPhishMistakeURL', '');
+  lockPref('browser.safebrowsing.provider.google4.reportMalwareMistakeURL', '');
+  lockPref('browser.safebrowsing.provider.google4.lists', '');
+  lockPref('browser.safebrowsing.provider.google4.gethashURL', '');
+  lockPref('browser.safebrowsing.provider.google4.dataSharingURL', '');
+  lockPref('browser.safebrowsing.provider.google4.advisoryURL', '');
+  lockPref('browser.safebrowsing.provider.google4.advisoryName', '');
+  lockPref('browser.safebrowsing.provider.google.updateURL', '');
+  lockPref('browser.safebrowsing.provider.google.reportURL', '');
+  lockPref('browser.safebrowsing.provider.google.reportPhishMistakeURL', '');
+  lockPref('browser.safebrowsing.provider.google.reportMalwareMistakeURL', '');
+  lockPref('browser.safebrowsing.provider.google.pver', '');
+  lockPref('browser.safebrowsing.provider.google.lists', '');
+  lockPref('browser.safebrowsing.provider.google.gethashURL', '');
+  lockPref('browser.safebrowsing.provider.google.advisoryURL', '');
+  lockPref('browser.safebrowsing.downloads.remote.url', '');
+}
+safeBrowsing();
