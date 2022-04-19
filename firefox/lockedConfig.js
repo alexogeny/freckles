@@ -80,6 +80,7 @@ lockPref('browser.newtabpage.activity-stream.showSponsoredTopSites', false);
 lockPref('browser.newtabpage.activity-stream.telemetry', false);
 
 /** my care factor for AU search results is zero */
+lockPref('browser.search.suggest.enabled', false);
 lockPref('browser.search.region', 'US');
 lockPref('browser.search.geoip.url', '');
 
@@ -244,6 +245,7 @@ lockPref('toolkit.telemetry.pioneer-new-studies-available', false);
 lockPref('toolkit.telemetry.shutdownPingSender.enabled', false);
 lockPref('toolkit.telemetry.updatePing.enabled', false);
 lockPref('toolkit.telemetry.unified', false);
+lockPref('toolkit.telemetry.bhrPing.enabled', false);
 lockPref('toolkit.telemetry.server', '');
 lockPref('breakpad.reportUrl', '');
 
@@ -290,3 +292,15 @@ lockPref('browser.safebrowsing.provider.google.lists', '');
 lockPref('browser.safebrowsing.provider.google.gethashURL', '');
 lockPref('browser.safebrowsing.provider.google.advisoryURL', '');
 lockPref('browser.safebrowsing.downloads.remote.url', '');
+
+/** forced ui tours are lame */
+lockPref('browser.uitour.enabled', false);
+
+/** as if I want notifications from the browser */
+lockPref('dom.push.enabled', false);
+
+/** what exactly is to be narrated */
+lockPref('narrate.enabled', false);
+
+/** force enable webgl */
+lockPref('webgl.force-enabled', true);
