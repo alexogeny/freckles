@@ -309,5 +309,8 @@ function safeBrowsing () {
   lockPref('browser.safebrowsing.provider.google.gethashURL', '');
   lockPref('browser.safebrowsing.provider.google.advisoryURL', '');
   lockPref('browser.safebrowsing.downloads.remote.url', '');
+  lockPref('browser.safebrowsing.provider.mozilla.updateURL', '');
+  lockPref('browser.safebrowsing.reportPhishURL', '');
+  lockPref('browser.safebrowsing.provider.mozilla.gethashURL', '');
 }
 safeBrowsing();
