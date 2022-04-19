@@ -1,6 +1,25 @@
+/** set my homepage */
+lockPref('browser.startup.homepage', 'https://home.alexogeny.dev');
+lockPref('browser.startup.homepage_override.mstone', 'ignore');
+
+/** open page source in vscode */
+lockPref('view_source.editor.external', true);
+lockPref('view_source.editor.path', '/usr/bin/code');
+
 /** if I wanted a beta browser I would have downloaded a beta browser */
 lockPref('app.normandy.enabled', false);
 lockPref('app.normandy.optoutstudies.enabled', false);
+
+/** give me back context menus */
+lockPref('dom.event.contextmenu.enabled', false);
+
+/** esni: https://www.cloudflare.com/ssl/encrypted-sni/ */
+lockPref('network.security.esni.enabled', true);
+
+/** don't recommend me things */
+lockPref('browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons', false);
+lockPref('browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features', false);
+lockPref('browser.newtabpage.activity-stream.feeds.topsites', false);
 
 /** et phone... home? */
 lockPref('beacon.enabled', false);
@@ -26,10 +45,17 @@ lockPref('browser.newtabpage.activity-stream.feeds.section.topstories', false);
 lockPref('browser.newtabpage.activity-stream.feeds.telemetry', false);
 lockPref('browser.newtabpage.activity-stream.section.highlights.includePocket', false);
 lockPref('browser.newtabpage.activity-stream.showSponsored', false);
+lockPref('browser.newtabpage.activity-stream.showSponsoredTopSites', false);
 lockPref('browser.newtabpage.activity-stream.telemetry', false);
 
 /** my care factor for AU search results is zero */
 lockPref('browser.search.region', 'US');
+
+/** prevent autoplay */
+lockPref('media.autoplay.enabled', false);
+
+/** do not collapse urls */
+lockPref('browser.urlbar.trimURLs', false);
 
 /** just no. */
 lockPref('browser.send_pings.require_same_host', true);
@@ -99,6 +125,7 @@ lockPref('dom.vibrator.enabled', false);
 lockPref('dom.vr.enabled', false);
 lockPref('dom.vr.oculus.enabled', false);
 lockPref('dom.webaudio.enabled', false);
+lockPref('dom.battery.enabled', false);
 
 /** blocklists are just more web requests I don't need */
 lockPref('extensions.blocklist.enabled', false);
@@ -119,7 +146,7 @@ lockPref('gfx.canvas.remote', false);
 /** will break netflix, but don't use it anyways */
 lockPref('media.eme.enabled', false);
 lockPref('media.gmp-widevinecdm.enabled', false);
-lockPref('media.gmp-widevinecdm.enabled', false);
+lockPref('media.gmp-widevinecdm.visible', false);
 lockPref('media.navigator.enabled', false);
 
 /** this will break meet software; keep a backup browser */
@@ -163,17 +190,25 @@ lockPref('privacy.resistFingerprinting', true);
 
 /** obviously */
 lockPref('network.IDN_show_punycode', true);
+lockPref('security.insecure_connection_text.enabled', true);
 
 /** opinion: save a bookmark if you find an important page */
 lockPref('places.history.enabled', false);
 
 /** like the idea of telemetry but hate it in practice */
 lockPref('toolkit.telemetry.enabled', false);
+lockPref('toolkit.telemetry.archive.enabled', false);
 lockPref('toolkit.telemetry.firstShutdownPing.enabled', false);
 lockPref('toolkit.telemetry.newProfilePing.enabled', false);
 lockPref('toolkit.telemetry.pioneer-new-studies-available', false);
 lockPref('toolkit.telemetry.shutdownPingSender.enabled', false);
+lockPref('toolkit.telemetry.updatePing.enabled', false);
 lockPref('toolkit.telemetry.unified', false);
+lockPref('toolkit.telemetry.server', '');
+lockPref('breakpad.reportUrl', '');
+
+/** don't save thumbnails of pages */
+lockPref('browser.pagethumbnails.capturing_disabled', true);
 
 /** get rid of that silly welcome screen */
 lockPref('trailhead.firstrun.didSeeAboutWelcome', true);
