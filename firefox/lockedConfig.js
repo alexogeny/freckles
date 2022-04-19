@@ -233,9 +233,6 @@ lockPref('datareporting.policy.dataSubmissionEnabled', false);
 
 /** disable crash reporting */
 lockPref('toolkit.crashreporter.enabled', false);
-Components.classes[ '@mozilla.org/toolkit/crash-reporter;1' ].getService(
-  Components.interfaces.nsICrashReporter
-).submitReports = false;
 
 /** dangerous stuff here (but only if you search for malware) */
 lockPref('browser.safebrowsing.enabled', false);
