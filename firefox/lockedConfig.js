@@ -13,6 +13,12 @@ lockPref('app.normandy.optoutstudies.enabled', false);
 /** give me back context menus */
 lockPref('dom.event.contextmenu.enabled', false);
 
+/** prevent clipboard spying */
+lockPref('dom.event.clipboardevents.enabled', false);
+
+/** stop people from reading plugin list */
+lockPref('plugins.enumerable_names', '');
+
 /** esni: https://www.cloudflare.com/ssl/encrypted-sni/ */
 lockPref('network.security.esni.enabled', true);
 
@@ -28,7 +34,7 @@ lockPref('beacon.enabled', false);
 lockPref('browser.cache.disk.parent_directory', '/run/user/1000/firefox');
 lockPref('browser.cache.memory.capacity', 512000);
 
-/** hiding the download panel was stupid */
+/** hiding the download panel was stupid but I never used it anyway */
 lockPref('browser.download.panel.shown', true);
 
 /** use a password manager for filling forms */
@@ -50,6 +56,7 @@ lockPref('browser.newtabpage.activity-stream.telemetry', false);
 
 /** my care factor for AU search results is zero */
 lockPref('browser.search.region', 'US');
+lockPref('browser.search.geoip.url', '');
 
 /** prevent autoplay */
 lockPref('media.autoplay.enabled', false);
@@ -62,7 +69,7 @@ lockPref('browser.send_pings.require_same_host', true);
 lockPref('browser.send_pings', false);
 
 /** make session store stuff a little less aggressive */
-lockPref('browser.sessionstore.interval', 600000);
+lockPref('browser.sessionstore.interval', 900000);
 lockPref('browser.sessionstore.max_tabs_undo', 3);
 lockPref('browser.sessionstore.privacy_level', 1);
 lockPref('browser.sessionstore.resume_from_crash', false);
@@ -90,7 +97,9 @@ lockPref('browser.tabs.warnOnClose', false);
 lockPref('browser.tabs.warnOnCloseOtherTabs', false);
 
 /** firefox should always be the default */
+lockPref('browser.defaultbrowser.notificationbar', false);
 lockPref('browser.shell.checkDefaultBrowser', false);
+lockPref('browser.shell.skipDefaultBrowserCheck', true);
 
 /** Don't do web stuff when I am typing into the url bar... pretty please? */
 lockPref('browser.urlbar.speculativeConnect.enabled', false);
@@ -139,6 +148,7 @@ lockPref('fission.autostart', true);
 /** isn't this what address fields are for */
 lockPref('geo.enabled', false);
 lockPref('geo.provider.ms-windows-location', false);
+lockPref('geo.wifi.uri', '');
 
 /** might break r/place in 5 years but who cares */
 lockPref('gfx.canvas.remote', false);
@@ -187,6 +197,7 @@ lockPref('network.http.referer.XOriginPolicy', 1);
 lockPref('network.http.speculative-parallel-limit', 0);
 lockPref('privacy.donottrackheader.enabled', true);
 lockPref('privacy.resistFingerprinting', true);
+lockPref('privacy.trackingprotection.enabled', true);
 
 /** obviously */
 lockPref('network.IDN_show_punycode', true);
@@ -225,3 +236,29 @@ lockPref('toolkit.crashreporter.enabled', false);
 Components.classes[ '@mozilla.org/toolkit/crash-reporter;1' ].getService(
   Components.interfaces.nsICrashReporter
 ).submitReports = false;
+
+/** dangerous stuff here (but only if you search for malware) */
+lockPref('browser.safebrowsing.enabled', false);
+lockPref('browser.safebrowsing.phishing.enabled', false);
+lockPref('browser.safebrowsing.malware.enabled', false);
+lockPref('browser.safebrowsing.downloads,enabled', false);
+lockPref('browser.safebrowsing.provider.google4.dataSharing.enabled', false);
+lockPref('browser.safebrowsing.provider.google4.dataSharing', '');
+lockPref('browser.safebrowsing.provider.google4.updateURL', '');
+lockPref('browser.safebrowsing.provider.google4.reportURL', '');
+lockPref('browser.safebrowsing.provider.google4.reportPhishMistakeURL', '');
+lockPref('browser.safebrowsing.provider.google4.reportMalwareMistakeURL', '');
+lockPref('browser.safebrowsing.provider.google4.lists', '');
+lockPref('browser.safebrowsing.provider.google4.gethashURL', '');
+lockPref('browser.safebrowsing.provider.google4.dataSharingURL', '');
+lockPref('browser.safebrowsing.provider.google4.advisoryURL', '');
+lockPref('browser.safebrowsing.provider.google4.advisoryName', '');
+lockPref('browser.safebrowsing.provider.google.updateURL', '');
+lockPref('browser.safebrowsing.provider.google.reportURL', '');
+lockPref('browser.safebrowsing.provider.google.reportPhishMistakeURL', '');
+lockPref('browser.safebrowsing.provider.google.reportMalwareMistakeURL', '');
+lockPref('browser.safebrowsing.provider.google.pver', '');
+lockPref('browser.safebrowsing.provider.google.lists', '');
+lockPref('browser.safebrowsing.provider.google.gethashURL', '');
+lockPref('browser.safebrowsing.provider.google.advisoryURL', '');
+lockPref('browser.safebrowsing.downloads.remote.url', '');
