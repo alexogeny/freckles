@@ -108,8 +108,10 @@ extensions()
 
 
 function studies () {
+  lockPref('app.normandy.api_url', '');
   lockPref('app.normandy.enabled', false);
   lockPref('app.normandy.optoutstudies.enabled', false);
+  lockPref('app.normandy.shieldLearnMoreUrl', '');
   lockPref('app.shield.optoutstudies.enabled', false);
   lockPref('messaging-system.rsexperimentloader.enabled', false);
 }
@@ -152,6 +154,8 @@ function search () {
   lockPref('browser.search.geoip.url', '');
   lockPref('browser.search.region', 'US');
   lockPref('browser.search.suggest.enabled', false);
+  lockPref('browser.urlbar.merino.enabled', false);
+  lockPref('browser.urlbar.merino.endpointURL', '');
 }
 search()
 
@@ -265,7 +269,7 @@ fingerPrinting()
 
 function telemetry () {
   lockPref('beacon.enabled', false);
-  lockPref('breakpad.reportUrl', '');
+  lockPref('breakpad.reportURL', '');
   lockPref('browser.send_pings.require_same_host', true);
   lockPref('browser.send_pings', false);
   lockPref('datareporting.healthreport.service.enabled', false);
@@ -282,6 +286,7 @@ function telemetry () {
   lockPref('toolkit.telemetry.unified', false);
   lockPref('toolkit.telemetry.updatePing.enabled', false);
 }
+telemetry()
 
 
 function safeBrowsing () {
@@ -314,3 +319,29 @@ function safeBrowsing () {
   lockPref('browser.safebrowsing.provider.mozilla.gethashURL', '');
 }
 safeBrowsing();
+
+
+function contentBlocking () {
+  lockPref('browser.contentblocking.report.cookie.url', '');
+  lockPref('browser.contentblocking.report.cryptominer.url', '');
+  lockPref('browser.contentblocking.report.endpoint_url', '');
+  lockPref('browser.contentblocking.report.fingerprinter.url', '');
+  lockPref('browser.contentblocking.report.lockwise.how_it_works.url', '');
+  lockPref('browser.contentblocking.report.manage_devices.url', '');
+  lockPref('browser.contentblocking.report.mobile-android.url', '');
+  lockPref('browser.contentblocking.report.mobile-ios.url', '');
+  lockPref('browser.contentblocking.report.monitor.home_page_url', '');
+  lockPref('browser.contentblocking.report.monitor.how_it_works.url', '');
+  lockPref('browser.contentblocking.report.monitor.preferences_url', '');
+  lockPref('browser.contentblocking.report.monitor.sign_in_url', '');
+  lockPref('browser.contentblocking.report.monitor.url', '');
+  lockPref('browser.contentblocking.report.proxy_extension.url', '');
+  lockPref('browser.contentblocking.report.social.url', '');
+  lockPref('browser.contentblocking.report.tracker.url', '');
+  lockPref('browser.contentblocking.report.vpn-android.url', '');
+  lockPref('browser.contentblocking.report.vpn-ios.url', '');
+  lockPref('browser.contentblocking.report.vpn-promo.url', '');
+  lockPref('browser.contentblocking.report.vpn.url', '');
+  lockPref('browser.contentblocking.reportBreakage.url', '');
+}
+contentBlocking()
