@@ -1,15 +1,10 @@
 ---
+
 system_packages:
   [
     "1password",
-    "code",
-    "curl",
     "discord",
-    "docker.io",
-    "git",
-    "npm",
-    "slack-desktop",
-    "zsh"
+    "slack-desktop"
   ]
 
 vscode_extensions:
@@ -32,12 +27,20 @@ vscode_extensions:
   - wesbos.theme-cobalt2
   - wmaurer.change-case
 
-global_git:
+git_config:
   - pull.rebase
   - fetch.prune
   - rebase.autostash
   - user.name
 
-email_addresses:
+git_email_addresses:
   github: 6896115+alexogeny@users.noreply.github.com
   gitlab: 8857503-alexogeny@users.noreply.gitlab.com
+
+zsh_plugins:
+  - docker_icon
+  - node_icon
+  - package_icon
+  - php_icon
+  - typescript_icon
+  - yarn_icon

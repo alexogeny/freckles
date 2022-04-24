@@ -83,7 +83,7 @@
   register: docker_compose_latest
   until: docker_compose_latest.json.name
 
-- name: see if docker compose installed | shell
+- name: is docker compose installed | shell
   command: docker compose version
   register: docker_compose_current
   ignore_errors: true

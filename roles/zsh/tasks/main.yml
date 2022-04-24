@@ -1,0 +1,60 @@
+- name: install zsh | apt
+  become: true
+  become_user: root
+  apt:
+    name: zsh
+    state: latest
+
+- name: install jq | apt
+  become: true
+  become_user: root
+  apt:
+    name: jq
+    state: latest
+
+- name: set shell to zsh
+  command: usermod --shell /bin/zsh {{u}}
+  become: true
+  become_user: root
+  changed_when: false
+
+- name: is oh-my-zsh installed | stat
+  stat:
+    path: "/home/{{u}}/.oh-my-zsh"
+  register: oh_my_zsh_stat
+
+- name: download oh-my-zsh | uri
+  uri:
+    url: "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh"
+    method: GET
+    status_code: 200
+    mode: 'u+x,g+x'
+    dest: "/home/{{u}}/Downloads/ohmyzsh-install.sh"
+  when: not oh_my_zsh_stat.stat.exists
+
+- name: run oh-my-zsh installer | command
+  command: sh "/home/{{u}}/Downloads/ohmyzsh-install.sh"
+  when: not oh_my_zsh_stat.stat.exists
+
+- name: link .zshrc file | file
+  file:
+    src: "{{playbook_dir}}/roles/zsh/files/zshrc.link.zshrc"
+    dest: "/home/{{u}}/.zshrc"
+    state: link
+    force: true
+
+- name: make oh-my-zsh plugin folders | file
+  file:
+    path: "/home/{{u}}/.oh-my-zsh/plugins/{{item}}"
+    state: directory
+  loop: "{{zsh_plugins}}"
+  when: oh_my_zsh_stat.stat.exists
+
+- name: link custom oh-my-zsh plugins | file
+  file:
+    src: "{{playbook_dir}}/roles/zsh/files/{{item}}.plugin.link.zsh"
+    dest: "/home/{{u}}/.oh-my-zsh/plugins/{{item}}/{{item}}.plugin.zsh"
+    state: link
+    force: true
+  loop: "{{zsh_plugins}}"
+  when: oh_my_zsh_stat.stat.exists

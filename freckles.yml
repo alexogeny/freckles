@@ -15,6 +15,10 @@
       tags:
         - firefox
 
+    - role: zsh
+      tags:
+        - zsh
+
   pre_tasks:
 
     - name: user variable
