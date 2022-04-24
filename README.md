@@ -1,28 +1,40 @@
 # Freckles
 
-Freckles are alexogny's dotfiles.
+Freckles are alexogeny's dotfiles.
 
-I haven't done much with the setup script yet, but the `run.sh` script will at
-least do the popos cleanups and install vscode extensions.
+Built using ansible. To run:
 
-Hope to make it more robust later.
+```shell
+sh setup.sh
+```
 
-## Popos cleanups
+Keep in mind that this will do symlinks to this folder, and it WILL override
+existing config files. Make sure to back up files you might want to keep and
+also run the script from a place where you won't be moving the repository.
 
-Does some cleanups after installing pop os. Namely it:
-- cleans up libre office (since I do not use it)
-- removes unused locales
-
-## Firefox
+### Firefox
 
 `lockedConfig.js` are all the preferences I use in firefox to harden it.
-These preferences are loaded by usage of autoconfig.js and firefox.cfg
+These preferences are loaded by usage of autoconfig.js and firefox.cfg. The
+autoload file references the `lockedConfig.js` in the GitHub cloud, so I can
+make changes on the fly and not have to redo any setup.
 
 A bunch of these changes will break sites but I figure the tradeoff is worth it.
 
-## Vscode
+Keep an extra ungoogled chromium if you need to access anything that's broken.
+
+### Vscode
 
 Includes keybindings, settings (preferences), and a list of extensions that I
 use during my day to day experience (intellisense, graphql, convert case, etc.)
 
-## TODO: zsh and zshrc
+They're all pretty useful, but feel free to add or remove extensions from the
+list.
+
+### Zsh
+
+Includes zsh, oh-my-zsh, and some plugins to show icons for software that you
+may or may not be using. Pretty clean. Constantly improving it. Should not slow
+down your terminal by much (i.e. should be imperceptible).
+
+### TODO: automagic git configuration
