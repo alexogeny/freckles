@@ -19,6 +19,10 @@
       tags:
         - zsh
 
+    - role: 1password
+      tags:
+        - 1password
+
   pre_tasks:
 
     - name: user variable | set_fact

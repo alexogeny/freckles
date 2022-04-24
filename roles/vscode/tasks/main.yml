@@ -19,14 +19,13 @@
   apt_repository:
     repo: deb [arch=amd64,arm64,armhf signed-by="/etc/apt/trusted.gpg.d/packages.microsoft.gpg"] https://packages.microsoft.com/repos/code stable main
     state: present
-    filename: vscode.list
+    filename: vscode
 
 - name: install vscode | apt
   become: true
   become_user: root
   apt:
-    name:
-      - code
+    name: code
     state: latest
 
 - name: install vscode extensions | code

@@ -1,0 +1,31 @@
+- name: is 1password signing key present | stat
+  stat:
+    path: /etc/apt/trusted.gpg.d/1password.gpg
+  register: has_1password_signing_key
+
+- name: install 1password signing key | shell
+  become: true
+  become_user: root
+  shell: |
+    wget -qO- https://downloads.1password.com/linux/keys/1password.asc |
+    gpg --dearmor > /tmp/1password.gpg
+    install -o root -g root -m 644 /tmp/1password.gpg /etc/apt/trusted.gpg.d/
+    rm -f /tmp/1password.gpg
+  when: not has_1password_signing_key.stat.exists
+
+- name: 1password repo | apt
+  become: true
+  become_user: root
+  apt_repository:
+    repo: deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/1password.gpg] https://downloads.1password.com/linux/debian/amd64 stable main
+    state: present
+    filename: 1password
+
+- name: install 1password | apt
+  become: true
+  become_user: root
+  apt:
+    name:
+      - 1password
+      - 1password-cli
+    state: latest
