@@ -42,5 +42,6 @@ zsh_plugins:
   - node_icon
   - package_icon
   - php_icon
+  - python_icon
   - typescript_icon
   - yarn_icon

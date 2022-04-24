@@ -63,14 +63,14 @@ function_gpushc() {
 alias gpushc='function_gpushc'
 
 # plugins
-plugins=(git docker_icon node_icon package_icon php_icon typescript_icon yarn_icon)
+plugins=(git docker_icon node_icon package_icon php_icon python_icon typescript_icon yarn_icon)
 export ZSH="$HOME/.oh-my-zsh"
 source $ZSH/oh-my-zsh.sh
 
 # theming
 NL=$'\n'
 
-PS1='%F{099}%n@%m%f in %F{039}%~$(git_prompt_info)$docker_icon$php_icon$package_icon$node_icon$yarn_icon$typescript_icon${NL}$FG[105]%(!.#.»)%{$reset_color%} '
+PS1='%F{099}%n@%m%f in %F{039}%~$(git_prompt_info)$docker_icon$php_icon$package_icon$python_icon$node_icon$yarn_icon$typescript_icon${NL}$FG[105]%(!.#.»)%{$reset_color%} '
 PS2='%{$fg[red]%}\ %{$reset_color%}'
 RPS1='${return_code}'
 PS1=$'$my_gray${(r:$COLUMNS::-:)}'$PS1
