@@ -72,5 +72,6 @@
   "window.menuBarVisibility": "toggle",
   "window.restoreWindows": "none",
   "window.newWindowDimensions": "inherit",
-  "workbench.colorTheme": "Shades of Purple"
+  "workbench.colorTheme": "Cobalt2",
+  "workbench.sideBar.location": "right"
 }

@@ -16,14 +16,14 @@
 
 - name: link vscode settings | file
   file:
-    src: "{{ lookup('env', 'ROOT') }}/roles/vscode/files/settings.link.json"
-    dest: "{{u}}/.config/Code/User/settings.json"
+    src: "{{playbook_dir}}/roles/vscode/files/settings.link.json"
+    dest: "/home/{{u}}/.config/Code/User/settings.json"
     state: link
     force: true
 
 - name: link vscode keybindings | file
   file:
-    src: "{{ lookup('env', 'ROOT') }}/roles/vscode/files/keybinds.link.json"
+    src: "{{playbook_dir}}/roles/vscode/files/keybinds.link.json"
     dest: "/home/{{u}}/.config/Code/User/keybindings.json"
     state: link
     force: true
