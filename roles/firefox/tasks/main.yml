@@ -1,0 +1,26 @@
+- name: install firefox | apt
+  become: true
+  become_user: root
+  apt:
+    name:
+      - firefox
+    state: latest
+    update_cache: true
+
+- name: link firefox autoconfig | file
+  become: true
+  become_user: root
+  file:
+    src: "{{ lookup('env', 'ROOT') }}/roles/firefox/files/autoconfig.link.json"
+    dest: "/lib/firefox/browser/defaults/preferences/autoconfig.js"
+    state: link
+    force: true
+
+- name: link firefox cfg | file
+  become: true
+  become_user: root
+  file:
+    src: "{{ lookup('env', 'ROOT') }}/roles/firefox/files/firefox.link.cfg"
+    dest: "/lib/firefox/firefox.cfg"
+    state: link
+    force: true

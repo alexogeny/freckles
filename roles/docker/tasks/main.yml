@@ -1,0 +1,99 @@
+- name: install docker | apt
+  become: true
+  become_user: root
+  apt:
+    name:
+      - docker
+      - docker.io
+      - docker-registry
+    state: latest
+    update_cache: true
+
+- name: install docker-python | pip
+  become: true
+  become_user: root
+  pip:
+    name: docker
+
+- name: create docker | group
+  become: true
+  become_user: root
+  group:
+    name: docker
+    state: present
+    gid: 1759
+
+- name: add user to docker | user
+  become: true
+  become_user: root
+  user:
+    name: "{{u}}"
+    groups: docker
+    append: yes
+
+- name: ensure docker is started | service
+  service:
+    name: docker
+    state: started
+
+- name: check for docker config | stat
+  stat:
+    path: "/home/{{u}}/.docker/config.json"
+  register: docker_config_stat
+
+- name: ensure permission on docker daemon | file
+  become: true
+  become_user: root
+  file:
+    path: /var/run/docker.sock
+    mode: 666
+
+- name: check if logged in to gitlab registry | json
+  set_fact:
+    has_gitlab_registry: "{{ lookup('file', '/home/{{u}}/.docker/config.json') | from_json | json_query('auths.\"registry.gitlab.com\".auth') }}"
+  when: docker_config_stat.stat.exists
+
+- name: get gitlab docker token | prompt
+  pause:
+    prompt: Enter gitlab container registry token
+    echo: no
+  register: gitlab_container_registry_token
+  when: has_gitlab_registry is not defined or has_gitlab_registry == ""
+
+- name: login to gitlab container registry | docker_login
+  docker_login:
+    registry_url: https://registry.gitlab.com
+    state: present
+    username: "{{u}}"
+    password: "{{gitlab_container_registry_token.user_input}}"
+  when: has_gitlab_registry is not defined or has_gitlab_registry == ""
+
+- name: docker plugin folder exists | file
+  file:
+    path: "/home/{{u}}/.docker/cli-plugins"
+    state: directory
+
+- name: latest docker compose release version | get_url
+  uri:
+    url: "https://api.github.com/repos/docker/compose/releases/latest"
+    method: GET
+    return_content: yes
+    status_code: 200
+    body_format: json
+  register: docker_compose_latest
+  until: docker_compose_latest.json.name
+
+- name: see if docker compose installed | shell
+  command: docker compose version
+  register: docker_compose_current
+  ignore_errors: true
+  changed_when: false
+
+- name: Install docker compose
+  get_url:
+    url: "https://github.com/docker/compose/releases/download/{{docker_compose_latest.json.name}}/docker-compose-Linux-{{ansible_architecture}}"
+    dest: "/home/{{u}}/.docker/cli-plugins/docker-compose"
+    mode: 'u+x,g+x'
+  when: >
+    (docker_compose_current.rc != 0) or
+    ("Docker Compose version {{docker_compose_latest.json.name}}" != docker_compose_current)

@@ -2,7 +2,7 @@
  * alexogeny's firefox configuration
  *
  * ! please note that if you choose to use this, lots of stuff will break
- * ! namely: google meet, netflix, etc.
+ * ! namely: google meet, netflix, youtube, etc.
  * ! proceed with caution
  *
  * * personally I keep a separate browser just for google meet
@@ -18,9 +18,6 @@
  *   - all fitlers on and updated
  * - localcdn
  * - multi account containers
- *
- * TODO: add more config settings. I know there are a heap more that I'm missing
- *       gonna leave this here until I've explored further
  */
 
 function config () {

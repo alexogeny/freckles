@@ -7,6 +7,3 @@ sudo apt remove --purge fonts-noto
 sudo apt install localepurge
 # removes generated locales that are not "en"
 sudo rm -rI /usr/share/local/!(en)
-
-# vscode extensions
-while read line; do code --install-extension "$line";done <vscode/extensions.txt

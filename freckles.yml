@@ -1,0 +1,22 @@
+---
+- hosts: local
+  vars_files:
+    - vars/default.yml
+  roles:
+    - role: docker
+      tags:
+        - docker
+
+    - role: vscode
+      tags:
+        - vscode
+
+    - role: firefox
+      tags:
+        - firefox
+
+  pre_tasks:
+
+    - name: user variable
+      set_fact:
+        u: "{{lookup('env', 'USER')}}"

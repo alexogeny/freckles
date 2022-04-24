@@ -1,0 +1,43 @@
+---
+system_packages:
+  [
+    "1password",
+    "code",
+    "curl",
+    "discord",
+    "docker.io",
+    "git",
+    "npm",
+    "slack-desktop",
+    "zsh"
+  ]
+
+vscode_extensions:
+  - aaron-bond.better-comments
+  - bmewburn.vscode-intelephense-client
+  - bungcip.better-toml
+  - ckolkman.vscode-postgres
+  - dbaeumer.vscode-eslint
+  - dsznajder.es7-react-js-snippets
+  - GraphQL.vscode-graphql
+  - IronGeek.vscode-env
+  - ms-azuretools.vscode-docker
+  - ms-python.python
+  - ms-python.vscode-pylance
+  - Prisma.prisma
+  - rangav.vscode-thunder-client
+  - redhat.ansible
+  - redhat.vscode-yaml
+  - Tyriar.sort-lines
+  - wesbos.theme-cobalt2
+  - wmaurer.change-case
+
+global_git:
+  - pull.rebase
+  - fetch.prune
+  - rebase.autostash
+  - user.name
+
+email_addresses:
+  github: 6896115+alexogeny@users.noreply.github.com
+  gitlab: 8857503-alexogeny@users.noreply.gitlab.com

@@ -1,0 +1,29 @@
+- name: install vscode | apt
+  become: true
+  become_user: root
+  apt:
+    name:
+      - code
+    state: latest
+    update_cache: true
+
+- name: install vscode extensions | code
+  shell: code --install-extension {{ item }}
+  loop: "{{vscode_extensions}}"
+  register: extension_results
+  failed_when: extension_results.rc != 0
+  changed_when: '"successfully" in extension_results.stdout'
+
+- name: link vscode settings | file
+  file:
+    src: "{{ lookup('env', 'ROOT') }}/roles/vscode/files/settings.link.json"
+    dest: "{{u}}/.config/Code/User/settings.json"
+    state: link
+    force: true
+
+- name: link vscode keybindings | file
+  file:
+    src: "{{ lookup('env', 'ROOT') }}/roles/vscode/files/keybinds.link.json"
+    dest: "/home/{{u}}/.config/Code/User/keybindings.json"
+    state: link
+    force: true
