@@ -21,6 +21,14 @@
 
   pre_tasks:
 
-    - name: user variable
+    - name: user variable | set_fact
       set_fact:
         u: "{{lookup('env', 'USER')}}"
+
+    - name: install wget | apt
+      become: true
+      become_user: root
+      apt:
+        name: wget
+        state: present
+        update_cache: true

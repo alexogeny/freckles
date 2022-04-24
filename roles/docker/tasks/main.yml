@@ -7,7 +7,6 @@
       - docker.io
       - docker-registry
     state: latest
-    update_cache: true
 
 - name: install docker-python | pip
   become: true

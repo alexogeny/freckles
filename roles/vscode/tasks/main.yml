@@ -1,3 +1,26 @@
+- name: is microsoft signing key present | stat
+  stat:
+    path: "/etc/apt/trusted.gpg.d/packages.microsoft.gpg"
+  register: has_microsoft_signing_key
+
+- name: install microsoft signing key | shell
+  become: true
+  become_user: root
+  shell: |
+    wget -qO- https://packages.microsoft.com/keys/microsoft.asc |
+    gpg --dearmor > /tmp/packages.microsoft.gpg
+    install -o root -g root -m 644 /tmp/packages.microsoft.gpg /etc/apt/trusted.gpg.d/
+    rm -f /tmp/packages.microsoft.gpg
+  when: not has_microsoft_signing_key.stat.exists
+
+- name: vscode repo | apt
+  become: true
+  become_user: root
+  apt_repository:
+    repo: deb [arch=amd64,arm64,armhf signed-by="/etc/apt/trusted.gpg.d/packages.microsoft.gpg"] https://packages.microsoft.com/repos/code stable main
+    state: present
+    filename: vscode.list
+
 - name: install vscode | apt
   become: true
   become_user: root
@@ -5,7 +28,6 @@
     name:
       - code
     state: latest
-    update_cache: true
 
 - name: install vscode extensions | code
   shell: code --install-extension {{ item }}
