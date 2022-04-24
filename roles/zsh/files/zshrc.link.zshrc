@@ -12,19 +12,22 @@ chpwd_functions+=(check_git)
 
 # apt
 alias apti='sudo apt install'
-alias aptu='sudo apt update && sudo apt upgrade -y'
+alias aptu='sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y'
 
 # docker
 alias dcrunl='docker compose run --rm local'
 alias dcupl='docker compose up --rm local'
 alias dcupd='docker compose up --rm -d local'
 alias dstop='docker stop $(docker ps -aq)'
+alias dremc='docker rm $(docker ps -aq)'
+alias dremi='docker rmi $(docker images -q)'
+alias dremv='docker volume rm $(docker volume ls -qf dangling=true)'
 alias dcyarn='docker compose run --rm local yarn'
 function_dclean() {
-  docker stop $(docker ps -aq)
-  docker rm $(docker ps -aq)
-  docker rmi $(docker images -q)
-  docker volume rm $(docker volume ls -qf dangling=true)
+  dstop
+  dremc
+  dremi
+  dremv
 }
 alias dclean='function_dclean'
 
@@ -52,6 +55,12 @@ function_gpushmr() {
     --force-with-lease
 }
 alias gpushmr='function_gpushmr'
+function_gpushc() {
+  branch_current=$(git branch --show-current)
+  echo "current branch: $branch_current"
+  git push -v -u origin $branch_current
+}
+alias gpushc='function_gpushc'
 
 # plugins
 plugins=(git docker_icon node_icon package_icon php_icon typescript_icon yarn_icon)
