@@ -50,7 +50,7 @@
 
 - name: check if logged in to gitlab registry | json
   set_fact:
-    has_gitlab_registry: "{{ lookup('file', '/home/{{u}}/.docker/config.json') | from_json | json_query('auths.\"registry.gitlab.com\".auth') }}"
+    has_gitlab_registry: "{{ lookup('file', '/home/{{u}}/.docker/config.json') | from_json | json_query('auths.\"https://registry.gitlab.com\".auth') }}"
   when: docker_config_stat.stat.exists
 
 - name: get gitlab docker token | prompt

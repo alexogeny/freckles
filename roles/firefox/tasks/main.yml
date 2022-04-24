@@ -11,7 +11,7 @@
   become: true
   become_user: root
   file:
-    src: "{{playbook_dir}}/roles/firefox/files/autoconfig.link.json"
+    src: "{{playbook_dir}}/roles/firefox/files/autoconfig.link.js"
     dest: "/lib/firefox/browser/defaults/preferences/autoconfig.js"
     state: link
     force: true
