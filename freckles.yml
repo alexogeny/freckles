@@ -32,6 +32,10 @@
       tags:
         - zsh
 
+    - role: discord
+      tags:
+        - discord
+
   pre_tasks:
 
     - name: user variable | set_fact

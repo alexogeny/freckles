@@ -1,0 +1,25 @@
+- name: check if discord installed | dpgk-query
+  command: dpkg-query -W discord
+  register: discord_installed
+  failed_when: False
+
+- name: download discord | get_url
+  become: true
+  become_user: root
+  get_url:
+    url: https://discordapp.com/api/download?platform=linux&format=deb
+    dest: /tmp/discord.deb
+  when: discord_installed.rc >= 1
+
+- name: install discord
+  become: true
+  become_user: root
+  apt: deb="/tmp/discord.deb"
+  when: discord_installed.rc >= 1
+
+- name: remove discord deb | file
+  become: true
+  become_user: root
+  file:
+    path: /tmp/discord.deb
+    state: absent
