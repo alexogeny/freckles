@@ -63,6 +63,15 @@ down your terminal by much (i.e. should be imperceptible).
 
 Mostly just to make things pretty like adding icons to repo prompts.
 
+![zsh prompt](resources/prompt.png)
+
+Currently supports:
+
+- docker + compose
+- php
+- node + yarn + ts + package version
+- python
+
 ### Git
 
 Configures my global `.gitconfig` with sane defaults and switches my commit
