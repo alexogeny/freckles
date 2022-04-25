@@ -8,9 +8,17 @@ Built using ansible. To run:
 sh setup.sh
 ```
 
-Keep in mind that this will do symlinks to this folder, and it WILL override
-existing config files. Make sure to back up files you might want to keep and
-also run the script from a place where you won't be moving the repository.
+## Important Notes
+
+**SYMLINKS** - Keep in mind that this will do symlinks to this folder, and it
+WILL override existing config files. Make sure to back up files you might want
+to keep and also run the script from a place where you won't be moving the
+ repository.
+
+**OS SUPPORT** - This will likely only work on popos (and maybe vanilla debian).
+Will likely not work on the latest Ubuntu due to the abomination that is `snapd`
+but anything before `22.04` should work (mostly due to the hijacking of `apt
+install firefox` being redirected to `snap install` without the user's consent).
 
 ### Firefox
 
