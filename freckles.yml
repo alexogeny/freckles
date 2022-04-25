@@ -4,6 +4,10 @@
     - vars/vault.yml
     - vars/default.yml
   roles:
+    - role: git
+      tags:
+        - git
+
     - role: 1password
       tags:
         - 1password

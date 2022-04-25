@@ -1,12 +1,4 @@
 ---
-
-system_packages:
-  [
-    "1password",
-    "discord",
-    "slack-desktop"
-  ]
-
 vscode_extensions:
   - aaron-bond.better-comments
   - bmewburn.vscode-intelephense-client
@@ -26,16 +18,6 @@ vscode_extensions:
   - Tyriar.sort-lines
   - wesbos.theme-cobalt2
   - wmaurer.change-case
-
-git_config:
-  - pull.rebase
-  - fetch.prune
-  - rebase.autostash
-  - user.name
-
-git_email_addresses:
-  github: 6896115+alexogeny@users.noreply.github.com
-  gitlab: 8857503-alexogeny@users.noreply.gitlab.com
 
 zsh_plugins:
   - docker_icon

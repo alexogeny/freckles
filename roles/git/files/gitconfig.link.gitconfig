@@ -1,0 +1,25 @@
+# global git config
+
+[pull]
+  ; always rebase on pull
+  rebase = true
+
+[fetch]
+  ; prune dead branches when fetching
+  prune = true
+
+[rebase]
+  ; always try to stash when rebasing
+  autostash = true
+
+[user]
+  ; me
+  name = alexogeny
+
+[includeIf "gitdir:/home/alexogeny/gh/**"]
+  ; github
+  path = /home/alexogeny/.github.gitconfig
+
+[includeIf "gitdir:/home/alexogeny/gl/**"]
+  ; gitlab
+  path = /home/alexogeny/.gitlab.gitconfig
