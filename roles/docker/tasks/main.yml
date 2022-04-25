@@ -52,11 +52,13 @@
     has_gitlab_registry: "{{ lookup('file', '/home/{{u}}/.docker/config.json') | from_json | json_query('auths.\"https://registry.gitlab.com\".auth') }}"
   when: docker_config_stat.stat.exists
 
-- name: get gitlab docker token | prompt
-  pause:
-    prompt: Enter gitlab container registry token
-    echo: no
-  register: gitlab_container_registry_token
+- name: get registry token from 1password | one_password
+  one_password:
+    login_details:
+      password: "{{one_password.password}}"
+    command: get
+    path: Personal.GitLab.tokens.registry
+  register: registry_token
   when: has_gitlab_registry is not defined or has_gitlab_registry == ""
 
 - name: login to gitlab container registry | docker_login
@@ -64,7 +66,7 @@
     registry_url: https://registry.gitlab.com
     state: present
     username: "{{u}}"
-    password: "{{gitlab_container_registry_token.user_input}}"
+    password: "{{registry_token.onepassword.secret}}"
   when: has_gitlab_registry is not defined or has_gitlab_registry == ""
 
 - name: docker plugin folder exists | file

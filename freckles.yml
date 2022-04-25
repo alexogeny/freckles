@@ -1,8 +1,13 @@
 ---
 - hosts: local
   vars_files:
+    - vars/vault.yml
     - vars/default.yml
   roles:
+    - role: 1password
+      tags:
+        - 1password
+
     - role: docker
       tags:
         - docker
@@ -18,10 +23,6 @@
     - role: zsh
       tags:
         - zsh
-
-    - role: 1password
-      tags:
-        - 1password
 
   pre_tasks:
 

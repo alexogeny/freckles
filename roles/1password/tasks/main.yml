@@ -29,3 +29,17 @@
       - 1password
       - 1password-cli
     state: latest
+
+- name: has 1password account | shell
+  command: op account list
+  register: has_1password_account
+  changed_when: False
+
+- name: add 1password account | one_password
+  one_password:
+    login_details:
+      password: "{{one_password.password}}"
+      key: "{{one_password.secret_key}}"
+      email: "{{one_password.email}}"
+    command: login
+  when: has_1password_account.stdout == ""

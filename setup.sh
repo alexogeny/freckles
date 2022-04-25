@@ -10,4 +10,4 @@ else
   sudo apt update && sudo apt install software-properties-common ansible -y
 fi
 
-ansible-playbook -i "$ROOT/hosts" "$ROOT/freckles.yml" --ask-become-pass
+ansible-playbook -i "$ROOT/hosts" "$ROOT/freckles.yml" --ask-become-pass --ask-vault-pass
