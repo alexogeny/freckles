@@ -20,6 +20,20 @@ Will likely not work on the latest Ubuntu due to the abomination that is `snapd`
 but anything before `22.04` should work (mostly due to the hijacking of `apt
 install firefox` being redirected to `snap install` without the user's consent).
 
+### 1Password
+
+Installs both `1password` and `1password-cli` - then configures the cli using
+the variables from the vault. This saves me having to do any user input when I
+want to get things like a gitlab token. Also means I can easily configure the
+desktop app after install.
+
+TODO: modify `~/.ssh/config` to reference the 1password agent socket
+
+### Docker
+
+Ensures that the latest version of `docker` and `docker compose` are installed.
+Also logs me into the gitlab container registry.
+
 ### Firefox
 
 `lockedConfig.js` are all the preferences I use in firefox to harden it.
@@ -39,10 +53,29 @@ use during my day to day experience (intellisense, graphql, convert case, etc.)
 They're all pretty useful, but feel free to add or remove extensions from the
 list.
 
+Adds the signing key and repo then ensures on latest.
+
 ### Zsh
 
 Includes zsh, oh-my-zsh, and some plugins to show icons for software that you
 may or may not be using. Pretty clean. Constantly improving it. Should not slow
 down your terminal by much (i.e. should be imperceptible).
 
-### TODO: automagic git configuration
+Mostly just to make things pretty like adding icons to repo prompts.
+
+### Git
+
+Configures my global `.gitconfig` with sane defaults and switches my commit
+email based on whether I'm in `~/gh/**` or `~/gl/**` (I wanted to change my git
+commit email based on host, not directory, so this was a happy middle ground).
+
+### Slack, Spotify
+
+Installs the gpg keys along with repos for these packages then ensures the
+`latest` version is installed.
+
+### Discord
+
+Similar to the above but it just grabs the `.deb` and installs it since Discord
+shamefully doesn't have a repo. What's up with that, Discord? Can't even check
+the signature of the `.deb` :sadface:.
