@@ -7,7 +7,7 @@ ROOT=$(cd $(dirname $BASH_SOURCE[0]) && pwd)
 if which ansible; then
   echo 'already have ansible'
 else
-  sudo apt update && sudo apt install software-properties-common ansible -y
+  sudo apt update && sudo apt install software-properties-common ansible python3-pip -y
 fi
 
 ansible-playbook -i "$ROOT/hosts" "$ROOT/freckles.yml" --ask-become-pass --ask-vault-pass

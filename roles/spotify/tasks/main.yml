@@ -7,7 +7,7 @@
   become: true
   become_user: root
   shell: |
-    wget -qO- https://download.spotify.com/debian/pubkey_0D811D58.gpg |
+    wget -qO- https://download.spotify.com/debian/pubkey_5E3C45D7B312C643.gpg |
     gpg --dearmor > /tmp/spotify.gpg
     install -o root -g root -m 644 /tmp/spotify.gpg /etc/apt/trusted.gpg.d/
     rm -f /tmp/spotify.gpg
@@ -17,7 +17,7 @@
   become: true
   become_user: root
   apt_repository:
-    repo: deb [signed-by=/etc/apt/trusted.gpg.d/spotify.gpg] https://repository.spotify.com stable non-free
+    repo: deb [signed-by=/etc/apt/trusted.gpg.d/spotify.gpg] http://repository.spotify.com stable non-free
     state: present
     filename: spotify
 

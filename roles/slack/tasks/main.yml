@@ -1,8 +1,23 @@
+- name: is slack key present | stat
+  stat:
+    path: /etc/apt/trusted.gpg.d/slack.gpg
+  register: has_slack_signing_key
+
+- name: install slack signing key | shell
+  become: true
+  become_user: root
+  shell: |
+    wget -qO- https://packagecloud.io/slacktechnologies/slack/gpgkey |
+    gpg --dearmor > /tmp/slack.gpg
+    install -o root -g root -m 644 /tmp/slack.gpg /etc/apt/trusted.gpg.d/
+    rm -f /tmp/slack.gpg.d
+  when: not has_slack_signing_key.stat.exists
+
 - name: slack repo | apt
   become: true
   become_user: root
   apt_repository:
-    repo: deb https://packagecloud.io/slacktechnologies/slack/debian/ jessie main
+    repo: deb [signed-by=/etc/apt/trusted.gpg.d/slack.gpg] https://packagecloud.io/slacktechnologies/slack/debian/ jessie main
     state: present
     filename: slack
 

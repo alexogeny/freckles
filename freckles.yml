@@ -46,6 +46,22 @@
       set_fact:
         u: "{{lookup('env', 'USER')}}"
 
+    - name: stop packagekitd | systemd
+      become: true
+      become_user: root
+      systemd:
+        name: packagekit
+        state: stopped
+        enabled: false
+
+    - name: stop daily upgrade timer | systemd
+      become: true
+      become_user: root
+      systemd:
+        name: apt-daily-upgrade.timer
+        state: stopped
+        enabled: false
+
     - name: install wget | apt
       become: true
       become_user: root
@@ -53,3 +69,6 @@
         name: wget
         state: present
         update_cache: true
+    - name: install pexpect | pip
+      pip:
+        name: pexpect
