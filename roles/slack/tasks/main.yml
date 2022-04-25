@@ -1,0 +1,14 @@
+- name: slack repo | apt
+  become: true
+  become_user: root
+  apt_repository:
+    repo: deb https://packagecloud.io/slacktechnologies/slack/debian/ jessie main
+    state: present
+    filename: slack
+
+- name: install slack | apt
+  become: true
+  become_user: root
+  apt:
+    name: slack-desktop
+    state: latest

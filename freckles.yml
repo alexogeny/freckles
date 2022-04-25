@@ -24,6 +24,10 @@
       tags:
         - firefox
 
+    - role: slack
+      tags:
+        - slack
+
     - role: zsh
       tags:
         - zsh
