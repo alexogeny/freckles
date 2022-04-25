@@ -1,0 +1,29 @@
+- name: is spotify signing key present | stat
+  stat:
+    path: /etc/apt/trusted.gpg.d/spotify.gpg
+  register: has_spotify_signing_key
+
+- name: install spotify signing key | shell
+  become: true
+  become_user: root
+  shell: |
+    wget -qO- https://download.spotify.com/debian/pubkey_0D811D58.gpg |
+    gpg --dearmor > /tmp/spotify.gpg
+    install -o root -g root -m 644 /tmp/spotify.gpg /etc/apt/trusted.gpg.d/
+    rm -f /tmp/spotify.gpg
+  when: not has_spotify_signing_key.stat.exists
+
+- name: spotify repo | apt
+  become: true
+  become_user: root
+  apt_repository:
+    repo: deb [signed-by=/etc/apt/trusted.gpg.d/spotify.gpg] https://repository.spotify.com stable non-free
+    state: present
+    filename: spotify
+
+- name: install spotify | apt
+  become: true
+  become_user: root
+  apt:
+    name: spotify-client
+    state: latest

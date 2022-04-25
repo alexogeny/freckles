@@ -36,6 +36,10 @@
       tags:
         - discord
 
+    - role: spotify
+      tags:
+        - spotify
+
   pre_tasks:
 
     - name: user variable | set_fact
