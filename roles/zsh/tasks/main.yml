@@ -35,6 +35,7 @@
 - name: run oh-my-zsh installer | command
   command: sh "/home/{{u}}/Downloads/ohmyzsh-install.sh"
   when: not oh_my_zsh_stat.stat.exists
+  register: oh_my_zsh_was_installed
 
 - name: link .zshrc file | file
   file:
@@ -48,7 +49,7 @@
     path: "/home/{{u}}/.oh-my-zsh/plugins/{{item}}"
     state: directory
   loop: "{{zsh_plugins}}"
-  when: oh_my_zsh_stat.stat.exists
+  when: oh_my_zsh_stat.stat.exists or oh_my_zsh_was_installed.rc == 0
 
 - name: link custom oh-my-zsh plugins | file
   file:
@@ -57,4 +58,4 @@
     state: link
     force: true
   loop: "{{zsh_plugins}}"
-  when: oh_my_zsh_stat.stat.exists
+  when: oh_my_zsh_stat.stat.exists or oh_my_zsh_was_installed.rc == 0
