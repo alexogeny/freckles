@@ -1,0 +1,19 @@
+- name: link wallpaper | file
+  file:
+    src: "{{playbook_dir}}/resources/wallpaper.link.png"
+    dest: "/home/{{u}}/.wallpaper.png"
+    state: link
+    force: true
+
+- name: psutil
+  become: true
+  become_user: root
+  apt:
+    name: python3-psutil
+    state: present
+
+- name: set gnome wallpaper
+  become_user: "{{u}}"
+  dconf:
+    key: "/org/gnome/desktop/background/picture-uri"
+    value: "'file:///home/{{u}}/.wallpaper.png'"

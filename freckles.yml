@@ -63,6 +63,18 @@
 
   tasks:
 
+    - name: has wallpaper
+      stat:
+        path: /home/{{u}}/.wallpaper.png
+      tags: wallpaper
+      register: has_wallpaper
+
+    - name: wallpaper
+      include_role:
+        name: wallpaper
+      tags: wallpaper
+      when: not has_wallpaper.stat.exists
+
     - name: has git config
       stat:
         path: /home/{{u}}/.gitlab.gitconfig
