@@ -11,4 +11,4 @@
   lineinfile:
     path: /var/lib/AccountsService/users/{{u}}
     regexp: '^Icon='
-    line: 'Icon=/var/lob/AccountsService/icons/{{u}}'
+    line: 'Icon=/var/lib/AccountsService/icons/{{u}}'
