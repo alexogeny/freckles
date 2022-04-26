@@ -2,6 +2,9 @@
   "[jsonc]": {
     "editor.defaultFormatter": "vscode.json-language-features"
   },
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.python"
+  },
   "diffEditor.codeLens": true,
   "editor.accessibilitySupport": "off",
   "editor.autoClosingBrackets": "always",
@@ -25,7 +28,6 @@
   "editor.fontFamily": "'Cascadia Code', 'Fira Code', 'Droid Sans Mono', 'monospace', monospace",
   "editor.fontLigatures": true,
   "editor.formatOnSave": true,
-  "editor.formatOnSaveMode": "modificationsIfAvailable",
   "editor.guides.bracketPairs": "active",
   "editor.padding.bottom": 20,
   "editor.padding.top": 20,
@@ -82,6 +84,7 @@
   "javascript.suggest.completeFunctionCalls": true,
   "javascript.updateImportsOnFileMove.enabled": "always",
   "php.validate.executablePath": "/usr/bin/php",
+  "python.formatting.provider": "black",
   "redhat.telemetry.enabled": false,
   "typescript.preferences.importModuleSpecifier": "non-relative",
   "typescript.preferences.quoteStyle": "single",

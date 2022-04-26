@@ -40,9 +40,26 @@
         update_cache: true
       when: '"wget" not in ansible_facts.packages'
 
+    - name: has_black
+      command: pip list | grep black
+      register: has_black
+      changed_when: false
+
+    - name: install black
+      pip:
+        name: black
+      when: not has_black
+
+    - name: has pexpect
+      command: pip list | grep pexpect
+      register: has_pexpect
+
     - name: install pexpect | pip
+      become: true
+      become_user: root
       pip:
         name: pexpect
+      when: not has_pexpect
 
   tasks:
 
@@ -88,17 +105,11 @@
       tags: vscode
       when: '"code" not in ansible_facts.packages'
 
-    - name: has zshrc
-      stat:
-        path: /home/{{u}}/.zshrc
-      tags: zsh
-      register: has_zshrc
-
     - name: zsh
       include_role:
         name: zsh
       tags: zsh
-      when: has_zshrc.stat.exists == False
+      when: '"zsh" not in ansible_facts.packages'
 
     - name: has firefox config
       stat:
