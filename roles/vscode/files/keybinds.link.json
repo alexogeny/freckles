@@ -126,5 +126,13 @@
     "key": "shift+alt+down",
     "command": "-editor.action.insertCursorBelow",
     "when": "editorTextFocus"
+  },
+  {
+    "key": "shift+space",
+    "command": "workbench.action.toggleZenMode"
+  },
+  {
+    "key": "ctrl+k z",
+    "command": "-workbench.action.toggleZenMode"
   }
 ]
