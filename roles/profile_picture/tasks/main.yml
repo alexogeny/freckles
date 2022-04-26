@@ -1,0 +1,14 @@
+- name: link profile picture
+  become: true
+  copy:
+    src: "{{playbook_dir}}/resources/profile.link.png"
+    dest: /var/lib/AccountsService/icons/{{u}}
+    force: true
+    checksum: 39c536ed34d5dff816f9f4852abf02437633285e
+
+- name: set profile picture
+  become: true
+  lineinfile:
+    path: /var/lib/AccountsService/users/{{u}}
+    regexp: '^Icon='
+    line: 'Icon=/var/lob/AccountsService/icons/{{u}}'
