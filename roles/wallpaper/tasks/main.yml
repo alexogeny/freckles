@@ -1,7 +1,7 @@
 - name: link wallpaper | file
   file:
-    src: "{{playbook_dir}}/resources/wallpaper.link.png"
-    dest: "/home/{{u}}/.wallpaper.png"
+    src: "{{playbook_dir}}/resources/wallpaper.link.jpg"
+    dest: "/home/{{u}}/.wallpaper.jpg"
     state: link
     force: true
 
@@ -16,4 +16,4 @@
   become_user: "{{u}}"
   dconf:
     key: "/org/gnome/desktop/background/picture-uri"
-    value: "'file:///home/{{u}}/.wallpaper.png'"
+    value: "'file:///home/{{u}}/.wallpaper.jpg'"

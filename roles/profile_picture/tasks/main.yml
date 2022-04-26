@@ -1,10 +1,10 @@
 - name: link profile picture
   become: true
   copy:
-    src: "{{playbook_dir}}/resources/profile.link.png"
+    src: "{{playbook_dir}}/resources/profile.link.jpg"
     dest: /var/lib/AccountsService/icons/{{u}}
     force: true
-    checksum: 39c536ed34d5dff816f9f4852abf02437633285e
+    checksum: 0fb8715c5c2a135f36b36bc713beb0e9ed4ce02b
 
 - name: set profile picture
   become: true
