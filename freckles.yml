@@ -1,50 +1,19 @@
 ---
 - hosts: local
+
   vars_files:
     - vars/vault.yml
     - vars/default.yml
-  roles:
-    - role: git
-      tags:
-        - git
-
-    - role: 1password
-      tags:
-        - 1password
-
-    - role: docker
-      tags:
-        - docker
-
-    - role: vscode
-      tags:
-        - vscode
-
-    - role: firefox
-      tags:
-        - firefox
-
-    - role: slack
-      tags:
-        - slack
-
-    - role: zsh
-      tags:
-        - zsh
-
-    - role: discord
-      tags:
-        - discord
-
-    - role: spotify
-      tags:
-        - spotify
 
   pre_tasks:
 
     - name: user variable | set_fact
       set_fact:
         u: "{{lookup('env', 'USER')}}"
+
+    - name: gather packages | package_facts
+      package_facts:
+        manager: apt
 
     - name: stop packagekitd | systemd
       become: true
@@ -69,6 +38,94 @@
         name: wget
         state: present
         update_cache: true
+      when: '"wget" not in ansible_facts.packages'
+
     - name: install pexpect | pip
       pip:
         name: pexpect
+
+  tasks:
+
+    - name: has git config
+      stat:
+        path: /home/{{u}}/.gitlab.gitconfig
+      tags: git
+      register: has_git_config
+
+    - name: git
+      include_role:
+        name: git
+      tags: git
+      when: has_git_config.stat.exists == False
+
+    - name: 1password
+      include_role:
+        name: 1password
+      tags: 1password
+      when: '"1password-cli" not in ansible_facts.packages'
+
+    - name: has docker compose
+      stat:
+        path: /home/{{u}}/.docker/cli-plugins/docker-compose
+      tags: docker
+      register: has_docker_compose
+
+    - name: docker
+      include_role:
+        name: docker
+      tags: docker
+      when: has_docker_compose.stat.exists == False
+
+    - name: php
+      include_role:
+        name: php
+      tags: php
+      when: '"php" not in ansible_facts.packages'
+
+    - name: vscode
+      include_role:
+        name: vscode
+      tags: vscode
+      when: '"code" not in ansible_facts.packages'
+
+    - name: has zshrc
+      stat:
+        path: /home/{{u}}/.zshrc
+      tags: zsh
+      register: has_zshrc
+
+    - name: zsh
+      include_role:
+        name: zsh
+      tags: zsh
+      when: has_zshrc.stat.exists == False
+
+    - name: has firefox config
+      stat:
+        path: /lib/firefox/firefox.cfg
+      tags: firefox
+      register: has_firefox_config
+
+    - name: firefox
+      include_role:
+        name: firefox
+      tags: firefox
+      when: has_firefox_config.stat.exists == False
+
+    - name: slack
+      include_role:
+        name: slack
+      tags: slack
+      when: '"slack-desktop" not in ansible_facts.packages'
+
+    - name: discord
+      include_role:
+        name: discord
+      tags: discord
+      when: '"discord" not in ansible_facts.packages'
+
+    - name: spotify
+      include_role:
+        name: spotify
+      tags: discord
+      when: '"spotify-client" not in ansible_facts.packages'

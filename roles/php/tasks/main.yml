@@ -1,0 +1,12 @@
+- name: install php | apt
+  become: true
+  become_user: root
+  apt:
+    name: php
+    state: latest
+
+- name: ensure apache2 is stopped | systemd
+  systemd:
+    name: apache2
+    state: stopped
+    enabled: false
