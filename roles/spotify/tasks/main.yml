@@ -13,6 +13,11 @@
     rm -f /tmp/spotify.gpg
   when: not has_spotify_signing_key.stat.exists
 
+- name: is spotify repo present
+  stat:
+    path: /etc/apt/sources.list.d/spotify.list
+  register: has_spotify_repo
+
 - name: spotify repo | apt
   become: true
   become_user: root
@@ -20,6 +25,7 @@
     repo: deb [signed-by=/etc/apt/trusted.gpg.d/spotify.gpg] http://repository.spotify.com stable non-free
     state: present
     filename: spotify
+  when: not has_spotify_repo.stat.exists
 
 - name: install spotify | apt
   become: true

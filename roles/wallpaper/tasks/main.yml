@@ -17,3 +17,9 @@
   dconf:
     key: "/org/gnome/desktop/background/picture-uri"
     value: "'file:///home/{{u}}/.wallpaper.jpg'"
+
+- name: set gnome wallpaper dark
+  become_user: "{{u}}"
+  dconf:
+    key: "/org/gnome/desktop/background/picture-uri-dark"
+    value: "'file:///home/{{u}}/.wallpaper.jpg'"

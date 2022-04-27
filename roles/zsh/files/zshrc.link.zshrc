@@ -9,6 +9,9 @@ check_git() {
 }
 chpwd_functions+=(check_git)
 
+# python
+alias python='python3'
+alias pip='pip3'
 
 # apt
 alias apti='sudo apt install'

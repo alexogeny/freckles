@@ -10,4 +10,7 @@ else
   sudo apt update && sudo apt install software-properties-common ansible python3-pip -y
 fi
 
+alias python='python3'
+alias pip='pip3'
+
 ansible-playbook -i "$ROOT/hosts" "$ROOT/freckles.yml" --ask-become-pass --ask-vault-pass

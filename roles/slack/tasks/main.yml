@@ -13,6 +13,11 @@
     rm -f /tmp/slack.gpg.d
   when: not has_slack_signing_key.stat.exists
 
+- name: is slack repo present
+  stat:
+    path: /etc/apt/sources.list.d/slack.list
+  register: has_slack_repo
+
 - name: slack repo | apt
   become: true
   become_user: root
@@ -20,6 +25,7 @@
     repo: deb [signed-by=/etc/apt/trusted.gpg.d/slack.gpg] https://packagecloud.io/slacktechnologies/slack/debian/ jessie main
     state: present
     filename: slack
+  when: not has_slack_repo.stat.exists
 
 - name: install slack | apt
   become: true

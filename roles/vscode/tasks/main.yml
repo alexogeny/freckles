@@ -13,6 +13,11 @@
     rm -f /tmp/packages.microsoft.gpg
   when: not has_microsoft_signing_key.stat.exists
 
+- name: is vscode repo present
+  stat:
+    path: /etc/apt/sources.list.d/vscode.list
+  register: has_vscode_repo
+
 - name: vscode repo | apt
   become: true
   become_user: root
@@ -20,6 +25,7 @@
     repo: deb [arch=amd64,arm64,armhf signed-by="/etc/apt/trusted.gpg.d/packages.microsoft.gpg"] https://packages.microsoft.com/repos/code stable main
     state: present
     filename: vscode
+  when: not has_vscode_repo.stat.exists
 
 - name: install vscode | apt
   become: true
