@@ -1,0 +1,27 @@
+# global
+.env
+
+# npm
+/node_modules
+/dist
+npm-debug.log
+.npmrc
+
+# mac
+.DS_Store
+
+# python
+__pycache__
+*.pyc
+/venv
+
+# php
+/vendor
+autoload.txt
+
+# mkcert
+self.crt
+self.key
+
+# docker
+.devcontainer.json

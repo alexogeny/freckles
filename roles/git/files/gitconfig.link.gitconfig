@@ -1,5 +1,11 @@
 # global git config
 
+[core]
+  excludesfile = /home/alexogeny/.gitignore
+
+[push]
+  default = current
+
 [pull]
   ; always rebase on pull
   rebase = true
@@ -15,6 +21,18 @@
 [user]
   ; me
   name = alexogeny
+
+[stash]
+  showPatch = true
+
+[log]
+  date = relative
+
+[url "git@github.com:"]
+  insteadOf = https://github.com/
+
+[url "git@gitlab.com:"]
+  insteadOf = https://gitlab.com/
 
 [includeIf "gitdir:/home/alexogeny/gh/**"]
   ; github

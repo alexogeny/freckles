@@ -5,6 +5,13 @@
     name: git
     state: latest
 
+- name: link gitignore file
+  file:
+    src: "{{playbook_dir}}/roles/git/files/gitignore.link.gitignore"
+    dest: "/home/{{u}}/.gitignore"
+    state: link
+    force: true
+
 - name: link gitconfig | file
   file:
     src: "{{playbook_dir}}/roles/git/files/gitconfig.link.gitconfig"
