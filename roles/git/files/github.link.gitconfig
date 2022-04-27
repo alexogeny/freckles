@@ -1,2 +1,5 @@
 [user]
   email = 6896115+alexogeny@users.noreply.github.com
+  signingkey = BC42EB10F9A009F13200659C23F84CA38C64BB27
+[commit]
+  gpgsign = true

@@ -2,6 +2,12 @@
 
 setopt promptsubst
 
+auto-ls () {
+  emulate -L zsh;
+  hash gls >/dev/null 2>&1 && CLICOLOR_FORCE=1 gls -aFh --color --group-directories-first || ls
+}
+chpwd_functions=( auto-ls $chpwd_functions )
+
 # git
 check_git() {
   git check-ignore -q . 2> /dev/null
