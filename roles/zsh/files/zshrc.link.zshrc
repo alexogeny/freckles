@@ -3,10 +3,10 @@
 setopt promptsubst
 
 auto-ls () {
-  emulate -L zsh;
-  hash gls >/dev/null 2>&1 && CLICOLOR_FORCE=1 gls -aFh --color --group-directories-first || ls
+  emulate -L zsh
+  ls -a
 }
-chpwd_functions=( auto-ls $chpwd_functions )
+chpwd_functions=(${chpwd_functions[@]} "auto-ls")
 
 # git
 check_git() {
@@ -24,9 +24,10 @@ alias apti='sudo apt install'
 alias aptu='sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y'
 
 # docker
-alias dcrunl='docker compose run --rm local'
-alias dcupl='docker compose up --rm local'
-alias dcupd='docker compose up --rm -d local'
+alias dc='docker compose'
+alias dcrunl='dc run local'
+alias dcupl='dc up local'
+alias dcupd='dc up -d local'
 alias dstop='docker stop $(docker ps -aq)'
 alias dremc='docker rm $(docker ps -aq)'
 alias dremi='docker rmi $(docker images -q)'
@@ -44,7 +45,7 @@ alias dclean='function_dclean'
 # git
 alias gpatch='git add --patch'
 function_gmain() {
-  branch_main=$(git symbolic-ref --short refs/remote/origin/HEAD | sed 's@^origin/@@')
+  branch_main=$(git symbolic-ref --short refs/remotes/origin/HEAD | awk -F'/' '{print $2}')
   branch_current=$(git branch --show-current)
   if [ $(echo $branch_current | grep -c $branch_main) -eq 0 ]; then
     git checkout $branch_main
@@ -59,14 +60,14 @@ function_gpushmr() {
   git push -v -u origin $branch_current \
     -o merge_request.create \
     -o merge_request.remove_source_branch \
-    -o merge_request_target="$(git symbolic-ref --short /refs/remotes/origin/HEAD | sed 's@^origin/@@')" \
+    -o merge_request_target="$(git symbolic-ref --short refs/remotes/origin/HEAD | awk -F'/' '{print $2}')" \
     -o merge_request.assignee=$(git config user.name) \
     --force-with-lease
 }
 alias gpushmr='function_gpushmr'
 function_gpushc() {
   branch_current=$(git branch --show-current)
-  echo "current branch: $branch_current"
+  echo "pushing to: $branch_current"
   git push -v -u origin $branch_current
 }
 alias gpushc='function_gpushc'

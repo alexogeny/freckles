@@ -23,3 +23,10 @@
     dest: "/lib/firefox/firefox.cfg"
     state: link
     force: true
+
+- name: link homep page
+  file:
+    src: "{{playbook_dir}}/roles/firefox/files/.home.link.html"
+    dest: "/home/{{u}}/.home.html"
+    state: link
+    force: true

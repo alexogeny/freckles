@@ -21,7 +21,7 @@
  */
 
 function config () {
-  lockPref('browser.startup.homepage', 'https://home.alexogeny.dev');
+  lockPref('browser.startup.homepage', 'file:///home/alexogeny/.home.html');
   lockPref('browser.startup.homepage_override.mstone', 'ignore');
 }
 config()
