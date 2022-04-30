@@ -144,14 +144,13 @@ function newTab () {
   lockPref('browser.newtabpage.activity-stream.showSponsoredTopSites', false);
   lockPref('browser.newtabpage.activity-stream.telemetry', false);
   lockPref('browser.newtabpage.enabled', true);
-  lockPref('browser.newtabpage.pinned', [
-    { "url": "https://gitlab.com/", "label": "GitLab" },
-    { "url": "https://jellyfin.alexogeny.dev/", "label": "Jellyfin" },
-    { "url": "https://flood.alexogeny.dev/", "label": "Flood" },
-    { "url": "https://www.youtube.com/", "label": "YouTube" },
-    { "url": "https://files.alexogeny.dev/", "label": "Files" },
-    { "url": "https://mail.google.com/", "label": "gmail" },
-  ]);
+  lockPref('browser.newtabpage.pinned', '[{"url":"https://gitlab.com/","label":"GitLab"},{"url":"https://jellyfin.alexogeny.dev/","label":"Jellyfin"},{"url":"https://flood.alexogeny.dev/","label":"Flood"},{"url":"https://www.youtube.com/","label":"YouTube"},{"url":"https://files.alexogeny.dev/","label":"Files"},{"url":"https://mail.google.com/","label":"gmail"}]');
+  lockPref('browser.newtabpage.activity-stream.default.sites', "");
+  lockPref('browser.newtabpage.activity-stream.discoverystream.endpointSpocsClear', "");
+  lockPref('browser.newtabpage.activity-stream.discoverystream.endpoints', "");
+  lockPref('browser.newtabpage.activity-stream.telemetry.structuredIngestion.endpoint', "");
+  lockPref('browser.newtabpage.activity-stream.discoverystream.personalization.enabled', "");
+  lockPref('browser.newtabpage.activity-stream.asrouter.useRemoteL10n', false);
 }
 newTab()
 
