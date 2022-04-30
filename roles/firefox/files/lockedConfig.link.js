@@ -24,14 +24,14 @@ function config () {
   lockPref('browser.startup.homepage', 'file:///home/alexogeny/.home.html');
   lockPref('browser.startup.homepage_override.mstone', 'ignore');
 }
-config()
+config();
 
 
 function developer () {
   lockPref('view_source.editor.external', true);
   lockPref('view_source.editor.path', '/usr/bin/code');
 }
-developer()
+developer();
 
 
 function warnings () {
@@ -41,7 +41,7 @@ function warnings () {
   lockPref('browser.tabs.warnOnCloseOtherTabs', false);
   lockPref('browser.warnOnQuit', false);
 }
-warnings()
+warnings();
 
 
 function networking () {
@@ -91,7 +91,7 @@ function DOM () {
   lockPref('dom.vr.oculus.enabled', false);
   lockPref('dom.webaudio.enabled', false);
 }
-DOM()
+DOM();
 
 
 function extensions () {
@@ -101,7 +101,7 @@ function extensions () {
   lockPref('extensions.update.autoUpdateDefault', false);
   lockPref('xpinstall.signature.required', false);
 }
-extensions()
+extensions();
 
 
 function studies () {
@@ -127,32 +127,41 @@ function caching () {
   lockPref('browser.cache.disk.parent_directory', '/run/user/1000/firefox');
   lockPref('browser.cache.memory.capacity', 512000);
 }
-caching()
+caching();
 
 
 function newTab () {
   lockPref('browser.newtab.preload', false);
+  lockPref('browser.newtabpage.activity-stream.asrouter.useRemoteL10n', false);
   lockPref('browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons', false);
   lockPref('browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features', false);
+  lockPref('browser.newtabpage.activity-stream.default.sites', "");
   lockPref('browser.newtabpage.activity-stream.discoverystream.enabled', false);
+  lockPref('browser.newtabpage.activity-stream.discoverystream.endpoints', "");
+  lockPref('browser.newtabpage.activity-stream.discoverystream.endpointSpocsClear', "");
+  lockPref('browser.newtabpage.activity-stream.discoverystream.personalization.enabled', false);
+  lockPref('browser.newtabpage.activity-stream.discoverystream.spocs.personalized', false);
   lockPref('browser.newtabpage.activity-stream.feeds.discoverystreamfeed', false);
+  lockpref('browser.newtabpage.activity-stream.feeds.recommendationprovider', false);
   lockPref('browser.newtabpage.activity-stream.feeds.section.topstories', false);
+  lockPref('browser.newtabpage.activity-stream.feeds.system.topsites', false);
+  lockPref('browser.newtabpage.activity-stream.feeds.system.topstories', false);
   lockPref('browser.newtabpage.activity-stream.feeds.telemetry', false);
   lockPref('browser.newtabpage.activity-stream.feeds.topsites', true);
+  lockPref('browser.newtabpage.activity-stream.section.highlights.includeBookmarks', false);
+  lockPref('browser.newtabpage.activity-stream.section.highlights.includeDownloads', false);
   lockPref('browser.newtabpage.activity-stream.section.highlights.includePocket', false);
+  lockPref('browser.newtabpage.activity-stream.section.highlights.includeVisited', false);
+  lockPref('browser.newtabpage.activity-stream.showSearch', false);
   lockPref('browser.newtabpage.activity-stream.showSponsored', false);
   lockPref('browser.newtabpage.activity-stream.showSponsoredTopSites', false);
-  lockPref('browser.newtabpage.activity-stream.telemetry', false);
-  lockPref('browser.newtabpage.enabled', true);
-  lockPref('browser.newtabpage.pinned', '[{"url":"https://gitlab.com/","label":"GitLab"},{"url":"https://jellyfin.alexogeny.dev/","label":"Jellyfin"},{"url":"https://flood.alexogeny.dev/","label":"Flood"},{"url":"https://www.youtube.com/","label":"YouTube"},{"url":"https://files.alexogeny.dev/","label":"Files"},{"url":"https://mail.google.com/","label":"gmail"}]');
-  lockPref('browser.newtabpage.activity-stream.default.sites', "");
-  lockPref('browser.newtabpage.activity-stream.discoverystream.endpointSpocsClear', "");
-  lockPref('browser.newtabpage.activity-stream.discoverystream.endpoints', "");
   lockPref('browser.newtabpage.activity-stream.telemetry.structuredIngestion.endpoint', "");
-  lockPref('browser.newtabpage.activity-stream.discoverystream.personalization.enabled', "");
-  lockPref('browser.newtabpage.activity-stream.asrouter.useRemoteL10n', false);
+  lockPref('browser.newtabpage.activity-stream.telemetry', false);
+  lockPref('browser.newtabpage.activity-stream.topSitesRows', 1);
+  lockPref('browser.newtabpage.enabled', true);
+  lockPref('browser.newtabpage.pinned', '[{"url":"https://gitlab.com/","label":"Gitlab"},{"url":"https://jellyfin.alexogeny.dev/","label":"Media"},{"url":"https://flood.alexogeny.dev/","label":"Flood"},{"url":"https://www.youtube.com/","label":"Youtube"},{"url":"https://files.alexogeny.dev/","label":"Files"},{"url":"https://mail.google.com/","label":"Gmail"}]');
 }
-newTab()
+newTab();
 
 
 function search () {
@@ -162,7 +171,7 @@ function search () {
   lockPref('browser.urlbar.merino.enabled', false);
   lockPref('browser.urlbar.merino.endpointURL', '');
 }
-search()
+search();
 
 
 function session () {
@@ -173,7 +182,7 @@ function session () {
   lockPref('browser.sessionstore.restore_tabs_lazily', false);
   lockPref('browser.sessionstore.resume_from_crash', false);
 }
-session()
+session();
 
 
 function browserUpdates () {
@@ -182,7 +191,7 @@ function browserUpdates () {
   lockPref('app.update.mode', 0);
   lockPref('app.update.service.enabled', false);
 }
-browserUpdates()
+browserUpdates();
 
 
 function defaultBrowser () {
@@ -190,7 +199,7 @@ function defaultBrowser () {
   lockPref('browser.shell.checkDefaultBrowser', false);
   lockPref('browser.shell.skipDefaultBrowserCheck', true);
 }
-defaultBrowser()
+defaultBrowser();
 
 
 function omnibar () {
@@ -212,7 +221,7 @@ function security () {
   lockPref('plugins.enumerable_names', '');
   lockPref('security.insecure_connection_text.enabled', true);
 }
-security()
+security();
 
 
 function geolocation () {
@@ -226,7 +235,7 @@ function geolocation () {
   lockPref('intl.accept_languages', 'en-US, en');
   lockPref('javascript.use_us_english_locale', true);
 }
-geolocation()
+geolocation();
 
 
 function mediaPlayback () {
@@ -236,7 +245,7 @@ function mediaPlayback () {
   lockPref('media.navigator.enabled', false);
   lockPref('media.videocontrols.picture-in-picture.video-toggle.enabled', false);
 }
-mediaPlayback()
+mediaPlayback();
 
 
 function peerToPeer () {
@@ -247,7 +256,7 @@ function peerToPeer () {
   lockPref('media.peerconnection.use_document_iceservers', false);
   lockPref('media.peerconnection.video.enabled', false);
 }
-peerToPeer()
+peerToPeer();
 
 
 function prefetching () {
@@ -257,7 +266,7 @@ function prefetching () {
   lockPref('network.prefetch-next', false);
   lockPref('network.stricttransportsecurity.preloadlist', false);
 }
-prefetching()
+prefetching();
 
 
 function fingerPrinting () {
@@ -269,7 +278,7 @@ function fingerPrinting () {
   lockPref('privacy.resistFingerprinting', true);
   lockPref('privacy.trackingprotection.enabled', true);
 }
-fingerPrinting()
+fingerPrinting();
 
 
 function telemetry () {
@@ -291,7 +300,7 @@ function telemetry () {
   lockPref('toolkit.telemetry.unified', false);
   lockPref('toolkit.telemetry.updatePing.enabled', false);
 }
-telemetry()
+telemetry();
 
 
 function safeBrowsing () {
@@ -349,4 +358,4 @@ function contentBlocking () {
   lockPref('browser.contentblocking.report.vpn.url', '');
   lockPref('browser.contentblocking.reportBreakage.url', '');
 }
-contentBlocking()
+contentBlocking();
