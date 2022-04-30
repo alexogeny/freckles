@@ -138,11 +138,20 @@ function newTab () {
   lockPref('browser.newtabpage.activity-stream.feeds.discoverystreamfeed', false);
   lockPref('browser.newtabpage.activity-stream.feeds.section.topstories', false);
   lockPref('browser.newtabpage.activity-stream.feeds.telemetry', false);
-  lockPref('browser.newtabpage.activity-stream.feeds.topsites', false);
+  lockPref('browser.newtabpage.activity-stream.feeds.topsites', true);
   lockPref('browser.newtabpage.activity-stream.section.highlights.includePocket', false);
   lockPref('browser.newtabpage.activity-stream.showSponsored', false);
   lockPref('browser.newtabpage.activity-stream.showSponsoredTopSites', false);
   lockPref('browser.newtabpage.activity-stream.telemetry', false);
+  lockPref('browser.newtabpage.enabled', true);
+  lockPref('browser.newtabpage.pinned', [
+    { "url": "https://gitlab.com/", "label": "GitLab" },
+    { "url": "https://jellyfin.alexogeny.dev/", "label": "Jellyfin" },
+    { "url": "https://flood.alexogeny.dev/", "label": "Flood" },
+    { "url": "https://www.youtube.com/", "label": "YouTube" },
+    { "url": "https://files.alexogeny.dev/", "label": "Files" },
+    { "url": "https://mail.google.com/", "label": "gmail" },
+  ]);
 }
 newTab()
 
