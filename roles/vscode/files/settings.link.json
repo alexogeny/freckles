@@ -10,7 +10,7 @@
   },
   "[sql]": {
     "editor.formatOnSave": false,
-    "editor.formatOnPaste": false,
+    "editor.formatOnPaste": false
   },
   "diffEditor.codeLens": true,
   "editor.accessibilitySupport": "off",

@@ -2,18 +2,39 @@
 
 setopt promptsubst
 
+# cd & ls
+alias ls='ls --color=auto'
+LS_COLORS='no=00;37:fi=00:di=00;33:ln=04;36:pi=40;33:so=01;35:bd=40;33;01:'
+export LS_COLORS
+zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+
 auto-ls () {
   emulate -L zsh
-  ls -a
+  ls
 }
 chpwd_functions=(${chpwd_functions[@]} "auto-ls")
 
 # git
+
+## check that git is installed on the system and this is a git repo
 check_git() {
   git check-ignore -q . 2> /dev/null
   (( is_git = $? == 1 ))
 }
 chpwd_functions+=(check_git)
+
+## check if the branch is dirty using git porcelain
+function parse_git_dirty {
+  [[ -z $(git status --porcelain 2> /dev/null ) ]] || echo "%F{221}*"
+}
+
+## find the name of the branch we are currently on
+function parse_git_branch {
+  if (( $is_git )); then
+    branch_name=$(git branch --no-color | sed -e '/^[^*]/d' | awk '{sub(/^[^[:alnum:]_]*/, ""); print $1}')
+    echo "(%F{076}$branch_name$(parse_git_dirty)%F{039})"
+  fi
+}
 
 # python
 alias python='python3'
@@ -28,22 +49,61 @@ alias dc='docker compose'
 alias dcrunl='dc run local'
 alias dcupl='dc up local'
 alias dcupd='dc up -d local'
-alias dstop='docker stop $(docker ps -aq)'
-alias dremc='docker rm $(docker ps -aq)'
-alias dremi='docker rmi $(docker images -q)'
-alias dremv='docker volume rm $(docker volume ls -qf dangling=true)'
-alias dcyarn='docker compose run --rm local yarn'
-function_dclean() {
-  dstop
-  dremc
-  dremi
-  dremv
+
+function dst() {
+  export spinner_msg="Stopping containers..."
+  export spinner_icon="🐋"
+  export up_count=$(docker ps -q | wc -l)
+  if [[ $up_count -ne 0 ]]; then
+    ~/.spinner docker stop $(docker ps -q)
+  else echo " ${spinner_icon} ⠿ No containers to stop."
+  fi
 }
-alias dclean='function_dclean'
+
+function drc() {
+  export spinner_msg="Removing containers..."
+  export spinner_icon="🐋"
+  export up_count=$(docker ps -aq | wc -l)
+  if [[ $up_count -ne 0 ]]; then
+    ~/.spinner docker rm $(docker ps -aq)
+  else
+    echo " ${spinner_icon} ⠿ No containers to remove."
+  fi
+}
+function dri() {
+  export spinner_msg="Removing images..."
+  export spinner_icon="🐋"
+  export up_count=$(docker images -q | wc -l)
+  if [[ $up_count -ne 0 ]]; then
+    ~/.spinner docker rmi $(docker images -q)
+  else
+    echo " ${spinner_icon} ⠿ No images to remove."
+  fi
+}
+function drv() {
+  export spinner_msg="Removing volumes..."
+  export spinner_icon="🐋"
+  export up_count=$(docker volume ls -qf dangling=true | wc -l)
+  if [[ $up_count -ne 0 ]]; then
+    ~/.spinner docker volume rm $(docker volume ls -qf dangling=true)
+  else
+    echo " ${spinner_icon} ⠿ No volumes to remove."
+  fi
+}
+alias dcyarn='docker compose run --rm local yarn'
+
+## handy function to remove all traces of a docker container and images (will need tor epull)
+function dpurge() {
+  dst && drc && dri && drv
+}
+## similar to above but keeps cached images
+function dclean() {
+  dst && drc && drv
+}
 
 
-# git
 alias gpatch='git add --patch'
+## switch to the main branch, regardless of its name
 function_gmain() {
   branch_main=$(git symbolic-ref --short refs/remotes/origin/HEAD | awk -F'/' '{print $2}')
   branch_current=$(git branch --show-current)
@@ -54,6 +114,8 @@ function_gmain() {
   fi
 }
 alias gmain='function_gmain'
+
+## push the branch and create an mr
 function_gpushmr() {
   branch_current=$(git branch --show-current)
   echo "current branch: $branch_current"
@@ -65,6 +127,8 @@ function_gpushmr() {
     --force-with-lease
 }
 alias gpushmr='function_gpushmr'
+
+## push to current branch
 function_gpushc() {
   branch_current=$(git branch --show-current)
   echo "pushing to: $branch_current"
@@ -72,27 +136,41 @@ function_gpushc() {
 }
 alias gpushc='function_gpushc'
 
-# plugins
-plugins=(git docker_icon node_icon package_icon php_icon python_icon typescript_icon yarn_icon)
-export ZSH="$HOME/.oh-my-zsh"
-source $ZSH/oh-my-zsh.sh
+# link plugins to the prompt (for pretty icons)
+for file in /home/alexogeny/.zsh/*; do
+  source "$file"
+done
+
+
+# timing
+function preexec() {
+  timer=$(date +%s%3N)
+}
+
+function precmd() {
+  if [ $timer ]; then
+    local now=$(date +%s%3N)
+    local d_ms=$(($now-$timer))
+    local d_s=$((d_ms / 1000))
+    local ms=$((d_ms % 1000))
+    local s=$((d_s % 60))
+    local m=$(((d_s / 60) % 60))
+    local h=$((d_s / 3600))
+    if ((h > 0)); then elapsed=${h}h${m}m
+    elif ((m > 0)); then elapsed=${m}m${s}s
+    elif ((s >= 10)); then elapsed=${s}.$((ms / 100))s
+    elif ((s > 0)); then elapsed=${s}.$((ms / 10))s
+    else elapsed=${ms}ms
+    fi
+
+    export RPROMPT="%F{cyan}${elapsed} %{$reset_color%}"
+    unset timer
+  fi
+}
 
 # theming
 NL=$'\n'
 
-PS1='%F{099}%n@%m%f in %F{039}%~$(git_prompt_info)$docker_icon$php_icon$package_icon$python_icon$node_icon$yarn_icon$typescript_icon${NL}$FG[105]%(!.#.»)%{$reset_color%} '
-PS2='%{$fg[red]%}\ %{$reset_color%}'
-RPS1='${return_code}'
-PS1=$'$my_gray${(r:$COLUMNS::-:)}'$PS1
-
-typeset +H return_code="%(?..%{$fg[red]%}%? ↵%{$reset_color%})"
-typeset +H my_gray="$FG[237]"
-typeset +H my_orange="$FG[214]"
-
-ZSH_THEME_GIT_PROMPT_PREFIX="$FG[075]($FG[078]"
-ZSH_THEME_GIT_PROMPT_CLEAN=""
-ZSH_THEME_GIT_PROMPT_DIRTY="$my_orange*%{$reset_color%}"
-ZSH_THEME_GIT_PROMPT_SUFFIX="$FG[075])%{$reset_color%}"
-
-BLUE='\033[0;34m'
-NC='\033[0m'
+PROMPT='%F{099}%n@%m%f in %F{039}%~$(parse_git_branch)'
+PROMPT=$PROMPT$'$(docker_icon)$(python_icon)$(php_icon)$(package_icon)$(node_icon)$(yarn_icon)$(typescript_icon)${NL}%F{039}%(!.#.»)%f '
+PROMPT=$'%(?..%{%F{202}%}%{$reset_color%})%F{237}${(r:$COLUMNS::-:)}'$PROMPT

@@ -26,14 +26,14 @@
 
 - name: link locked config
   file:
-    src: "{{playbook_dir}}//roles/firefox/files/.lockedconfig.link.js"
+    src: "{{playbook_dir}}/roles/firefox/files/lockedconfig.link.js"
     dest: "/home/{{u}}/.firefox.js"
     state: link
     force: true
 
 - name: link home page
   file:
-    src: "{{playbook_dir}}/roles/firefox/files/.home.link.html"
+    src: "{{playbook_dir}}/roles/firefox/files/home.link.html"
     dest: "/home/{{u}}/.home.html"
     state: link
     force: true
