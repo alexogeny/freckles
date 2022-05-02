@@ -5,6 +5,9 @@
   "[jsonc]": {
     "editor.defaultFormatter": "vscode.json-language-features"
   },
+  "[php]": {
+    "editor.defaultFormatter": "junstyle.php-cs-fixer"
+  },
   "[python]": {
     "editor.defaultFormatter": "ms-python.python"
   },
@@ -94,6 +97,18 @@
   "javascript.suggest.completeFunctionCalls": true,
   "javascript.updateImportsOnFileMove.enabled": "always",
   "php.validate.executablePath": "/usr/bin/php",
+  "php-cs-fixer.allowRisky": true,
+  "php-cs-fixer.autoFixBySemicolon": true,
+  "php-cs-fixer.config": "~/.php-cs-fixer.php",
+  "php-cs-fixer.documentFormattingProvider": true,
+  "php-cs-fixer.exclude": [],
+  "php-cs-fixer.executablePath": "~/.config/composer/vendor/bin/php-cs-fixer",
+  "php-cs-fixer.executablePathWindows": "",
+  "php-cs-fixer.formatHtml": false,
+  "php-cs-fixer.lastDownload": 1651527842459,
+  "php-cs-fixer.onsave": true,
+  "php-cs-fixer.pathMode": "override",
+  "php-cs-fixer.rules": "@PSR12",
   "python.formatting.provider": "black",
   "redhat.telemetry.enabled": false,
   "scm.diffDecorationsGutterWidth": 5,
