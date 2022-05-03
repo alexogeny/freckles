@@ -31,6 +31,13 @@
         state: stopped
         enabled: false
 
+    - name: fstrim
+      become: true
+      become_user: root
+      systemd:
+        name: fstrim.timer
+        enabled: true
+
     - name: install wget | apt
       become: true
       become_user: root

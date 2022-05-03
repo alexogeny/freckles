@@ -26,7 +26,7 @@
 
 - name: link locked config
   file:
-    src: "{{playbook_dir}}/roles/firefox/files/lockedconfig.link.js"
+    src: "{{playbook_dir}}/roles/firefox/files/lockedConfig.link.js"
     dest: "/home/{{u}}/.firefox.js"
     state: link
     force: true

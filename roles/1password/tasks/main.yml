@@ -49,3 +49,15 @@
       email: "{{one_password.email}}"
     command: login
   when: has_1password_account.stdout == ""
+
+- name: ssh folder
+  file:
+    path: /home/{{u}}/.ssh
+    state: directory
+
+- name: ssh file
+  copy:
+    dest: /home/{{u}}/.ssh/config
+    content: |
+      Host *
+        IdentityAgent /home/{{u}}/.1password/agent.sock
