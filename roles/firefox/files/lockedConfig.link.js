@@ -142,7 +142,7 @@ function newTab () {
   lockPref('browser.newtabpage.activity-stream.discoverystream.personalization.enabled', false);
   lockPref('browser.newtabpage.activity-stream.discoverystream.spocs.personalized', false);
   lockPref('browser.newtabpage.activity-stream.feeds.discoverystreamfeed', false);
-  lockpref('browser.newtabpage.activity-stream.feeds.recommendationprovider', false);
+  // lockpref('browser.newtabpage.activity-stream.feeds.recommendationprovider', false);
   lockPref('browser.newtabpage.activity-stream.feeds.section.topstories', false);
   lockPref('browser.newtabpage.activity-stream.feeds.system.topsites', false);
   lockPref('browser.newtabpage.activity-stream.feeds.system.topstories', false);
