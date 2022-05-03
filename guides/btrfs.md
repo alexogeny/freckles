@@ -15,6 +15,7 @@ sudo -i
 look for the install media
 
 partition layout will look like:
+
 1. 512MiB bootloader partition (efi)
 2. luks2 encrypted partition of the remaining space
 
