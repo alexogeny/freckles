@@ -124,6 +124,7 @@
   "php-cs-fixer.rules": "@PSR12",
   "python.formatting.provider": "black",
   "redhat.telemetry.enabled": false,
+  "security.workspace.trust.untrustedFiles": "open",
   "scm.diffDecorationsGutterWidth": 5,
   "typescript.preferences.importModuleSpecifier": "non-relative",
   "typescript.preferences.quoteStyle": "single",
@@ -156,6 +157,5 @@
     "prefs",
     "UEFI",
     "zstd"
-  ],
-  "workbench.colorTheme": "Cobalt2"
+  ]
 }

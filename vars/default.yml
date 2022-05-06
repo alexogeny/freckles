@@ -9,6 +9,7 @@ vscode_extensions:
   - GraphQL.vscode-graphql
   - IronGeek.vscode-env
   - junstyle.php-cs-fixer
+  - mechatroner.rainbow-csv
   - ms-azuretools.vscode-docker
   - ms-python.python
   - ms-python.vscode-pylance
@@ -16,6 +17,7 @@ vscode_extensions:
   - rangav.vscode-thunder-client
   - redhat.ansible
   - redhat.vscode-yaml
+  - streetsidesoftware.code-spell-checker
   - Tyriar.sort-lines
   - wesbos.theme-cobalt2
   - wmaurer.change-case
