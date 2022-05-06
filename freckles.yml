@@ -46,10 +46,6 @@
           - libreoffice-common
           - geary
           - gnome-remote-desktop
-          - gnome-weather
-          - gnome-calculator
-          - gnome-calendar
-          - gnome-contacts
         state: absent
         purge: true
         autoclean: yes
