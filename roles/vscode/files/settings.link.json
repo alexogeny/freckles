@@ -12,8 +12,21 @@
     "editor.defaultFormatter": "ms-python.python"
   },
   "[sql]": {
+    "editor.colorDecorators": false,
+    "editor.codeLens": false,
     "editor.formatOnSave": false,
-    "editor.formatOnPaste": false
+    "editor.formatOnPaste": false,
+    "cSpell.blockCheckingWhenLineLengthGreaterThan": 5000,
+    "editor.accessibilitySupport": "off",
+    "editor.autoClosingBrackets": "never",
+    "editor.autoClosingQuotes": "never",
+    "editor.copyWithSyntaxHighlighting": false,
+    "editor.dragAndDrop": false,
+    "editor.guides.highlightActiveBracketPair": false,
+    "editor.guides.highlightActiveIndentation": false,
+    "editor.guides.bracketPairsHorizontal": false,
+    "editor.lightbulb.enabled": false,
+    "editor.matchBrackets": "never"
   },
   "diffEditor.codeLens": true,
   "editor.accessibilitySupport": "off",
@@ -130,5 +143,19 @@
   "workbench.enableExperiments": false,
   "workbench.sideBar.location": "right",
   "workbench.startupEditor": "none",
-  "workbench.tips.enabled": false
+  "workbench.tips.enabled": false,
+  "cSpell.userWords": [
+    "automagically",
+    "bootloader",
+    "Btrfs",
+    "filesystems",
+    "luks",
+    "mklabel",
+    "mkpart",
+    "nvme",
+    "prefs",
+    "UEFI",
+    "zstd"
+  ],
+  "workbench.colorTheme": "Cobalt2"
 }
