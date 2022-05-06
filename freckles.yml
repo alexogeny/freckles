@@ -38,6 +38,23 @@
         name: fstrim.timer
         enabled: true
 
+    - name: cleanup unused packages | apt
+      become: true
+      become_user: root
+      apt:
+        name:
+          - libreoffice-common
+          - geary
+          - gnome-remote-desktop
+          - gnome-weather
+          - gnome-calculator
+          - gnome-calendar
+          - gnome-contacts
+        state: absent
+        purge: true
+        autoclean: yes
+        autoremove: yes
+
     - name: install wget | apt
       become: true
       become_user: root
