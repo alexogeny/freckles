@@ -60,6 +60,14 @@ alias pipi='sudo pip install'
 alias apti='sudo apt install'
 alias aptu='sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y'
 
+# remove old linux kernel
+function kclean() {
+  current="$(uname -r | awk -F '-generic' '{ print $1}')"
+  installed="linux-(headers|image)-(${current}|$(uname -r)|generic)"
+  removable=$(dpkg --list | egrep -i 'linux-image|linux-headers' | awk '/ii/{ print $2}' | egrep -v "$installed")
+  sudo apt --purge remove $(echo $removable)
+}
+
 # docker
 alias dc='docker compose'
 alias dcrunl='dc run local'
