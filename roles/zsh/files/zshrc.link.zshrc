@@ -65,7 +65,11 @@ function kclean() {
   current="$(uname -r | awk -F '-generic' '{ print $1}')"
   installed="linux-(headers|image)-(${current}|$(uname -r)|generic)"
   removable=$(dpkg --list | egrep -i 'linux-image|linux-headers' | awk '/ii/{ print $2}' | egrep -v "$installed")
-  sudo apt --purge remove $(echo $removable)
+  sudo apt --purge remove $(echo $removable) -y
+  irfs
+}
+function irfs() {
+  sudo update-initramfs -c -k $(uname -r)
 }
 
 # docker
