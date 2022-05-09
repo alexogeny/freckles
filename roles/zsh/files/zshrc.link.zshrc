@@ -36,9 +36,25 @@ function parse_git_branch {
   fi
 }
 
+# general
+alias reboot='sudo reboot'
+alias shutdown='sudo shutdown'
+alias cl='clear'
+alias rain='curl -s "wttr.in/Brisbane?format=3"'
+
+# hashing
+alias sha1='openssl sha1'
+alias sha256='openssl sha256'
+
+# grep
+alias grep='grep --color=auto'
+alias egrep='egrep --color=auto'
+alias fgrep='fgrep --color=auto'
+
 # python
 alias python='python3'
 alias pip='pip3'
+alias pipi='sudo pip install'
 
 # apt
 alias apti='sudo apt install'
