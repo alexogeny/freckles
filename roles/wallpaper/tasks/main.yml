@@ -23,3 +23,8 @@
   dconf:
     key: "/org/gnome/desktop/background/picture-uri-dark"
     value: "'file:///home/{{u}}/.wallpaper.jpg'"
+
+- name: cleanup unused wallpapers
+  become: true
+  become_user: root
+  shell: find /usr/share/backgrounds/pop -type f | grep -v retro | xargs rm
