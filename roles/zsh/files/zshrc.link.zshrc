@@ -58,7 +58,7 @@ alias pipi='sudo pip install'
 
 # apt
 alias apti='sudo apt install'
-alias aptu='sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y'
+alias aptu='sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y && sudo apt clean'
 
 # remove old linux kernel
 function kclean() {
