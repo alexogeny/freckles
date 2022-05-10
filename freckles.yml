@@ -84,7 +84,7 @@
       include_role:
         name: profile_picture
       tags: profile
-      when: has_profile_picture.stat.checksum != "0fb8715c5c2a135f36b36bc713beb0e9ed4ce02b"
+      when: has_profile_picture.stat.checksum != "eb38b87f732670e2e604161a8f5012c5f4420d11"
 
     - name: has git config
       stat:
