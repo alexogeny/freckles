@@ -1,0 +1,36 @@
+- name: is chrome key present | stat
+  stat:
+    path: /etc/apt/trusted.gpg.d/chrome.gpg
+  register: has_chrome_signing_key
+
+- name: install chrome signing key | shell
+  become: true
+  become_user: root
+  shell: |
+    wget -qO- https://dl.google.com/linux/linux_signing_key.pub |
+    gpg --dearmor > /tmp/chrome.gpg
+    install -o root -g root -m 644 /tmp/chrome.gpg /etc/apt/trusted.gpg.d/
+    rm -f /tmp/chrome.gpg.d
+  when: not has_chrome_signing_key.stat.exists
+
+- name: is chrome repo present
+  stat:
+    path: /etc/apt/sources.list.d/chrome.list
+  register: has_chrome_repo
+
+- name: chrome repo | apt
+  become: true
+  become_user: root
+  shell: echo 'deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main' > /etc/apt/sources.list.d/chrome.list
+  # apt_repository:
+  #   repo: deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/chrome.gpg] http://dl.google.com/linux/chome/deb/ stable main
+  #   state: present
+  #   filename: chrome
+  when: not has_chrome_repo.stat.exists
+
+- name: install chrome | apt
+  become: true
+  become_user: root
+  apt:
+    name: google-chrome-stable
+    state: latest

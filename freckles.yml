@@ -163,3 +163,9 @@
         name: spotify
       tags: discord
       when: '"spotify-client" not in ansible_facts.packages'
+
+    - name: chrome
+      include_role:
+        name: chrome
+      tags: work
+      when: '"google-chrome-stable" not in ansible_facts.packages'
