@@ -6,10 +6,14 @@
     "editor.defaultFormatter": "vscode.json-language-features"
   },
   "[php]": {
-    "editor.defaultFormatter": "junstyle.php-cs-fixer"
+    "editor.defaultFormatter": "junstyle.php-cs-fixer",
+    "editor.tabSize": 4
   },
   "[python]": {
     "editor.defaultFormatter": "ms-python.python"
+  },
+  "[graphql]": {
+    "editor.tabSize": 4
   },
   "[sql]": {
     "editor.colorDecorators": false,
