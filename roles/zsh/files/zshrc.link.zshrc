@@ -36,6 +36,11 @@ function parse_git_branch {
   fi
 }
 
+# link plugins to the prompt (for pretty icons)
+for file in /home/alexogeny/.zsh/*; do
+  source "$file"
+done
+
 # general
 alias reboot='sudo reboot'
 alias shutdown='sudo shutdown'
@@ -164,10 +169,6 @@ function_gpushc() {
 }
 alias gpushc='function_gpushc'
 
-# link plugins to the prompt (for pretty icons)
-for file in /home/alexogeny/.zsh/*; do
-  source "$file"
-done
 
 
 # timing
@@ -202,3 +203,11 @@ NL=$'\n'
 PROMPT='%F{099}%n@%m%f in %F{039}%~$(parse_git_branch)'
 PROMPT=$PROMPT$'$(docker_icon)$(python_icon)$(php_icon)$(package_icon)$(node_icon)$(yarn_icon)$(typescript_icon)${NL}%F{039}%(!.#.»)%f '
 PROMPT=$'%(?..%{%F{202}%}%{$reset_color%})%F{237}${(r:$COLUMNS::-:)}'$PROMPT
+
+if [[ -z $(command -v firejail) ]]; then
+  PROMPT=$'🔥 firejail not installed!${NL}'$PROMPT
+fi
+
+if [[ $(which firefox | grep -c firecfg.py) -ne 1 ]]; then
+  PROMPT=$'🔥 firecfg.py has not been run!${NL}'$PROMPT
+fi
