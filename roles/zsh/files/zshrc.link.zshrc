@@ -12,27 +12,35 @@ auto-ls () {
   emulate -L zsh
   ls
 }
-chpwd_functions=(${chpwd_functions[@]} "auto-ls")
+[[ ${chpwd_functions[(r)chpwd_functions]} != "auto-ls" ]] && chpwd_functions+=(auto-ls)
+
+# colors
+blue='%F{045}'
+green='%F{077}'
+purple='%F{141}'
+orange='%F{208}'
+red='%F{203}'
+pink='%F{219}'
 
 # git
 
 ## check that git is installed on the system and this is a git repo
-check_git() {
+check-git() {
   git check-ignore -q . 2> /dev/null
   (( is_git = $? == 1 ))
 }
-chpwd_functions+=(check_git)
+[[ ${precmd_functions[(r)check-git]} != 'check-git' ]] && precmd_functions+=(check-git)
 
 ## check if the branch is dirty using git porcelain
-function parse_git_dirty {
+function parse-git-dirty {
   [[ -z $(git status --porcelain 2> /dev/null ) ]] || echo "%F{221}*"
 }
 
 ## find the name of the branch we are currently on
-function parse_git_branch {
+function parse-git-branch {
   if (( $is_git )); then
     branch_name=$(git branch --no-color | sed -e '/^[^*]/d' | awk '{sub(/^[^[:alnum:]_]*/, ""); print $1}')
-    echo "(%F{076}$branch_name$(parse_git_dirty)%F{039})"
+    echo -n "($green⌥ $branch_name$(parse-git-dirty)$blue)"
   fi
 }
 
@@ -197,17 +205,61 @@ function precmd() {
   fi
 }
 
-# theming
-NL=$'\n'
+function host-name() {
+  echo -n "$pink%n$purple@$pink%m%f"
+}
 
-PROMPT='%F{099}%n@%m%f in %F{039}%~$(parse_git_branch)'
-PROMPT=$PROMPT$'$(docker_icon)$(python_icon)$(php_icon)$(package_icon)$(node_icon)$(yarn_icon)$(typescript_icon)${NL}%F{039}%(!.#.»)%f '
-PROMPT=$'%(?..%{%F{202}%}%{$reset_color%})%F{237}${(r:$COLUMNS::-:)}'$PROMPT
+function truncate-path() {
+  local current_path=$1
+  local prefix=''
+  if [[ '~' = "${current_path:0:1}" ]]; then
+    current_path=${current_path:1}
+    prefix='~'
+  fi
+  IFS='/' read -rA dirs <<< $current_path
+  if [[ ${#dirs} -gt 5 ]]; then
+    slashes=$(printf "/%.0s" {1..$(((${#dirs}-4)))})
+    fqp=$(printf "%s/%s/%s%s%s/%s" $prefix $dirs[2] $dirs[3] $slashes $dirs[-2] $dirs[-1])
+  else
+    fqp=$(printf "%s%s" $prefix $current_path)
+  fi
+  echo -n $fqp
+}
+
+function path-name() {
+  echo -n " $blue"
+  local current_path=$(print -rD $PWD)
+  truncate-path $current_path
+}
+
+function prompt() {
+  echo -n ' %(!.#.»)%f '
+}
+
+function nl() {
+  echo -n '\n'
+}
+
+alexogeny-prompt() {
+  host-name
+  path-name
+  parse-git-branch
+  prompt
+}
+
+PROMPT='$(alexogeny-prompt)'
+
+# TODO: figure out what to do with package plugins
+# theming
+# NL=$'\n'
+# PROMPT='%F{099}%n@%m%f in %F{039}%~$(parse-git-branch)'
+# PROMPT=$PROMPT$'$(docker_icon)$(python_icon)$(php_icon)$(package_icon)$(node_icon)$(yarn_icon)$(typescript_icon)${NL}%F{039}%(!.#.»)%f '
+# PROMPT=$'%(?..%{%F{202}%}%{$reset_color%})%F{237}${(r:$COLUMNS::-:)}'$PROMPT
 
 if [[ -z $(command -v firejail) ]]; then
-  PROMPT=$'🔥 firejail not installed!${NL}'$PROMPT
+  PROMPT=$'🔥 %F{208}no firejail%f '$PROMPT
 fi
 
 if [[ $(which firefox | grep -c firecfg.py) -ne 1 ]]; then
-  PROMPT=$'🔥 firecfg.py has not been run!${NL}'$PROMPT
+  PROMPT=$'🔥 firecfg.py has not been run!$(nl)'$PROMPT
 fi
