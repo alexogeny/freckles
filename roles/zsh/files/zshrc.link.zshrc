@@ -111,6 +111,7 @@ function drc() {
     echo " ${spinner_icon} ⠿ No containers to remove."
   fi
 }
+
 function dri() {
   export spinner_msg="Removing images..."
   export spinner_icon="🐋"
@@ -121,6 +122,7 @@ function dri() {
     echo " ${spinner_icon} ⠿ No images to remove."
   fi
 }
+
 function drv() {
   export spinner_msg="Removing volumes..."
   export spinner_icon="🐋"
@@ -131,7 +133,15 @@ function drv() {
     echo " ${spinner_icon} ⠿ No volumes to remove."
   fi
 }
+
 alias dcyarn='docker compose run --rm local yarn'
+
+function dcd() {
+  repo=$(basename $(git rev-parse --show-toplevel))
+  export spinner_msg="Starting $repo..."
+  export spinner_icon="🐋"
+  ~/.spinner docker compose up -d local 2>/dev/null
+}
 
 ## handy function to remove all traces of a docker container and images (will need tor epull)
 function dpurge() {
