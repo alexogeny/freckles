@@ -44,11 +44,6 @@ function parse-git-branch {
   fi
 }
 
-# link plugins to the prompt (for pretty icons)
-for file in /home/alexogeny/.zsh/*; do
-  source "$file"
-done
-
 # general
 alias reboot='sudo reboot'
 alias shutdown='sudo shutdown'
@@ -274,13 +269,6 @@ alexogeny-prompt() {
 }
 
 PROMPT='$(alexogeny-prompt)'
-
-# TODO: figure out what to do with package plugins
-# theming
-# NL=$'\n'
-# PROMPT='%F{099}%n@%m%f in %F{039}%~$(parse-git-branch)'
-# PROMPT=$PROMPT$'$(docker_icon)$(python_icon)$(php_icon)$(package_icon)$(node_icon)$(yarn_icon)$(typescript_icon)${NL}%F{039}%(!.#.»)%f '
-# PROMPT=$'%(?..%{%F{202}%}%{$reset_color%})%F{237}${(r:$COLUMNS::-:)}'$PROMPT
 
 if [[ -z $(command -v firejail) ]]; then
   PROMPT=$'🔥 %F{208}no firejail%f '$PROMPT

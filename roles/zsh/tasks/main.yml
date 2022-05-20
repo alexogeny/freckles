@@ -25,19 +25,6 @@
     state: link
     force: true
 
-- name: make zsh plugin folder | file
-  file:
-    path: "/home/{{u}}/.zsh"
-    state: directory
-
-- name: link zsh plugins | file
-  file:
-    src: "{{playbook_dir}}/roles/zsh/files/{{item}}.plugin.link.zsh"
-    dest: "/home/{{u}}/.zsh/{{item}}.plugin.zsh"
-    state: link
-    force: true
-  loop: "{{zsh_plugins}}"
-
 - name: link bash spinner
   file:
     src: "{{playbook_dir}}/roles/zsh/files/spinner.plugin.link.zsh"
