@@ -70,20 +70,15 @@ alias pip='pip3'
 alias pipi='sudo pip install'
 
 # apt
-alias apti='sudo apt install'
-alias aptu='sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y && sudo apt clean'
 function update() {
   export spinner_msg='Updating package lists...'
   export spinner_icon="📦"
   ~/.spinner sudo apt update -qq 2>/dev/null
   export spinner_msg='Upgrading packages...'
-  export spinner_icon="📦"
   ~/.spinner sudo apt upgrade -qqy 2>/dev/null
   export spinner_msg='Removing unneeded packages...'
-  export spinner_icon="📦"
   ~/.spinner sudo apt autoremove -qqy 2>/dev/null
   export spinner_msg='Cleaning up...'
-  export spinner_icon="📦"
   ~/.spinner sudo apt clean -qqy 2>/dev/null
 }
 
