@@ -28,3 +28,4 @@
   become: true
   become_user: root
   shell: find /usr/share/backgrounds/pop -type f | grep -v retro | xargs rm
+  when: hostvars[inventory_hostname].ansible_distribution == "Pop!_OS"
