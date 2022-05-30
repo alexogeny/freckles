@@ -269,11 +269,3 @@ alexogeny-prompt() {
 }
 
 PROMPT='$(alexogeny-prompt)'
-
-if [[ -z $(command -v firejail) ]]; then
-  PROMPT=$'🔥 %F{208}no firejail%f '$PROMPT
-fi
-
-if [[ $(which firefox | grep -c firecfg.py) -ne 1 ]]; then
-  PROMPT=$'🔥 firecfg.py has not been run!$(nl)'$PROMPT
-fi

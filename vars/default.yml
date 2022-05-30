@@ -6,6 +6,8 @@ vscode_extensions:
   - ckolkman.vscode-postgres
   - dbaeumer.vscode-eslint
   - dsznajder.es7-react-js-snippets
+  - eamodio.gitlens
+  - foxundermoon.shell-format
   - GraphQL.vscode-graphql
   - IronGeek.vscode-env
   - junstyle.php-cs-fixer
