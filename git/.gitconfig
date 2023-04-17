@@ -1,5 +1,3 @@
-# global git config
-
 [core]
   excludesfile = /home/alexogeny/.gitignore
 
@@ -7,19 +5,15 @@
   default = current
 
 [pull]
-  ; always rebase on pull
   rebase = true
 
 [fetch]
-  ; prune dead branches when fetching
   prune = true
 
 [rebase]
-  ; always try to stash when rebasing
   autostash = true
 
 [user]
-  ; me
   name = alexogeny
 
 [stash]
@@ -34,10 +28,11 @@
 [url "git@gitlab.com:"]
   insteadOf = https://gitlab.com/
 
-[includeIf "gitdir:/home/alexogeny/gh/**"]
-  ; github
+[includeIf "gitdir:/home/alexogeny/Personal/Github/**"]
   path = /home/alexogeny/.github.gitconfig
 
-[includeIf "gitdir:/home/alexogeny/gl/**"]
-  ; gitlab
+[includeIf "gitdir:/home/alexogeny/Personal/Gitlab/**"]
   path = /home/alexogeny/.gitlab.gitconfig
+
+[includeIf "gitdir:/home/alexogeny/Work/**"]
+  path = /home/alexogeny/.work.gitconfig
