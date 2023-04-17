@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # Create symlinks for git
-ln -sf "$(pwd)/git/.gitconfig" "${HOME}/.gitconfig"
-ln -sf "$(pwd)/git/.gitignore" "${HOME}/.gitignore"
-ln -sf "$(pwd)/git/.github.gitconfig" "${HOME}/.github.gitconfig"
-ln -sf "$(pwd)/git/.gitlab.gitconfig" "${HOME}/.gitlab.gitconfig"
+cp "$(pwd)/git/.gitconfig" "${HOME}/.gitconfig"
+cp "$(pwd)/git/.gitignore" "${HOME}/.gitignore"
+cp "$(pwd)/git/.github.gitconfig" "${HOME}/.github.gitconfig"
+cp "$(pwd)/git/.gitlab.gitconfig" "${HOME}/.gitlab.gitconfig"
 
 # Create symlinks for ssh
 mkdir -p "${HOME}/.ssh"
-ln -sf "$(pwd)/ssh/config" "${HOME}/.ssh/config"
+cp "$(pwd)/ssh/config" "${HOME}/.ssh/config"
 
 # Check if VSCode is installed and install it if not
 if ! command -v code >/dev/null 2>&1; then
@@ -40,8 +40,8 @@ fi
 
 # Create symlinks for vscode
 mkdir -p "${HOME}/.config/Code/User"
-ln -sf "$(pwd)/vscode/settings.json" "${HOME}/.config/Code/User/settings.json"
-ln -sf "$(pwd)/vscode/keybinds.json" "${HOME}/.config/Code/User/keybindings.json"
+cp "$(pwd)/vscode/settings.json" "${HOME}/.config/Code/User/settings.json"
+cp "$(pwd)/vscode/keybinds.json" "${HOME}/.config/Code/User/keybindings.json"
 
 # Install and configure zsh
 if ! command -v zsh >/dev/null 2>&1; then
@@ -57,9 +57,9 @@ if ! command -v zsh >/dev/null 2>&1; then
 fi
 
 # Create symlink for .zshrc
-ln -sf "$(pwd)/zsh/.zshrc" "${HOME}/.zshrc"
+cp "$(pwd)/zsh/.zshrc" "${HOME}/.zshrc"
 mkdir -p "${HOME}/.zsh-things"
-ln -sf "$(pwd)/zsh/.git.zsh" "${HOME}/.zsh-things/.git.zsh"
+cp "$(pwd)/zsh/.git.zsh" "${HOME}/.zsh-things/.git.zsh"
 cp "$(pwd)/zsh/.spinner.sh" "${HOME}/.spinner"
 
 # Set zsh as the default shell for the current user
