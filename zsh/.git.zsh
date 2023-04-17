@@ -9,21 +9,23 @@ function clone_repo() {
     --work)
       local workspace="Work"
       local gitconfig_suffix=".work"
+      local domain="-work"
       ;;
     *)
       local workspace="Personal"
       local gitconfig_suffix=""
+      local domain=""
       ;;
   esac
 
   case "$platform" in
     --gh)
-      local hostname="github.com"
+      local hostname="github.com${domain}"
       local target_base="${HOME}/${workspace}/Github"
       local gitconfig="${HOME}/.github${gitconfig_suffix}.gitconfig"
       ;;
     --gl)
-      local hostname="gitlab.com"
+      local hostname="gitlab.com${domain}"
       local target_base="${HOME}/${workspace}/Gitlab"
       local gitconfig="${HOME}/.gitlab${gitconfig_suffix}.gitconfig"
       ;;
@@ -40,7 +42,7 @@ function clone_repo() {
   echo "Using gitconfig $gitconfig"
 
   mkdir -p "$target_dir"
-  git clone "$repo_url" "$target_dir"
+  ~/.spinner git clone "$repo_url" "$target_dir" --quiet
   git --git-dir="$target_dir/.git" --work-tree="$target_dir" config --local include.path "$gitconfig"
 
   echo "Repository cloned to $target_dir"

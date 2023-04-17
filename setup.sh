@@ -67,3 +67,6 @@ if [ "$(basename "$SHELL")" != "zsh" ]; then
     chsh -s "$(command -v zsh)"
     echo "zsh is now the default shell. Please restart your terminal."
 fi
+
+# source
+source "${HOME}/.zshrc"
