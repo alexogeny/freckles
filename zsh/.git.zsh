@@ -1,32 +1,34 @@
 function clone_repo() {
-  # Usage: clone_repo [namespace/repo] [--work-gh|--work-gl|--gh|--gl]
+  # Usage: clone_repo [namespace/repo] [--gh|--gl] [--work]
 
   local namespace_repo="$1"
   local platform="$2"
+  local work="$3"
+
+  case "$work" in
+    --work)
+      local workspace="Work"
+      local gitconfig_suffix=".work"
+      ;;
+    *)
+      local workspace="Personal"
+      local gitconfig_suffix=""
+      ;;
+  esac
 
   case "$platform" in
-    --work-gh)
-      local hostname="work.github.com"
-      local target_base="${HOME}/Work/Github"
-      local gitconfig="${HOME}/.work.gitconfig"
-      ;;
-    --work-gl)
-      local hostname="work.gitlab.com"
-      local target_base="${HOME}/Work/Gitlab"
-      local gitconfig="${HOME}/.work.gitconfig"
-      ;;
     --gh)
       local hostname="github.com"
-      local target_base="${HOME}/Personal/Github"
-      local gitconfig="${HOME}/.github.gitconfig"
+      local target_base="${HOME}/${workspace}/Github"
+      local gitconfig="${HOME}/.github${gitconfig_suffix}.gitconfig"
       ;;
     --gl)
       local hostname="gitlab.com"
-      local target_base="${HOME}/Personal/Gitlab"
-      local gitconfig="${HOME}/.gitlab.gitconfig"
+      local target_base="${HOME}/${workspace}/Gitlab"
+      local gitconfig="${HOME}/.gitlab${gitconfig_suffix}.gitconfig"
       ;;
     *)
-      echo "Invalid platform. Please use --work, --gh, or --gl."
+      echo "Invalid platform. Please use --gh, or --gl."
       return 1
       ;;
   esac
@@ -44,4 +46,4 @@ function clone_repo() {
   echo "Repository cloned to $target_dir"
 }
 
-alias gclone="clone_repo"
+alias gcl="clone_repo"
