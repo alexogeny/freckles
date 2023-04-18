@@ -38,10 +38,9 @@ function clone_repo() {
   local repo_url="git@${hostname}:${namespace_repo}.git"
   local target_dir="${target_base}/${namespace_repo}"
 
-  echo "Cloning repository $repo_url to $target_dir"
-  echo "Using gitconfig $gitconfig"
-
   mkdir -p "$target_dir"
+  export spinner_icon="🔗"
+  export spinner_msg="Cloning ${namespace_repo} to ${target_dir}"
   ~/.spinner git clone "$repo_url" "$target_dir" --quiet
   git --git-dir="$target_dir/.git" --work-tree="$target_dir" config --local include.path "$gitconfig"
 

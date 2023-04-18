@@ -5,27 +5,25 @@ if ! command -v apt-get >/dev/null 2>&1; then
     exit 1
 fi
 
-cp "$(pwd)/git/.gitconfig" "${HOME}/.gitconfig"
-cp "$(pwd)/git/.gitignore" "${HOME}/.gitignore"
-cp "$(pwd)/git/.github.gitconfig" "${HOME}/.github.gitconfig"
-cp "$(pwd)/git/.gitlab.gitconfig" "${HOME}/.gitlab.gitconfig"
-
-mkdir -p "${HOME}/.ssh"
-cp "$(pwd)/ssh/config" "${HOME}/.ssh/config"
+function check_sudo() {
+    if [[ $(sudo -n uptime 2>&1|grep "load"|wc -l) -eq 0 ]]; then
+        sudo -v
+    fi
+}
 
 if ! command -v zsh >/dev/null 2>&1; then
     echo "zsh not found, installing..."
+    check_sudo
     ~/.spinner sudo apt-get update && sudo apt-get install -y zsh
 fi
 
 cp "$(pwd)/zsh/.zshrc" "${HOME}/.zshrc"
 mkdir -p "${HOME}/.zsh-things"
-files=("git.zsh" "aliases.zsh" "python.zsh")
-
+files=("git.zsh" "aliases.zsh" "python.zsh" "node.zsh" "spinner.zsh")
 for file in "${files[@]}"; do
     cp "$(pwd)/zsh/${file}" "${HOME}/.zsh-things/${file}"
 done
-cp "$(pwd)/zsh/.spinner.sh" "${HOME}/.spinner"
+ln -sf "${HOME}/.zsh-things/spinner.zsh" "${HOME}/.spinner"
 
 if [ "$(basename "$SHELL")" != "zsh" ]; then
     chsh -s "$(command -v zsh)"
@@ -38,6 +36,74 @@ if ! command -v curl >/dev/null 2>&1; then
     echo "curl not found, installing..."
     sudo apt-get update && sudo apt-get install -y curl
 fi
+
+if ! command -v 1password >/dev/null 2>&1; then
+    echo "1Password not found, installing..."
+    check_sudo
+    export spinner_icon="📥"
+    export spinner_msg="Downloading 1Password"
+    ~/.spinner curl -fsSL https://downloads.1password.com/linux/debian/amd64/stable/1password-latest.deb -o 1password-latest.deb
+    export spinner_icon="📦"
+    export spinner_msg="Installing 1Password"
+    ~/.spinner sudo apt-get install -qqy ./1password-latest.deb
+    export spinner_icon="🧹"
+    export spinner_msg="Cleaning up"
+    ~/.spinner rm 1password-latest.deb
+fi
+
+if ! command -v op >/dev/null 2>&1; then
+    echo "1Password CLI not found, installing..."
+    check_sudo
+    export spinner_icon="📥"
+    export spinner_msg="Downloading 1Password CLI"
+    ~/.spinner curl -fsSL https://downloads.1password.com/linux/debian/amd64/stable/1password-cli-amd64-latest.deb -o 1password-cli-amd64-latest.deb
+    export spinner_icon="📦"
+    export spinner_msg="Installing 1Password CLI"
+    ~/.spinner sudo apt-get install -qqy ./1password-cli-amd64-latest.deb
+    export spinner_icon="🧹"
+    export spinner_msg="Cleaning up"
+    ~/.spinner rm 1password-cli-amd64-latest.deb
+fi
+
+# check 'op account list', and if it's empty, prompt the user to sign in and connect the desktop app
+if [ "$(op account list | wc -l)" -eq 0 ]; then
+    echo "1Password CLI not signed in. Please sign in and connect the desktop app."
+    1password
+    while [ "$(op account list | wc -l)" -eq 0 ]; do
+        sleep 10
+    done
+fi
+
+mkdir -p "${HOME}/.ssh"
+chmod 700 "${HOME}/.ssh"
+cp "$(pwd)/ssh/config" "${HOME}/.ssh/config"
+chmod 600 "${HOME}/.ssh/config"
+for vault in "personal" "work"; do
+    for service in "github" "gitlab"; do
+        pub_key="${HOME}/.ssh/${service}.${vault}.pub"
+        priv_key="${HOME}/.ssh/${service}.${vault}"
+        if [ ! -f "${pub_key}" ]; then
+            export spinner_icon="🔑"
+            export spinner_msg="Fetching ${service} public SSH key for ${vault} vault"
+            ~/.spinner op read --force --out-file "${pub_key}" "op://${vault}/${service}/ssh/public"
+        fi
+        if [ ! -f "${priv_key}" ]; then
+            export spinner_icon="🔑"
+            export spinner_msg="Fetching ${service} private SSH key for ${vault} vault"
+            ~/.spinner op read --force --out-file "${priv_key}" "op://${vault}/${service}/ssh/private"
+            if [ -f "${priv_key}" ]; then
+                chmod 600 "${priv_key}"
+            fi
+        fi
+    done
+done
+
+cp "$(pwd)/git/.gitconfig" "${HOME}/.gitconfig"
+cp "$(pwd)/git/.gitignore" "${HOME}/.gitignore"
+cp "$(pwd)/git/.github.gitconfig" "${HOME}/.github.gitconfig"
+cp "$(pwd)/git/.gitlab.gitconfig" "${HOME}/.gitlab.gitconfig"
+
+
 if ! command -v pip3 >/dev/null 2>&1; then
     echo "pip3 not found, installing..."
     ~/.spinner sudo apt-get update && sudo apt-get install -y python3-pip
@@ -69,9 +135,9 @@ if ! command -v code >/dev/null 2>&1; then
     sudo apt-get install -y code
 fi
 
-mkdir -p "${HOME}/.config/Code/User"
-cp "$(pwd)/vscode/settings.json" "${HOME}/.config/Code/User/settings.json"
-cp "$(pwd)/vscode/keybinds.json" "${HOME}/.config/Code/User/keybindings.json"
+# mkdir -p "${HOME}/.config/Code/User"
+# cp "$(pwd)/vscode/settings.json" "${HOME}/.config/Code/User/settings.json"
+# cp "$(pwd)/vscode/keybinds.json" "${HOME}/.config/Code/User/keybindings.json"
 
 if ! command -v node >/dev/null 2>&1; then
     echo "node.js not found, installing..."

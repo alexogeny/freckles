@@ -1,4 +1,5 @@
 alias auu="apt-update-upgrade"
+alias ai="apt-install"
 
 alias ghw="cd ~/Work/Github"
 alias glw="cd ~/Work/Gitlab"
@@ -26,8 +27,7 @@ alias sha1='openssl sha1'
 alias sha256='openssl sha256'
 alias sha512='openssl sha512'
 
-alias mkdir='mkdir -pv'
+alias mdp='mkdir -pv'
 
 alias mv='mv -i'
-alias cp='cp -i'
 alias ln='ln -i'
