@@ -10,6 +10,22 @@ cp "$(pwd)/git/.gitlab.gitconfig" "${HOME}/.gitlab.gitconfig"
 mkdir -p "${HOME}/.ssh"
 cp "$(pwd)/ssh/config" "${HOME}/.ssh/config"
 
+# Create symlink for .zshrc
+cp "$(pwd)/zsh/.zshrc" "${HOME}/.zshrc"
+mkdir -p "${HOME}/.zsh-things"
+cp "$(pwd)/zsh/.git.zsh" "${HOME}/.zsh-things/.git.zsh"
+cp "$(pwd)/zsh/.aliases.zsh" "${HOME}/.zsh-things/.aliases.zsh"
+cp "$(pwd)/zsh/.spinner.sh" "${HOME}/.spinner"
+
+# Set zsh as the default shell for the current user
+if [ "$(basename "$SHELL")" != "zsh" ]; then
+    chsh -s "$(command -v zsh)"
+    echo "zsh is now the default shell. Please restart your terminal."
+fi
+
+# source
+source "${HOME}/.zshrc"
+
 # check if curl is installed and install it if not
 if ! command -v curl >/dev/null 2>&1; then
     echo "curl not found, installing..."
@@ -68,19 +84,3 @@ if ! command -v zsh >/dev/null 2>&1; then
         exit 1
     fi
 fi
-
-# Create symlink for .zshrc
-cp "$(pwd)/zsh/.zshrc" "${HOME}/.zshrc"
-mkdir -p "${HOME}/.zsh-things"
-cp "$(pwd)/zsh/.git.zsh" "${HOME}/.zsh-things/.git.zsh"
-cp "$(pwd)/zsh/.aliases.zsh" "${HOME}/.zsh-things/.aliases.zsh"
-cp "$(pwd)/zsh/.spinner.sh" "${HOME}/.spinner"
-
-# Set zsh as the default shell for the current user
-if [ "$(basename "$SHELL")" != "zsh" ]; then
-    chsh -s "$(command -v zsh)"
-    echo "zsh is now the default shell. Please restart your terminal."
-fi
-
-# source
-source "${HOME}/.zshrc"
