@@ -11,6 +11,13 @@ function check_sudo() {
     fi
 }
 
+if ! command -v git >/dev/null 2>&1; then
+    check_sudo
+    export spinner_icon="📦"
+    export spinner_msg="Installing git"
+    ~/.spinner sudo apt-get update -qq && sudo apt-get install -qqy git
+fi
+
 if ! command -v zsh >/dev/null 2>&1; then
     check_sudo
     export spinner_icon="📦"
