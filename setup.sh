@@ -12,9 +12,10 @@ function check_sudo() {
 }
 
 if ! command -v zsh >/dev/null 2>&1; then
-    echo "zsh not found, installing..."
     check_sudo
-    ~/.spinner sudo apt-get update && sudo apt-get install -y zsh
+    export spinner_icon="📦"
+    export spinner_msg="Installing zsh"
+    ~/.spinner sudo apt-get update -qq && sudo apt-get install -qqy zsh
 fi
 
 cp "$(pwd)/zsh/.zshrc" "${HOME}/.zshrc"
@@ -33,12 +34,13 @@ fi
 source "${HOME}/.zshrc"
 
 if ! command -v curl >/dev/null 2>&1; then
-    echo "curl not found, installing..."
-    sudo apt-get update && sudo apt-get install -y curl
+    check_sudo
+    export spinner_icon="📦"
+    export spinner_msg="Installing curl"
+    ~/.spinner sudo apt-get update -qq && sudo apt-get install -qqy curl
 fi
 
 if ! command -v 1password >/dev/null 2>&1; then
-    echo "1Password not found, installing..."
     check_sudo
     export spinner_icon="📥"
     export spinner_msg="Downloading 1Password"
@@ -65,7 +67,6 @@ if ! command -v op >/dev/null 2>&1; then
     ~/.spinner rm 1password-cli-amd64-latest.deb
 fi
 
-# check 'op account list', and if it's empty, prompt the user to sign in and connect the desktop app
 if [ "$(op account list | wc -l)" -eq 0 ]; then
     echo "1Password CLI not signed in. Please sign in and connect the desktop app."
     1password
@@ -105,26 +106,27 @@ cp "$(pwd)/git/.gitlab.gitconfig" "${HOME}/.gitlab.gitconfig"
 
 
 if ! command -v pip3 >/dev/null 2>&1; then
-    echo "pip3 not found, installing..."
+    export spinner_icon="🐍"
+    export spinner_msg="Installing pip3"
     ~/.spinner sudo apt-get update && sudo apt-get install -y python3-pip
 fi
 
 if [ ! -d "$HOME/.pyenv" ]; then
-    echo "pyenv not found, installing..."
+    export spinner_icon="🐍"
+    export spinner_msg="Installing pyenv"
     curl https://pyenv.run | bash
-    echo "pyenv installed, please restart your terminal."
-    exit 1
 fi
 
 if ! command -v pipenv >/dev/null 2>&1; then
-    echo "pipenv not found, installing..."
+    export spinner_icon="🐍"
+    export spinner_msg="Installing pipenv"
     ~/.spinner pip3 install --user --break-system-packages pipenv
 fi
 
 # Check if VSCode is installed and install it if not
 if ! command -v code >/dev/null 2>&1; then
-    echo "VSCode not found, installing..."
-    # Ubuntu, Debian
+    export spinner_icon="📦"
+    export spinner_msg="Installing VSCode"
     curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor >packages.microsoft.gpg
     sudo install -o root -g root -m 644 packages.microsoft.gpg /etc/apt/trusted.gpg.d/
     rm packages.microsoft.gpg
@@ -140,13 +142,17 @@ fi
 # cp "$(pwd)/vscode/keybinds.json" "${HOME}/.config/Code/User/keybindings.json"
 
 if ! command -v node >/dev/null 2>&1; then
-    echo "node.js not found, installing..."
-    curl -sL https://deb.nodesource.com/setup_current.x | sudo -E bash -
-    ~/.spinner sudo apt-get install -qy nodejs npm
+    export spinner_icon="📦"
+    export spinner_msg="Installing nodejs"
+    check_sudo
+    ~/.spinner curl -sL https://deb.nodesource.com/setup_current.x | sudo -E bash - && \
+        sudo apt-get install -qy nodejs npm
 fi
 
 if ! command -v nvm >/dev/null 2>&1; then
-    echo "nvm not found, installing..."
+    export spinner_icon="📦"
+    export spinner_msg="Installing nvm"
+
     nvm_latest_version=$(curl -s https://api.github.com/repos/nvm-sh/nvm/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/${nvm_latest_version}/install.sh | bash
+    ~/.spinner curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/${nvm_latest_version}/install.sh | bash
 fi
