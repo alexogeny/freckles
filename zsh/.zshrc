@@ -24,16 +24,18 @@ function check_sudo() {
 function apt-update-upgrade() {
     check_sudo
     export spinner_icon="📦"
-    export spinner_msg="Updating apt and upgrading packages"
-    ~/.spinner sudo apt update -qq 2>/dev/null
-    ~/.spinner sudo apt upgrade -qqy 2>/dev/null
+    export spinner_msg="Updating apt"
+    ~/.spinner sudo apt update -qq
+    export spinner_icon="📦"
+    export spinner_msg="Installing apt upgrades"
+    ~/.spinner sudo apt upgrade -qqy
 }
 
 function apt-install() {
     check_sudo
     export spinner_icon="📦"
     export spinner_msg="Installing $@"
-    ~/.spinner sudo apt install -qqy "$@" 2>/dev/null
+    ~/.spinner sudo apt install -qqy "$@"
 }
 
 source "${HOME}/.zsh-things/git.zsh"
