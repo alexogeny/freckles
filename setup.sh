@@ -164,3 +164,16 @@ if ! command -v nvm >/dev/null 2>&1; then
     nvm_latest_version=$(curl -s https://api.github.com/repos/nvm-sh/nvm/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')
     ~/.spinner curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/${nvm_latest_version}/install.sh | bash
 fi
+
+if ! command -v discord >/dev/null 2>&1; then
+    check_sudo
+    export spinner_icon="📥"
+    export spinner_msg="Downloading Discord"
+    ~/.spinner curl -fsSL https://discord.com/api/download?platform=linux&format=deb -o discord.deb
+    export spinner_icon="📦"
+    export spinner_msg="Installing Discord"
+    ~/.spinner sudo apt-get install -qqy ./discord.deb
+    export spinner_icon="🧹"
+    export spinner_msg="Cleaning up"
+    ~/.spinner rm discord.deb
+fi
