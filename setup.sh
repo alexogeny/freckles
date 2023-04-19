@@ -86,6 +86,7 @@ mkdir -p "${HOME}/.ssh"
 chmod 700 "${HOME}/.ssh"
 cp "$(pwd)/ssh/config" "${HOME}/.ssh/config"
 chmod 600 "${HOME}/.ssh/config"
+cp "$(pwd)/ssh/known_hosts" "${HOME}/.ssh/known_hosts"
 for vault in "personal" "work"; do
     for service in "github" "gitlab"; do
         pub_key="${HOME}/.ssh/${service}.${vault}.pub"
