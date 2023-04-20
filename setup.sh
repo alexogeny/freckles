@@ -76,7 +76,6 @@ fi
 
 if [ "$(op account list | wc -l)" -eq 0 ]; then
     echo "1Password CLI not signed in. Please sign in and connect the desktop app."
-    1password
     while [ "$(op account list | wc -l)" -eq 0 ]; do
         sleep 10
     done
