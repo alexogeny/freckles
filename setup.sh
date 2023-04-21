@@ -118,6 +118,13 @@ if ! command -v pip3 >/dev/null 2>&1; then
     ~/.spinner sudo apt-get update && sudo apt-get install -y python3-pip
 fi
 
+if [ ! -d "$HOME/.config/pip" ]; then
+    mkdir -p "$HOME/.config/pip"
+fi
+if [ ! -f "$HOME/.config/pip/pip.conf" ]; then
+    cp "$(pwd)/python/pip.conf" "$HOME/.config/pip/pip.conf"
+fi
+
 if [ ! -d "$HOME/.pyenv" ]; then
     export spinner_icon="🐍"
     export spinner_msg="Installing pyenv"
