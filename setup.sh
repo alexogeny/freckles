@@ -27,7 +27,7 @@ fi
 
 cp "$(pwd)/zsh/.zshrc" "${HOME}/.zshrc"
 mkdir -p "${HOME}/.zsh-things"
-files=("git.zsh" "aliases.zsh" "python.zsh" "node.zsh" "spinner.zsh")
+files=("git.zsh" "aliases.zsh" "python.zsh" "node.zsh" "spinner.zsh" "rust.zsh")
 for file in "${files[@]}"; do
     cp "$(pwd)/zsh/${file}" "${HOME}/.zsh-things/${file}"
 done
@@ -193,6 +193,15 @@ if ! command -v spotify >/dev/null 2>&1; then
     export spinner_icon="📦"
     export spinner_msg="Installing Spotify"
     ~/.spinner sudo apt-get update && sudo apt-get install -qqy spotify-client
+    export spinner_icon=""
+    export spinner_msg=""
+fi
+
+if ! command -v cargo >/dev/null 2>&1; then
+    check_sudo
+    export spinner_icon="📦"
+    export spinner_msg="Installing Rust"
+    ~/.spinner sudo apt install -qqy cargo
     export spinner_icon=""
     export spinner_msg=""
 fi
