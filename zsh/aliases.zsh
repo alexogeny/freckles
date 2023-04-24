@@ -6,17 +6,20 @@ alias glw="cd ~/Work/Gitlab"
 alias ghp="cd ~/Personal/Github"
 alias glp="cd ~/Personal/Gitlab"
 
+alias ls="ls --color=auto"
+function cs () {
+    cd "$1" && ls
+}
 
-alias ..='cd ..'
-alias ...='cd ../..'
-alias ....='cd ../../..'
-alias .....='cd ../../../..'
-alias ......='cd ../../../../..'
-alias .......='cd ../../../../../..'
+alias ..='cs ..'
+alias ...='cs ../..'
+alias ....='cs ../../..'
+alias .....='cs ../../../..'
+alias ......='cs ../../../../..'
+alias .......='cs ../../../../../..'
 
 alias c='clear'
 
-alias ls='ls --color=auto'
 alias ll='ls -la'
 alias l.='ls -d .* --color=auto'
 alias grep='grep --color=auto'

@@ -1,9 +1,17 @@
 #!/usr/bin/env zsh
 
+# set up ssh agent
 if [ -z "$SSH_AUTH_SOCK" ]; then
     eval "$(ssh-agent -s)"
 fi
 
+# colors
+blue='%F{045}'
+green='%F{077}'
+purple='%F{141}'
+orange='%F{208}'
+red='%F{203}'
+pink='%F{219}'
 
 eval "$(ssh-agent -s)" >/dev/null 2>&1
 for service in "github" "gitlab"; do
