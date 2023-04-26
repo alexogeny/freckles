@@ -115,7 +115,7 @@ cp "$(pwd)/git/.gitlab.gitconfig" "${HOME}/.gitlab.gitconfig"
 if ! command -v pip3 >/dev/null 2>&1; then
     export spinner_icon="🐍"
     export spinner_msg="Installing pip3"
-    ~/.spinner sudo apt-get update && sudo apt-get install -y python3-pip
+    ~/.spinner sudo apt-get update && sudo apt-get install -y python3-pip libbz2-dev python3-virtualenv
 fi
 
 if [ ! -d "$HOME/.config/pip" ]; then
