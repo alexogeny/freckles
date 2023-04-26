@@ -11,18 +11,34 @@ function check_sudo() {
     fi
 }
 
-if ! command -v git >/dev/null 2>&1; then
+function install_from_deb_link {
+    if [ -n "$3" ] && command -v "$3" >/dev/null 2>&1; then
+        return
+    fi
     check_sudo
+    export spinner_icon="📥"
+    export spinner_msg="Downloading ${1}"
+    ~/.spinner curl -fsSL "${2}" -o "${1}"
     export spinner_icon="📦"
-    export spinner_msg="Installing git"
-    ~/.spinner sudo apt-get update -qq && sudo apt-get install -qqy git
-fi
+    export spinner_msg="Installing ${1}"
+    ~/.spinner sudo apt-get install -qqy "./${1}"
+    export spinner_icon="🧹"
+    export spinner_msg="Cleaning up"
+    ~/.spinner rm "${1}"
+}
 
-if ! command -v zsh >/dev/null 2>&1; then
+packages_to_install='git,zsh,curl,python3-pip,libbz2-dev,python3-virtualenv,cargo,build-essential'
+missing_packages=''
+for package in $(echo "$packages_to_install" | tr ',' '\n'); do
+    if ! dpkg -s "$package" >/dev/null 2>&1; then
+        missing_packages="${missing_packages} ${package}"
+    fi
+done
+if [ -n "$missing_packages" ]; then
     check_sudo
     export spinner_icon="📦"
-    export spinner_msg="Installing zsh"
-    ~/.spinner sudo apt-get update -qq && sudo apt-get install -qqy zsh
+    export spinner_msg="Installing missing packages: ${missing_packages}"
+    ~/.spinner sudo apt-get update -qq && sudo apt-get install -qqy "$missing_packages"
 fi
 
 cp "$(pwd)/zsh/.zshrc" "${HOME}/.zshrc"
@@ -40,39 +56,10 @@ fi
 
 source "${HOME}/.zshrc"
 
-if ! command -v curl >/dev/null 2>&1; then
-    check_sudo
-    export spinner_icon="📦"
-    export spinner_msg="Installing curl"
-    ~/.spinner sudo apt-get update -qq && sudo apt-get install -qqy curl
-fi
-
-if ! command -v 1password >/dev/null 2>&1; then
-    check_sudo
-    export spinner_icon="📥"
-    export spinner_msg="Downloading 1Password"
-    ~/.spinner curl -fsSL https://downloads.1password.com/linux/debian/amd64/stable/1password-latest.deb -o 1password-latest.deb
-    export spinner_icon="📦"
-    export spinner_msg="Installing 1Password"
-    ~/.spinner sudo apt-get install -qqy ./1password-latest.deb
-    export spinner_icon="🧹"
-    export spinner_msg="Cleaning up"
-    ~/.spinner rm 1password-latest.deb
-fi
-
-if ! command -v op >/dev/null 2>&1; then
-    echo "1Password CLI not found, installing..."
-    check_sudo
-    export spinner_icon="📥"
-    export spinner_msg="Downloading 1Password CLI"
-    ~/.spinner curl -fsSL https://downloads.1password.com/linux/debian/amd64/stable/1password-cli-amd64-latest.deb -o 1password-cli-amd64-latest.deb
-    export spinner_icon="📦"
-    export spinner_msg="Installing 1Password CLI"
-    ~/.spinner sudo apt-get install -qqy ./1password-cli-amd64-latest.deb
-    export spinner_icon="🧹"
-    export spinner_msg="Cleaning up"
-    ~/.spinner rm 1password-cli-amd64-latest.deb
-fi
+install_from_deb_link "code_latest_amd64.deb" "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64" "code"
+install_from_deb_link "discord.deb" "https://discord.com/api/download?platform=linux&format=deb" "discord"
+install_from_deb_link "1password-latest.deb" "https://downloads.1password.com/linux/debian/amd64/stable/1password-latest.deb" "1password"
+install_from_deb_link "1password-cli-amd64-latest.deb" "https://downloads.1password.com/linux/debian/amd64/stable/1password-cli-amd64-latest.deb" "op"
 
 if [ "$(op account list | wc -l)" -eq 0 ]; then
     echo "1Password CLI not signed in. Please sign in and connect the desktop app."
@@ -111,13 +98,6 @@ cp "$(pwd)/git/.gitignore" "${HOME}/.gitignore"
 cp "$(pwd)/git/.github.gitconfig" "${HOME}/.github.gitconfig"
 cp "$(pwd)/git/.gitlab.gitconfig" "${HOME}/.gitlab.gitconfig"
 
-
-if ! command -v pip3 >/dev/null 2>&1; then
-    export spinner_icon="🐍"
-    export spinner_msg="Installing pip3"
-    ~/.spinner sudo apt-get update && sudo apt-get install -y python3-pip libbz2-dev python3-virtualenv
-fi
-
 if [ ! -d "$HOME/.config/pip" ]; then
     mkdir -p "$HOME/.config/pip"
 fi
@@ -137,20 +117,6 @@ if ! command -v pipenv >/dev/null 2>&1; then
     ~/.spinner pip3 install --user --break-system-packages pipenv
 fi
 
-# Check if VSCode is installed and install it if not
-if ! command -v code >/dev/null 2>&1; then
-    export spinner_icon="📦"
-    export spinner_msg="Installing VSCode"
-    curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor >packages.microsoft.gpg
-    sudo install -o root -g root -m 644 packages.microsoft.gpg /etc/apt/trusted.gpg.d/
-    rm packages.microsoft.gpg
-
-    echo "deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main" | sudo tee /etc/apt/sources.list.d/vscode.list
-
-    sudo apt-get update
-    sudo apt-get install -y code
-fi
-
 # mkdir -p "${HOME}/.config/Code/User"
 # cp "$(pwd)/vscode/settings.json" "${HOME}/.config/Code/User/settings.json"
 # cp "$(pwd)/vscode/keybinds.json" "${HOME}/.config/Code/User/keybindings.json"
@@ -166,22 +132,8 @@ fi
 if ! command -v nvm >/dev/null 2>&1; then
     export spinner_icon="📦"
     export spinner_msg="Installing nvm"
-
     nvm_latest_version=$(curl -s https://api.github.com/repos/nvm-sh/nvm/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')
     ~/.spinner curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/${nvm_latest_version}/install.sh | bash
-fi
-
-if ! command -v discord >/dev/null 2>&1; then
-    check_sudo
-    export spinner_icon="📥"
-    export spinner_msg="Downloading Discord"
-    ~/.spinner curl -fsSL https://discord.com/api/download?platform=linux&format=deb -o discord.deb
-    export spinner_icon="📦"
-    export spinner_msg="Installing Discord"
-    ~/.spinner sudo apt-get install -qqy ./discord.deb
-    export spinner_icon="🧹"
-    export spinner_msg="Cleaning up"
-    ~/.spinner rm discord.deb
 fi
 
 if ! command -v spotify >/dev/null 2>&1; then
@@ -193,15 +145,4 @@ if ! command -v spotify >/dev/null 2>&1; then
     export spinner_icon="📦"
     export spinner_msg="Installing Spotify"
     ~/.spinner sudo apt-get update && sudo apt-get install -qqy spotify-client
-    export spinner_icon=""
-    export spinner_msg=""
-fi
-
-if ! command -v cargo >/dev/null 2>&1; then
-    check_sudo
-    export spinner_icon="📦"
-    export spinner_msg="Installing Rust"
-    ~/.spinner sudo apt install -qqy cargo
-    export spinner_icon=""
-    export spinner_msg=""
 fi

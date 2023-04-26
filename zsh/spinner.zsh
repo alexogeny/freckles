@@ -41,3 +41,7 @@ spinner $!
 
 # Clean up the temporary file
 rm -f "${tmp_file}"
+
+# reset spinner_icon and spinner_msg
+export spinner_icon=""
+export spinner_msg=""
