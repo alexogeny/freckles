@@ -68,28 +68,25 @@ if [ "$(op account list | wc -l)" -eq 0 ]; then
     done
 fi
 
-mkdir -p "${HOME}/.ssh"
-chmod 700 "${HOME}/.ssh"
-cp "$(pwd)/ssh/config" "${HOME}/.ssh/config"
-chmod 600 "${HOME}/.ssh/config"
-cp "$(pwd)/ssh/known_hosts" "${HOME}/.ssh/known_hosts"
+mkdir -p "${HOME}/.ssh" && chmod 700 "${HOME}/.ssh"
+
+for file in "config" "known_hosts"; do
+    cp "$(pwd)/ssh/$file" "${HOME}/.ssh/$file" && chmod 600 "${HOME}/.ssh/$file"
+done
+
+spinner() {
+    export spinner_icon="🔑"
+    export spinner_msg="Fetching $1 public SSH key for $2 vault"
+    ~/.spinner op read --force --out-file "$3" "op://$2/$1/ssh/public"  
+}
+
 for vault in "personal" "work"; do
     for service in "github" "gitlab"; do
         pub_key="${HOME}/.ssh/${service}.${vault}.pub"
         priv_key="${HOME}/.ssh/${service}.${vault}"
-        if [ ! -f "${pub_key}" ]; then
-            export spinner_icon="🔑"
-            export spinner_msg="Fetching ${service} public SSH key for ${vault} vault"
-            ~/.spinner op read --force --out-file "${pub_key}" "op://${vault}/${service}/ssh/public"
-        fi
-        if [ ! -f "${priv_key}" ]; then
-            export spinner_icon="🔑"
-            export spinner_msg="Fetching ${service} private SSH key for ${vault} vault"
-            ~/.spinner op read --force --out-file "${priv_key}" "op://${vault}/${service}/ssh/private"
-            if [ -f "${priv_key}" ]; then
-                chmod 600 "${priv_key}"
-            fi
-        fi
+        
+        [ ! -f "${pub_key}" ] && spinner $service $vault $pub_key
+        [ ! -f "${priv_key}" ] && { spinner $service $vault $priv_key; [ -f "${priv_key}" ] && chmod 600 "${priv_key}"; }
     done
 done
 
