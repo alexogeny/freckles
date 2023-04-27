@@ -6,25 +6,19 @@ if ! command -v apt-get >/dev/null 2>&1; then
 fi
 
 function check_sudo() {
-    if [[ $(sudo -n uptime 2>&1|grep "load"|wc -l) -eq 0 ]]; then
+    if [[ $(sudo -n uptime 2>&1 | grep "load" | wc -l) -eq 0 ]]; then
         sudo -v
     fi
 }
 
 function install_from_deb_link {
-    if [ -n "$3" ] && command -v "$3" >/dev/null 2>&1; then
-        return
-    fi
+    [ -n "$3" ] && command -v "$3" >/dev/null 2>&1 && return
     check_sudo
-    export spinner_icon="📥"
-    export spinner_msg="Downloading ${1}"
-    ~/.spinner curl -fsSL "${2}" -o "${1}"
     export spinner_icon="📦"
-    export spinner_msg="Installing ${1}"
-    ~/.spinner sudo apt-get install -qqy "./${1}"
-    export spinner_icon="🧹"
-    export spinner_msg="Cleaning up"
-    ~/.spinner rm "${1}"
+    export spinner_msg="Downloading and installing ${1}"
+    ./zsh/spinner.zsh curl -fsSL "${2}" -o "${1}"
+    ./zsh/spinner.zsh sudo apt-get install -qqy "./${1}"
+    ./zsh/spinner.zsh rm "${1}"
 }
 
 packages_to_install='git,zsh,curl,python3-pip,libbz2-dev,python3-virtualenv,cargo,build-essential'
@@ -38,7 +32,7 @@ if [ -n "$missing_packages" ]; then
     check_sudo
     export spinner_icon="📦"
     export spinner_msg="Installing missing packages: ${missing_packages}"
-    ~/.spinner sudo apt-get update -qq && sudo apt-get install -qqy "$missing_packages"
+    ./zsh/spinner.zsh sudo apt-get update -qq && sudo apt-get install -qqy "$missing_packages"
 fi
 
 cp "$(pwd)/zsh/.zshrc" "${HOME}/.zshrc"
@@ -49,10 +43,10 @@ for file in "${files[@]}"; do
 done
 ln -sf "${HOME}/.zsh-things/spinner.zsh" "${HOME}/.spinner"
 
-if [ "$(basename "$SHELL")" != "zsh" ]; then
+[ "$(basename "$SHELL")" != "zsh" ] && {
     chsh -s "$(command -v zsh)"
     echo "zsh is now the default shell. Please restart your terminal."
-fi
+}
 
 source "${HOME}/.zshrc"
 
@@ -74,19 +68,22 @@ for file in "config" "known_hosts"; do
     cp "$(pwd)/ssh/$file" "${HOME}/.ssh/$file" && chmod 600 "${HOME}/.ssh/$file"
 done
 
-spinner() {
+sshsetup() {
     export spinner_icon="🔑"
     export spinner_msg="Fetching $1 public SSH key for $2 vault"
-    ~/.spinner op read --force --out-file "$3" "op://$2/$1/ssh/public"  
+    ./zsh/spinner.zsh op read --force --out-file "$3" "op://$2/$1/ssh/public"
 }
 
 for vault in "personal" "work"; do
     for service in "github" "gitlab"; do
         pub_key="${HOME}/.ssh/${service}.${vault}.pub"
         priv_key="${HOME}/.ssh/${service}.${vault}"
-        
-        [ ! -f "${pub_key}" ] && spinner $service $vault $pub_key
-        [ ! -f "${priv_key}" ] && { spinner $service $vault $priv_key; [ -f "${priv_key}" ] && chmod 600 "${priv_key}"; }
+
+        [ ! -f "${pub_key}" ] && sshsetup $service $vault $pub_key
+        [ ! -f "${priv_key}" ] && {
+            sshsetup $service $vault $priv_key
+            [ -f "${priv_key}" ] && chmod 600 "${priv_key}"
+        }
     done
 done
 
@@ -95,34 +92,26 @@ cp "$(pwd)/git/.gitignore" "${HOME}/.gitignore"
 cp "$(pwd)/git/.github.gitconfig" "${HOME}/.github.gitconfig"
 cp "$(pwd)/git/.gitlab.gitconfig" "${HOME}/.gitlab.gitconfig"
 
-if [ ! -d "$HOME/.config/pip" ]; then
-    mkdir -p "$HOME/.config/pip"
-fi
-if [ ! -f "$HOME/.config/pip/pip.conf" ]; then
-    cp "$(pwd)/python/pip.conf" "$HOME/.config/pip/pip.conf"
-fi
+mkdir -p "$HOME/.config/pip"
+[[ ! -f "$HOME/.config/pip/pip.conf" ]] && cp "$(pwd)/python/pip.conf" "$HOME/.config/pip/pip.conf"
 
-if [ ! -d "$HOME/.pyenv" ]; then
+[[ ! -d "$HOME/.pyenv" ]] && {
     export spinner_icon="🐍"
     export spinner_msg="Installing pyenv"
     curl https://pyenv.run | bash
-fi
+}
 
-if ! command -v pipenv >/dev/null 2>&1; then
+command -v pipenv >/dev/null 2>&1 || {
     export spinner_icon="🐍"
     export spinner_msg="Installing pipenv"
-    ~/.spinner pip3 install --user --break-system-packages pipenv
-fi
-
-# mkdir -p "${HOME}/.config/Code/User"
-# cp "$(pwd)/vscode/settings.json" "${HOME}/.config/Code/User/settings.json"
-# cp "$(pwd)/vscode/keybinds.json" "${HOME}/.config/Code/User/keybindings.json"
+    ./zsh/spinner.zsh pip3 install --user --break-system-packages pipenv
+}
 
 if ! command -v node >/dev/null 2>&1; then
     export spinner_icon="📦"
     export spinner_msg="Installing nodejs"
     check_sudo
-    ~/.spinner curl -sL https://deb.nodesource.com/setup_current.x | sudo -E bash - && \
+    ./zsh/spinner.zsh curl -sL https://deb.nodesource.com/setup_current.x | sudo -E bash - &&
         sudo apt-get install -qy nodejs npm
 fi
 
@@ -130,16 +119,14 @@ if ! command -v nvm >/dev/null 2>&1; then
     export spinner_icon="📦"
     export spinner_msg="Installing nvm"
     nvm_latest_version=$(curl -s https://api.github.com/repos/nvm-sh/nvm/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')
-    ~/.spinner curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/${nvm_latest_version}/install.sh | bash
+    ./zsh/spinner.zsh curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/${nvm_latest_version}/install.sh | bash
 fi
 
 if ! command -v spotify >/dev/null 2>&1; then
     check_sudo
     export spinner_icon="📥"
-    export spinner_msg="Adding Spotify repository"
+    export spinner_msg="Installing spotify"
     curl -sS https://download.spotify.com/debian/pubkey_7A3A762FAFD4A51F.gpg | sudo gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg
     echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
-    export spinner_icon="📦"
-    export spinner_msg="Installing Spotify"
-    ~/.spinner sudo apt-get update && sudo apt-get install -qqy spotify-client
+    ./zsh/spinner.zsh sudo apt-get update && sudo apt-get install -qqy spotify-client
 fi
