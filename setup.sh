@@ -49,6 +49,13 @@ if [ -n "$missing_packages" ]; then
     ./zsh/spinner.zsh sudo apt-get update -qq && sudo apt-get install -qqy "$missing_packages"
 fi
 
+if ! command -v firefox >/dev/null 2>&1; then
+    check_sudo
+    curl -fsSL "https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US" -o "firefox.tar.bz2"
+    sudo tar -xjf "firefox.tar.bz2" -C /opt/
+    sudo ln -s /opt/firefox/firefox /usr/lib/firefox/firefox
+fi
+
 cp "$(pwd)/zsh/.zshrc" "${HOME}/.zshrc"
 mkdir -p "${HOME}/.zsh-things"
 files=("git.zsh" "aliases.zsh" "python.zsh" "node.zsh" "spinner.zsh" "rust.zsh")
