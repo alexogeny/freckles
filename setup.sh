@@ -21,6 +21,20 @@ function install_from_deb_link {
     ./zsh/spinner.zsh rm "${1}"
 }
 
+if command -v snap >/dev/null 2>&1; then
+    check_sudo
+    if [ -n "$(snap list)" ]; then
+        check_sudo
+        export spinner_icon="📦"
+        export spinner_msg="Removing snap packages"
+        ./zsh/spinner.zsh sudo snap remove --purge $(snap list | awk '{print $1}')
+    fi
+    sudo apt remove --autoremove snapd
+    sudo mkdir -p /etc/apt/preferences.d/
+    echo -e "Package: snapd\nPin: release a=*n\nPin-Priority: -10\n" | sudo tee /etc/apt/preferences.d/nosnap.pref
+    sudo apt update
+fi
+
 packages_to_install='git,zsh,curl,python3-pip,libbz2-dev,python3-virtualenv,cargo,build-essential'
 missing_packages=''
 for package in $(echo "$packages_to_install" | tr ',' '\n'); do
