@@ -48,6 +48,21 @@ function apt-install() {
     ~/.spinner sudo apt install -qqy "$@"
 }
 
+function cache-clean() {
+  yarn cache clean
+  pip cache purge
+  npm cache clean --force
+  if [ -d ~/.cache/pip ]; then
+    rm -rf ~/.cache/pip
+  fi
+  if [ -d ~/.cache/pip-tools ]; then
+    rm -rf ~/.cache/pip-tools
+  fi
+  if [ -d ~/.bun/install/cache ]; then
+    rm -rf ~/.bun/install/cache
+  fi
+}
+
 function host-name() {
   echo -n "$pink%n$purple@$pink%m%f"
 }
