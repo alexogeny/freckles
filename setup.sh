@@ -1,9 +1,49 @@
 #!/bin/bash
 
+info() {
+    printf "\033[1;34m👗 INFO: $1\033[0m\n"
+}
+
+warning() {
+    printf "\033[1;33m👜 WARNING: $1\033[0m\n"
+}
+
+error() {
+    printf "\033[1;31m👠 ERROR: $1\033[0m\n"
+}
+
+success() {
+    printf "\033[1;32m🎀 SUCCESS: $1\033[0m\n"
+}
+
 if ! command -v apt-get >/dev/null 2>&1; then
-    echo "This script only supports Debian-based systems."
+    error "This script only supports Debian-based systems."
     exit 1
 fi
+
+ssh=false
+unsnap=false
+firefox=false
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+    -s | --ssh)
+        ssh=true
+        shift
+        ;;
+    -f | --firefox)
+        firefox=true
+        shift
+        ;;
+    -u | --unsnap)
+        unsnap=true
+        shift
+        ;;
+    *)
+        error "Unknown parameter passed: $1"
+        exit 1
+        ;;
+    esac
+done
 
 function check_sudo() {
     if [[ $(sudo -n uptime 2>&1 | grep "load" | wc -l) -eq 0 ]]; then
@@ -21,18 +61,24 @@ function install_from_deb_link {
     ./zsh/spinner.zsh rm "${1}"
 }
 
-if command -v snap >/dev/null 2>&1; then
-    check_sudo
-    if [ -n "$(snap list)" ]; then
+if [ "$unsnap" = true ]; then
+    info "Removing snap packages"
+    if command -v snap >/dev/null 2>&1; then
         check_sudo
-        export spinner_icon="📦"
-        export spinner_msg="Removing snap packages"
-        ./zsh/spinner.zsh sudo snap remove --purge $(snap list | awk '{print $1}')
+        if [ -n "$(snap list)" ]; then
+            check_sudo
+            export spinner_icon="📦"
+            export spinner_msg="Removing snap packages"
+            ./zsh/spinner.zsh sudo snap remove --purge $(snap list | awk '{print $1}')
+        fi
+        sudo apt remove --autoremove snapd
+        sudo mkdir -p /etc/apt/preferences.d/
+        echo -e "Package: snapd\nPin: release a=*n\nPin-Priority: -10\n" | sudo tee /etc/apt/preferences.d/nosnap.pref
+        sudo apt update
+        success "Removed snap packages"
+    else
+        warning "Snap not installed"
     fi
-    sudo apt remove --autoremove snapd
-    sudo mkdir -p /etc/apt/preferences.d/
-    echo -e "Package: snapd\nPin: release a=*n\nPin-Priority: -10\n" | sudo tee /etc/apt/preferences.d/nosnap.pref
-    sudo apt update
 fi
 
 packages_to_install='git,zsh,curl,python3-pip,libbz2-dev,python3-virtualenv,cargo,build-essential'
@@ -49,11 +95,17 @@ if [ -n "$missing_packages" ]; then
     ./zsh/spinner.zsh sudo apt-get update -qq && sudo apt-get install -qqy "$missing_packages"
 fi
 
-if ! command -v firefox >/dev/null 2>&1; then
-    check_sudo
-    curl -fsSL "https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US" -o "firefox.tar.bz2"
-    sudo tar -xjf "firefox.tar.bz2" -C /opt/
-    sudo ln -s /opt/firefox/firefox /usr/lib/firefox/firefox
+if [ "$firefox" = true ]; then
+    info "Installing Firefox"
+    if ! command -v firefox >/dev/null 2>&1; then
+        check_sudo
+        curl -fsSL "https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US" -o "firefox.tar.bz2"
+        sudo tar -xjf "firefox.tar.bz2" -C /opt/
+        sudo ln -s /opt/firefox/firefox /usr/lib/firefox/firefox
+        success "Installed Firefox"
+    else
+        warning "Firefox is already installed"
+    fi
 fi
 
 cp "$(pwd)/zsh/.zshrc" "${HOME}/.zshrc"
@@ -76,37 +128,40 @@ install_from_deb_link "discord.deb" "https://discord.com/api/download?platform=l
 install_from_deb_link "1password-latest.deb" "https://downloads.1password.com/linux/debian/amd64/stable/1password-latest.deb" "1password"
 install_from_deb_link "1password-cli-amd64-latest.deb" "https://downloads.1password.com/linux/debian/amd64/stable/1password-cli-amd64-latest.deb" "op"
 
-if [ "$(op account list | wc -l)" -eq 0 ]; then
-    echo "1Password CLI not signed in. Please sign in and connect the desktop app."
-    while [ "$(op account list | wc -l)" -eq 0 ]; do
-        sleep 10
+if [ "$ssh" = true ]; then
+    info "Setting up SSH keys"
+    if [ "$(op account list | wc -l)" -eq 0 ]; then
+        warning "1Password CLI not signed in. Please sign in and connect the desktop app."
+        while [ "$(op account list | wc -l)" -eq 0 ]; do
+            sleep 10
+        done
+    fi
+
+    mkdir -p "${HOME}/.ssh" && chmod 700 "${HOME}/.ssh"
+
+    for file in "config" "known_hosts"; do
+        cp "$(pwd)/ssh/$file" "${HOME}/.ssh/$file" && chmod 600 "${HOME}/.ssh/$file"
+    done
+
+    sshsetup() {
+        export spinner_icon="🔑"
+        export spinner_msg="Fetching $1 public SSH key for $2 vault"
+        ./zsh/spinner.zsh op read --force --out-file "$3" "op://$2/$1/ssh/public"
+    }
+
+    for vault in "personal" "work"; do
+        for service in "github" "gitlab"; do
+            pub_key="${HOME}/.ssh/${service}.${vault}.pub"
+            priv_key="${HOME}/.ssh/${service}.${vault}"
+
+            [ ! -f "${pub_key}" ] && sshsetup $service $vault $pub_key
+            [ ! -f "${priv_key}" ] && {
+                sshsetup $service $vault $priv_key
+                [ -f "${priv_key}" ] && chmod 600 "${priv_key}"
+            }
+        done
     done
 fi
-
-mkdir -p "${HOME}/.ssh" && chmod 700 "${HOME}/.ssh"
-
-for file in "config" "known_hosts"; do
-    cp "$(pwd)/ssh/$file" "${HOME}/.ssh/$file" && chmod 600 "${HOME}/.ssh/$file"
-done
-
-sshsetup() {
-    export spinner_icon="🔑"
-    export spinner_msg="Fetching $1 public SSH key for $2 vault"
-    ./zsh/spinner.zsh op read --force --out-file "$3" "op://$2/$1/ssh/public"
-}
-
-for vault in "personal" "work"; do
-    for service in "github" "gitlab"; do
-        pub_key="${HOME}/.ssh/${service}.${vault}.pub"
-        priv_key="${HOME}/.ssh/${service}.${vault}"
-
-        [ ! -f "${pub_key}" ] && sshsetup $service $vault $pub_key
-        [ ! -f "${priv_key}" ] && {
-            sshsetup $service $vault $priv_key
-            [ -f "${priv_key}" ] && chmod 600 "${priv_key}"
-        }
-    done
-done
 
 cp "$(pwd)/git/.gitconfig" "${HOME}/.gitconfig"
 cp "$(pwd)/git/.gitignore" "${HOME}/.gitignore"
@@ -153,3 +208,5 @@ if ! command -v spotify >/dev/null 2>&1; then
     echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
     ./zsh/spinner.zsh sudo apt-get update && sudo apt-get install -qqy spotify-client
 fi
+
+success "Done!"

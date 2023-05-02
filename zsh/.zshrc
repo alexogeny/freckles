@@ -25,6 +25,22 @@ for service in "github" "gitlab"; do
     done
 done
 
+info() {
+    printf "\033[1;34m👗 INFO: $1\033[0m\n"
+}
+
+warning() {
+    printf "\033[1;33m👜 WARNING: $1\033[0m\n"
+}
+
+error() {
+    printf "\033[1;31m👠 ERROR: $1\033[0m\n"
+}
+
+success() {
+    printf "\033[1;32m🎀 SUCCESS: $1\033[0m\n"
+}
+
 function check_sudo() {
     if [[ $(sudo -n uptime 2>&1|grep "load"|wc -l) -eq 0 ]]; then
         sudo -v
