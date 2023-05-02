@@ -264,5 +264,6 @@ if [ "$slack" = true ]; then
     else
         warning "Slack is already installed"
     fi
+fi
 
 success "Done!"
