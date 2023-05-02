@@ -123,6 +123,14 @@ else
     warning "All packages already installed"
 fi
 
+if ! command -v brew >/dev/null 2>&1; then
+    export spinner_icon="📦"
+    export spinner_msg="Installing brew"
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+    brew install gcc libffi
+fi
+
 if [ "$firefox" = true ]; then
     info "Installing Firefox"
     if ! command -v firefox >/dev/null 2>&1; then
@@ -207,14 +215,6 @@ cp "$(pwd)/git/.gitconfig" "${HOME}/.gitconfig"
 cp "$(pwd)/git/.gitignore" "${HOME}/.gitignore"
 cp "$(pwd)/git/.github.gitconfig" "${HOME}/.github.gitconfig"
 cp "$(pwd)/git/.gitlab.gitconfig" "${HOME}/.gitlab.gitconfig"
-
-if ! command -v brew >/dev/null 2>&1; then
-    export spinner_icon="📦"
-    export spinner_msg="Installing brew"
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
-    brew install gcc python libffi
-fi
 
 if [ "$python" = true ]; then
     info "Installing python"
