@@ -58,9 +58,11 @@ function install_from_deb_link {
     info "Installing ${1}"
     check_sudo
     export spinner_icon="📦"
-    export spinner_msg="Downloading and installing ${1}"
+    export spinner_msg="Downloading ${1}"
     ./zsh/spinner.zsh curl -fsSL "${2}" -o "${1}"
+    export spinner_msg="Installing ${1}"
     ./zsh/spinner.zsh sudo apt-get install -qqy "./${1}"
+    export spinner_msg="Cleaning up ${1}"
     ./zsh/spinner.zsh rm "${1}"
 }
 
@@ -74,7 +76,7 @@ if [ "$unsnap" = true ]; then
             export spinner_msg="Removing snap packages"
             ./zsh/spinner.zsh sudo snap remove --purge $(snap list | awk '{print $1}')
         fi
-        sudo apt remove --autoremove snapd
+        sudo apt remove --autoremove snap snapd
         sudo mkdir -p /etc/apt/preferences.d/
         echo -e "Package: snapd\nPin: release a=*n\nPin-Priority: -10\n" | sudo tee /etc/apt/preferences.d/nosnap.pref
         sudo apt update
@@ -95,7 +97,7 @@ if [ -n "$missing_packages" ]; then
     check_sudo
     export spinner_icon="📦"
     export spinner_msg="Installing missing packages: ${missing_packages}"
-    ./zsh/spinner.zsh sudo apt-get update -qq && sudo apt-get install -qqy "$missing_packages"
+    ./zsh/spinner.zsh sudo apt-get update -qq && sudo apt-get install -qqy $missing_packages
 else
     warning "All packages already installed"
 fi
@@ -114,7 +116,10 @@ if [ "$firefox" = true ]; then
         check_sudo
         curl -fsSL "https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US" -o "firefox.tar.bz2"
         sudo tar -xjf "firefox.tar.bz2" -C /opt/
+        sudo mkdir -p /usr/lib/firefox
         sudo ln -s /opt/firefox/firefox /usr/lib/firefox/firefox
+        sudo find ~/.local/share/applications -name "*Firefox*.desktop" -delete
+        cp ./firefox/Firefox.desktop ~/.local/share/applications/Firefox.desktop
         success "Installed Firefox"
     else
         warning "Firefox is already installed"
@@ -140,8 +145,9 @@ if [ "$zsh" = true ]; then
     ln -sf "${HOME}/.zsh-things/spinner.zsh" "${HOME}/.spinner"
 
     [ "$(basename "$SHELL")" != "zsh" ] && {
+    	command -v zsh | sudo tee -a /etc/shells
         chsh -s "$(command -v zsh)"
-        info "zsh is now the default shell. Please restart your terminal."
+        info "zsh is now the default shell. Please log in again."
     }
 
     source "${HOME}/.zshrc"
@@ -170,7 +176,7 @@ if [ "$ssh" = true ]; then
     sshsetup() {
         export spinner_icon="🔑"
         export spinner_msg="Fetching $1 public SSH key for $2 vault"
-        ./zsh/spinner.zsh op read --force --out-file "$3" "op://$2/$1/ssh/public"
+        ./zsh/spinner.zsh op read --force --out-file "$3" "op://$2/$1/ssh/$4"
     }
 
     item_list=$(op item list --favorite)
@@ -183,9 +189,9 @@ if [ "$ssh" = true ]; then
 
             if echo "$item_list" | grep "${service}" | grep "${vault}" >/dev/null; then
                 info "Fetching $service keys for $vault vault"
-                [ ! -f "${pub_key}" ] && sshsetup $service $vault $pub_key
+                [ ! -f "${pub_key}" ] && sshsetup $service $vault $pub_key public
                 [ ! -f "${priv_key}" ] && {
-                    sshsetup $service $vault $priv_key
+                    sshsetup $service $vault $priv_key private
                     [ -f "${priv_key}" ] && chmod 600 "${priv_key}"
                 }
                 if [ -f "${priv_key}" ]; then
@@ -227,7 +233,7 @@ if [ "$node" = true ]; then
         export spinner_icon="📦"
         export spinner_msg="Installing nodejs"
         check_sudo
-        ./zsh/spinner.zsh brew install node nvm
+        ./zsh/spinner.zsh brew install node
     else
         warning "Node is already installed"
     fi

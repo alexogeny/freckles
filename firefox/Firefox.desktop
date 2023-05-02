@@ -1,0 +1,14 @@
+[Desktop Entry]
+Encoding=UTF-8
+Version=1.0
+Type=Application
+Exec=/opt/firefox/firefox
+StartupNotify=true
+Terminal=false
+Keywords=web;browser;internet;
+Categories=Network;WebBrowser;Favorites;
+Name=Firefox
+Comment=
+Icon=/opt/firefox/browser/chrome/icons/default/default128.png
+MimeType=text/html;text/xml;application/xhtml_xml;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;
+X-Ayatana-Desktop-Shortcuts=NewWindow;NewIncognito
