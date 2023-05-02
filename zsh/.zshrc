@@ -49,9 +49,11 @@ function apt-install() {
 }
 
 function cache-clean() {
+  check_sudo
   yarn cache clean
   pip cache purge
   npm cache clean --force
+  sudo apt autoclean
   if [ -d ~/.cache/pip ]; then
     rm -rf ~/.cache/pip
   fi
