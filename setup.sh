@@ -21,21 +21,36 @@ if ! command -v apt-get >/dev/null 2>&1; then
     exit 1
 fi
 
+firefox=false
+node=false
+python=false
 ssh=false
 unsnap=false
-firefox=false
+zsh=false
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-    -s | --ssh)
-        ssh=true
-        shift
-        ;;
     -f | --firefox)
         firefox=true
         shift
         ;;
+    -n | --node)
+        node=true
+        shift
+        ;;
+    -p | --python)
+        python=true
+        shift
+        ;;
+    -s | --ssh)
+        ssh=true
+        shift
+        ;;
     -u | --unsnap)
         unsnap=true
+        shift
+        ;;
+    -z | --zsh)
+        zsh=true
         shift
         ;;
     *)
@@ -47,12 +62,14 @@ done
 
 function check_sudo() {
     if [[ $(sudo -n uptime 2>&1 | grep "load" | wc -l) -eq 0 ]]; then
+        info "Sudo password needed to continue."
         sudo -v
     fi
 }
 
 function install_from_deb_link {
     [ -n "$3" ] && command -v "$3" >/dev/null 2>&1 && return
+    info "Installing ${1}"
     check_sudo
     export spinner_icon="📦"
     export spinner_msg="Downloading and installing ${1}"
@@ -81,7 +98,7 @@ if [ "$unsnap" = true ]; then
     fi
 fi
 
-packages_to_install='git,zsh,curl,python3-pip,libbz2-dev,python3-virtualenv,cargo,build-essential'
+packages_to_install='git,curl,libbz2-dev,cargo,build-essential'
 missing_packages=''
 for package in $(echo "$packages_to_install" | tr ',' '\n'); do
     if ! dpkg -s "$package" >/dev/null 2>&1; then
@@ -93,6 +110,8 @@ if [ -n "$missing_packages" ]; then
     export spinner_icon="📦"
     export spinner_msg="Installing missing packages: ${missing_packages}"
     ./zsh/spinner.zsh sudo apt-get update -qq && sudo apt-get install -qqy "$missing_packages"
+else
+    warning "All packages already installed"
 fi
 
 if [ "$firefox" = true ]; then
@@ -108,20 +127,31 @@ if [ "$firefox" = true ]; then
     fi
 fi
 
-cp "$(pwd)/zsh/.zshrc" "${HOME}/.zshrc"
-mkdir -p "${HOME}/.zsh-things"
-files=("git.zsh" "aliases.zsh" "python.zsh" "node.zsh" "spinner.zsh" "rust.zsh")
-for file in "${files[@]}"; do
-    cp "$(pwd)/zsh/${file}" "${HOME}/.zsh-things/${file}"
-done
-ln -sf "${HOME}/.zsh-things/spinner.zsh" "${HOME}/.spinner"
+if [ "$zsh" = true ]; then
+    if ! command -v zsh >/dev/null 2>&1; then
+        check_sudo
+        export spinner_icon="📦"
+        export spinner_msg="Installing zsh"
+        ./zsh/spinner.zsh brew install zsh
+    else
+        warning "zsh is already installed"
+    fi
+    info "Configuring zsh files"
+    cp "$(pwd)/zsh/.zshrc" "${HOME}/.zshrc"
+    mkdir -p "${HOME}/.zsh-things"
+    files=("git.zsh" "aliases.zsh" "python.zsh" "node.zsh" "spinner.zsh" "rust.zsh")
+    for file in "${files[@]}"; do
+        cp "$(pwd)/zsh/${file}" "${HOME}/.zsh-things/${file}"
+    done
+    ln -sf "${HOME}/.zsh-things/spinner.zsh" "${HOME}/.spinner"
 
-[ "$(basename "$SHELL")" != "zsh" ] && {
-    chsh -s "$(command -v zsh)"
-    echo "zsh is now the default shell. Please restart your terminal."
-}
+    [ "$(basename "$SHELL")" != "zsh" ] && {
+        chsh -s "$(command -v zsh)"
+        info "zsh is now the default shell. Please restart your terminal."
+    }
 
-source "${HOME}/.zshrc"
+    source "${HOME}/.zshrc"
+fi
 
 install_from_deb_link "code_latest_amd64.deb" "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64" "code"
 install_from_deb_link "discord.deb" "https://discord.com/api/download?platform=linux&format=deb" "discord"
@@ -163,13 +193,11 @@ if [ "$ssh" = true ]; then
     done
 fi
 
+info "Configuring git files"
 cp "$(pwd)/git/.gitconfig" "${HOME}/.gitconfig"
 cp "$(pwd)/git/.gitignore" "${HOME}/.gitignore"
 cp "$(pwd)/git/.github.gitconfig" "${HOME}/.github.gitconfig"
 cp "$(pwd)/git/.gitlab.gitconfig" "${HOME}/.gitlab.gitconfig"
-
-mkdir -p "$HOME/.config/pip"
-[[ ! -f "$HOME/.config/pip/pip.conf" ]] && cp "$(pwd)/python/pip.conf" "$HOME/.config/pip/pip.conf"
 
 if ! command -v brew >/dev/null 2>&1; then
     export spinner_icon="📦"
@@ -179,25 +207,31 @@ if ! command -v brew >/dev/null 2>&1; then
     brew install gcc python libffi
 fi
 
-if ! command -v pipenv >/dev/null 2>&1; then
-    export spinner_icon="📦"
-    export spinner_msg="Installing pipenv"
-    brew install pipenv
+if [ "$python" = true ]; then
+    info "Installing python"
+    if ! command -v python >/dev/null 2>&1; then
+        export spinner_icon="📦"
+        export spinner_msg="Installing python"
+        check_sudo
+        ./zsh/spinner.zsh brew install python pyenv pipenv
+        info "Configuring python files"
+        mkdir -p "$HOME/.config/pip"
+        [[ ! -f "$HOME/.config/pip/pip.conf" ]] && cp "$(pwd)/python/pip.conf" "$HOME/.config/pip/pip.conf"
+    else
+        warning "Python is already installed"
+    fi
 fi
 
-if ! command -v node >/dev/null 2>&1; then
-    export spinner_icon="📦"
-    export spinner_msg="Installing nodejs"
-    check_sudo
-    ./zsh/spinner.zsh curl -sL https://deb.nodesource.com/setup_current.x | sudo -E bash - &&
-        sudo apt-get install -qy nodejs npm
-fi
-
-if ! command -v nvm >/dev/null 2>&1; then
-    export spinner_icon="📦"
-    export spinner_msg="Installing nvm"
-    nvm_latest_version=$(curl -s https://api.github.com/repos/nvm-sh/nvm/releases/latest | grep -oP '"tag_name": "\K(.*)(?=")')
-    ./zsh/spinner.zsh curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/${nvm_latest_version}/install.sh | bash
+if [ "$node" = true ]; then
+    info "Installing node"
+    if ! command -v node >/dev/null 2>&1; then
+        export spinner_icon="📦"
+        export spinner_msg="Installing nodejs"
+        check_sudo
+        ./zsh/spinner.zsh brew install node nvm
+    else
+        warning "Node is already installed"
+    fi
 fi
 
 if ! command -v spotify >/dev/null 2>&1; then
