@@ -173,16 +173,27 @@ if [ "$ssh" = true ]; then
         ./zsh/spinner.zsh op read --force --out-file "$3" "op://$2/$1/ssh/public"
     }
 
+    item_list=$(op item list --favorite)
+    item_list=$(echo "$item_list" | tr '[:upper:]' '[:lower:]')
+
     for vault in "personal" "work"; do
         for service in "github" "gitlab"; do
             pub_key="${HOME}/.ssh/${service}.${vault}.pub"
             priv_key="${HOME}/.ssh/${service}.${vault}"
 
-            [ ! -f "${pub_key}" ] && sshsetup $service $vault $pub_key
-            [ ! -f "${priv_key}" ] && {
-                sshsetup $service $vault $priv_key
-                [ -f "${priv_key}" ] && chmod 600 "${priv_key}"
-            }
+            if echo "$item_list" | grep "${service}" | grep "${vault}" >/dev/null; then
+                info "Fetching $service keys for $vault vault"
+                [ ! -f "${pub_key}" ] && sshsetup $service $vault $pub_key
+                [ ! -f "${priv_key}" ] && {
+                    sshsetup $service $vault $priv_key
+                    [ -f "${priv_key}" ] && chmod 600 "${priv_key}"
+                }
+                if [ -f "${priv_key}" ]; then
+                    if ! ssh-add -l | grep -q "${priv_key}"; then
+                        ssh-add "${priv_key}"
+                    fi
+                fi
+            fi
         done
     done
 fi
