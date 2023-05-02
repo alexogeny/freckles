@@ -121,6 +121,8 @@ if [ "$firefox" = true ]; then
         sudo ln -s /opt/firefox/firefox /usr/lib/firefox/firefox
         sudo find ~/.local/share/applications -name "*Firefox*.desktop" -delete
         cp ./firefox/Firefox.desktop ~/.local/share/applications/Firefox.desktop
+        mkdir -p ~/.config
+        cp ./firefox/mimeapps.list ~/.config/mimeapps.list
         success "Installed Firefox"
     else
         warning "Firefox is already installed"
