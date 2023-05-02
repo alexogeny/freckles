@@ -1,5 +1,18 @@
 #!/bin/bash
 
+declare -A flags
+flags=(
+    ["--all"]="firefox git node python ssh unsnap zsh"
+    ["--initial"]="firefox git node python ssh unsnap zsh"
+    ["--firefox"]="firefox"
+    ["--git"]="git"
+    ["--node"]="node"
+    ["--python"]="python"
+    ["--ssh"]="ssh"
+    ["--unsnap"]="unsnap"
+    ["--zsh"]="zsh"
+)
+
 info() {
     printf "\033[1;34m👗 INFO: $1\033[0m\n"
 }
@@ -21,52 +34,16 @@ if ! command -v apt-get >/dev/null 2>&1; then
     exit 1
 fi
 
-firefox=false
-node=false
-python=false
-ssh=false
-unsnap=false
-zsh=false
 while [[ "$#" -gt 0 ]]; do
-    case $1 in
-    -a | --all | -i | --initial)
-        firefox=true
-        node=true
-        python=true
-        ssh=true
-        unsnap=true
-        zsh=true
+    if [[ ${flags["$1"]+_} ]]; then
+        for option in ${flags["$1"]}; do
+            declare "$option=true"
+        done
         shift
-        ;;
-    -f | --firefox)
-        firefox=true
-        shift
-        ;;
-    -n | --node)
-        node=true
-        shift
-        ;;
-    -p | --python)
-        python=true
-        shift
-        ;;
-    -s | --ssh)
-        ssh=true
-        shift
-        ;;
-    -u | --unsnap)
-        unsnap=true
-        shift
-        ;;
-    -z | --zsh)
-        zsh=true
-        shift
-        ;;
-    *)
+    else
         error "Unknown parameter passed: $1"
         exit 1
-        ;;
-    esac
+    fi
 done
 
 function check_sudo() {
@@ -210,11 +187,13 @@ if [ "$ssh" = true ]; then
     done
 fi
 
-info "Configuring git files"
-cp "$(pwd)/git/.gitconfig" "${HOME}/.gitconfig"
-cp "$(pwd)/git/.gitignore" "${HOME}/.gitignore"
-cp "$(pwd)/git/.github.gitconfig" "${HOME}/.github.gitconfig"
-cp "$(pwd)/git/.gitlab.gitconfig" "${HOME}/.gitlab.gitconfig"
+if [ "$git" = true ]; then
+    info "Configuring git files"
+    cp "$(pwd)/git/.gitconfig" "${HOME}/.gitconfig"
+    cp "$(pwd)/git/.gitignore" "${HOME}/.gitignore"
+    cp "$(pwd)/git/.github.gitconfig" "${HOME}/.github.gitconfig"
+    cp "$(pwd)/git/.gitlab.gitconfig" "${HOME}/.gitlab.gitconfig"
+fi
 
 if [ "$python" = true ]; then
     info "Installing python"
