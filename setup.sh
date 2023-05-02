@@ -3,11 +3,12 @@
 declare -A flags
 flags=(
     ["--all"]="firefox git node python ssh unsnap zsh"
-    ["--initial"]="firefox git node python ssh unsnap zsh"
+    ["--initial"]="firefox git node python unsnap zsh slack"
     ["--firefox"]="firefox"
     ["--git"]="git"
     ["--node"]="node"
     ["--python"]="python"
+    ["--slack"]="slack"
     ["--ssh"]="ssh"
     ["--unsnap"]="unsnap"
     ["--zsh"]="zsh"
@@ -247,5 +248,21 @@ if ! command -v spotify >/dev/null 2>&1; then
     echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
     ./zsh/spinner.zsh sudo apt-get update && sudo apt-get install -qqy spotify-client
 fi
+
+if [ "$slack" = true ]; then
+    info "Installing slack"
+    if ! command -v slack >/dev/null 2>&1; then
+        check_sudo
+        export spinner_icon="📥"
+        export spinner_msg="Installing slack"
+        content=$(curl -s https://slack.com/intl/en-au/downloads/instructions/ubuntu)
+        deb_link=$(echo "$content" | grep -oP 'https://downloads\.slack-edge\.com/releases/linux/\K[0-9.]+/prod/x64/slack-desktop-[0-9.]+-amd64\.deb')
+        deb_link="https://downloads.slack-edge.com/releases/linux/$deb_link"
+        curl -sS "$deb_link" -o slack.deb
+        ./zsh/spinner.zsh sudo apt-get install -qqy ./slack.deb
+        rm slack.deb
+    else
+        warning "Slack is already installed"
+    fi
 
 success "Done!"
