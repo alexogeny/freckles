@@ -34,3 +34,6 @@ alias mdp='mkdir -pv'
 
 alias mv='mv -i'
 alias ln='ln -i'
+
+alias python=python3
+alias pip=pip3

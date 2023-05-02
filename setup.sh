@@ -116,17 +116,19 @@ cp "$(pwd)/git/.gitlab.gitconfig" "${HOME}/.gitlab.gitconfig"
 mkdir -p "$HOME/.config/pip"
 [[ ! -f "$HOME/.config/pip/pip.conf" ]] && cp "$(pwd)/python/pip.conf" "$HOME/.config/pip/pip.conf"
 
-[[ ! -d "$HOME/.pyenv" ]] && {
-    export spinner_icon="🐍"
-    export spinner_msg="Installing pyenv"
-    curl https://pyenv.run | bash
-}
+if ! command -v brew >/dev/null 2>&1; then
+    export spinner_icon="📦"
+    export spinner_msg="Installing brew"
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+    brew install gcc python libffi
+fi
 
-command -v pipenv >/dev/null 2>&1 || {
-    export spinner_icon="🐍"
+if ! command -v pipenv >/dev/null 2>&1; then
+    export spinner_icon="📦"
     export spinner_msg="Installing pipenv"
-    ./zsh/spinner.zsh pip3 install --user --break-system-packages pipenv
-}
+    brew install pipenv
+fi
 
 if ! command -v node >/dev/null 2>&1; then
     export spinner_icon="📦"
