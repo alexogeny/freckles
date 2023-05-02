@@ -29,6 +29,15 @@ unsnap=false
 zsh=false
 while [[ "$#" -gt 0 ]]; do
     case $1 in
+    -a | --all | -i | --initial)
+        firefox=true
+        node=true
+        python=true
+        ssh=true
+        unsnap=true
+        zsh=true
+        shift
+        ;;
     -f | --firefox)
         firefox=true
         shift
