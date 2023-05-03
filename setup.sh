@@ -268,4 +268,13 @@ if [ "$slack" = true ]; then
     fi
 fi
 
+if [ "$(cat /proc/swaps | wc -l)" -gt 1 ]; then
+    info "Disabling swap"
+    sudo swapoff -a
+    sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+    for swapfile in $(cat /proc/swaps | tail -n +2 | awk '{print $1}'); do
+        sudo rm "$swapfile"
+    done
+fi
+
 success "Done!"
