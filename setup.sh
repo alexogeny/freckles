@@ -129,7 +129,7 @@ if [ "$firefox" = true ]; then
     fi
 fi
 
-if [ "$zsh" = true ]; then
+install_zsh() {
     if ! command -v zsh >/dev/null 2>&1; then
         check_sudo
         export spinner_icon="📦"
@@ -138,6 +138,9 @@ if [ "$zsh" = true ]; then
     else
         warning "zsh is already installed"
     fi
+}
+
+configure_zsh_files() {
     info "Configuring zsh files"
     cp "$(pwd)/zsh/.zshrc" "${HOME}/.zshrc"
     mkdir -p "${HOME}/.zsh-things"
@@ -146,14 +149,25 @@ if [ "$zsh" = true ]; then
         cp "$(pwd)/zsh/${file}" "${HOME}/.zsh-things/${file}"
     done
     ln -sf "${HOME}/.zsh-things/spinner.zsh" "${HOME}/.spinner"
+}
 
-    [ "$(basename "$SHELL")" != "zsh" ] && {
-    	command -v zsh | sudo tee -a /etc/shells
+set_zsh_as_default() {
+    if [[ "$(basename "$SHELL")" != "zsh" ]]; then
+        command -v zsh | sudo tee -a /etc/shells
         chsh -s "$(command -v zsh)"
         info "zsh is now the default shell. Please log in again."
-    }
+    fi
+}
 
+source_zshrc() {
     source "${HOME}/.zshrc"
+}
+
+if [[ "$zsh" == true ]]; then
+    install_zsh
+    configure_zsh_files
+    set_zsh_as_default
+    source_zshrc
 fi
 
 install_from_deb_link "code_latest_amd64.deb" "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64" "code"
@@ -229,8 +243,6 @@ if [ "$git" = true ]; then
             warning "Source file not found: $src_file"
         fi
     done
-else
-    info "Skipping git configuration"
 fi
 
 if [ "$python" = true ]; then
@@ -291,12 +303,12 @@ if [[ "$slack" == "true" ]]; then
             rm -f "$slack_tempfile"
             exit 1
         }
-        
+
         ./zsh/spinner.zsh sudo dpkg -i "$slack_tempfile" || {
             ./zsh/spinner.zsh sudo apt-get install -qqy -f
             success "Dependencies fixed and Slack installed"
         }
-        
+
         rm -f "$slack_tempfile"
 
     else
