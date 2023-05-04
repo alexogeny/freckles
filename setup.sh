@@ -82,25 +82,24 @@ if [ "$unsnap" = true ]; then
         echo -e "Package: snapd\nPin: release a=*n\nPin-Priority: -10\n" | sudo tee /etc/apt/preferences.d/nosnap.pref
         sudo apt update
         success "Removed snap packages"
-    else
-        warning "Snap not installed"
     fi
 fi
 
 packages_to_install='git,curl,libbz2-dev,cargo,build-essential'
 missing_packages=''
-for package in $(echo "$packages_to_install" | tr ',' '\n'); do
-    if ! dpkg -s "$package" >/dev/null 2>&1; then
+
+IFS=',' read -ra packages <<< "$packages_to_install"
+for package in "${packages[@]}"; do
+    if ! dpkg -s "$package" > /dev/null 2>&1; then
         missing_packages="${missing_packages} ${package}"
     fi
 done
+
 if [ -n "$missing_packages" ]; then
     check_sudo
     export spinner_icon="📦"
     export spinner_msg="Installing missing packages: ${missing_packages}"
     ./zsh/spinner.zsh sudo apt-get update -qq && sudo apt-get install -qqy $missing_packages
-else
-    warning "All packages already installed"
 fi
 
 if ! command -v brew >/dev/null 2>&1; then
@@ -109,11 +108,12 @@ if ! command -v brew >/dev/null 2>&1; then
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
     brew install gcc libffi
+    success "Installed brew"
 fi
 
 if [ "$firefox" = "true" ]; then
-    info "Installing Firefox"
     if ! command -v firefox >/dev/null 2>&1; then
+        info "Installing Firefox"
         check_sudo
         if ! curl -fsSL "https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US" -o "firefox.tar.bz2"; then
             error "Failed to download Firefox"
@@ -130,8 +130,6 @@ if [ "$firefox" = "true" ]; then
         mkdir -p ~/.config
         cp -f ./firefox/mimeapps.list ~/.config/mimeapps.list
         success "Installed Firefox"
-    else
-        warning "Firefox is already installed"
     fi
 fi
 
@@ -141,8 +139,6 @@ install_zsh() {
         export spinner_icon="📦"
         export spinner_msg="Installing zsh"
         ./zsh/spinner.zsh brew install zsh
-    else
-        warning "zsh is already installed"
     fi
 }
 
@@ -215,7 +211,6 @@ if [ "$ssh" = true ]; then
             priv_key="${ssh_dir}/${service}.${vault}"
 
             if echo "$item_list" | grep -q "${service}.*${vault}"; then
-                info "Fetching $service keys for $vault vault"
                 [ ! -f "${pub_key}" ] && sshsetup $service $vault $pub_key public
                 [ ! -f "${priv_key}" ] && {
                     sshsetup $service $vault $priv_key private
@@ -261,8 +256,6 @@ if [ "$python" = true ]; then
         info "Configuring python files"
         mkdir -p "$HOME/.config/pip"
         [[ ! -f "$HOME/.config/pip/pip.conf" ]] && cp "$(pwd)/python/pip.conf" "$HOME/.config/pip/pip.conf"
-    else
-        warning "Python is already installed"
     fi
 fi
 
@@ -273,8 +266,6 @@ if [ "$node" = true ]; then
         export spinner_msg="Installing nodejs"
         check_sudo
         ./zsh/spinner.zsh brew install node
-    else
-        warning "Node is already installed"
     fi
 fi
 
@@ -316,9 +307,6 @@ if [[ "$slack" == "true" ]]; then
         }
 
         rm -f "$slack_tempfile"
-
-    else
-        warning "Slack is already installed"
     fi
 fi
 
@@ -342,11 +330,7 @@ disable_swap() {
             error "Error: failed to modify /etc/fstab" >&2
             exit 1
         }
-    else
-        warning "Swap is already disabled"
     fi
 }
 
 disable_swap
-
-success "Done!"
