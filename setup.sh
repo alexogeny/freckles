@@ -268,13 +268,31 @@ if [ "$slack" = true ]; then
     fi
 fi
 
-if [ "$(cat /proc/swaps | wc -l)" -gt 1 ]; then
-    info "Disabling swap"
-    sudo swapoff -a
-    sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
-    for swapfile in $(cat /proc/swaps | tail -n +2 | awk '{print $1}'); do
-        sudo rm "$swapfile"
-    done
-fi
+disable_swap() {
+    readarray -t swapfiles < <(awk 'NR > 1 {print $1}' /proc/swaps)
+
+    if [ "${#swapfiles[@]}" -gt 0 ]; then
+        check_sudo
+        info "Disabling swap"
+        for swapfile in "${swapfiles[@]}"; do
+            sudo swapoff "$swapfile" || {
+                error "Error: swapoff failed for $swapfile" >&2
+                exit 1
+            }
+            sudo rm "$swapfile" || {
+                error "Error: failed to remove $swapfile" >&2
+                exit 1
+            }
+        done
+        sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab || {
+            error "Error: failed to modify /etc/fstab" >&2
+            exit 1
+        }
+    else
+        warning "Swap is already disabled"
+    fi
+}
+
+disable_swap
 
 success "Done!"
