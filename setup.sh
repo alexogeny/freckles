@@ -209,10 +209,22 @@ fi
 
 if [ "$git" = true ]; then
     info "Configuring git files"
-    cp "$(pwd)/git/.gitconfig" "${HOME}/.gitconfig"
-    cp "$(pwd)/git/.gitignore" "${HOME}/.gitignore"
-    cp "$(pwd)/git/.github.gitconfig" "${HOME}/.github.gitconfig"
-    cp "$(pwd)/git/.gitlab.gitconfig" "${HOME}/.gitlab.gitconfig"
+
+    GIT_FILES=("git/.gitconfig" "git/.gitignore" "git/.github.gitconfig" "git/.gitlab.gitconfig")
+
+    for file in "${GIT_FILES[@]}"; do
+        src_file="$(pwd)/$file"
+        dest_file="${HOME}/${file##*/}"
+
+        if [ -f "$src_file" ]; then
+            cp -f "$src_file" "$dest_file"
+            success "Copied $src_file to $dest_file"
+        else
+            warning "Source file not found: $src_file"
+        fi
+    done
+else
+    info "Skipping git configuration"
 fi
 
 if [ "$python" = true ]; then
