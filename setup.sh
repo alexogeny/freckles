@@ -111,18 +111,24 @@ if ! command -v brew >/dev/null 2>&1; then
     brew install gcc libffi
 fi
 
-if [ "$firefox" = true ]; then
+if [ "$firefox" = "true" ]; then
     info "Installing Firefox"
     if ! command -v firefox >/dev/null 2>&1; then
         check_sudo
-        curl -fsSL "https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US" -o "firefox.tar.bz2"
-        sudo tar -xjf "firefox.tar.bz2" -C /opt/
+        if ! curl -fsSL "https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US" -o "firefox.tar.bz2"; then
+            error "Failed to download Firefox"
+            exit 1
+        fi
+        if ! sudo tar -xjf "firefox.tar.bz2" -C /opt/; then
+            error "Failed to extract Firefox"
+            exit 1
+        fi
         sudo mkdir -p /usr/lib/firefox
         sudo ln -s /opt/firefox/firefox /usr/lib/firefox/firefox
-        sudo find ~/.local/share/applications -name "*Firefox*.desktop" -delete
-        cp ./firefox/Firefox.desktop ~/.local/share/applications/Firefox.desktop
+        sudo find ~/.local/share/applications -name "*Firefox*.desktop" -exec rm -f {} \;
+        cp -f ./firefox/Firefox.desktop ~/.local/share/applications/Firefox.desktop
         mkdir -p ~/.config
-        cp ./firefox/mimeapps.list ~/.config/mimeapps.list
+        cp -f ./firefox/mimeapps.list ~/.config/mimeapps.list
         success "Installed Firefox"
     else
         warning "Firefox is already installed"
