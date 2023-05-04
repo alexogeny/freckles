@@ -161,6 +161,15 @@ install_from_deb_link "discord.deb" "https://discord.com/api/download?platform=l
 install_from_deb_link "1password-latest.deb" "https://downloads.1password.com/linux/debian/amd64/stable/1password-latest.deb" "1password"
 install_from_deb_link "1password-cli-amd64-latest.deb" "https://downloads.1password.com/linux/debian/amd64/stable/1password-cli-amd64-latest.deb" "op"
 
+sshsetup() {
+    export spinner_icon="🔑"
+    export spinner_msg="Fetching $1 $4 SSH key for $2 vault"
+    "$(dirname "$0")/zsh/spinner.zsh" op read --force --out-file "$3" "op://$2/$1/ssh/$4" || {
+        error "Failed to fetch $1 $4 SSH key for $2 vault"
+        return 1
+    }
+}
+
 if [ "$ssh" = true ]; then
     info "Setting up SSH keys"
     if [ "$(op account list | wc -l)" -eq 0 ]; then
@@ -170,27 +179,22 @@ if [ "$ssh" = true ]; then
         done
     fi
 
-    mkdir -p "${HOME}/.ssh" && chmod 700 "${HOME}/.ssh"
+    ssh_dir="${HOME}/.ssh"
+    mkdir -p "${ssh_dir}" && chmod 700 "${ssh_dir}"
 
     for file in "config" "known_hosts"; do
-        cp "$(pwd)/ssh/$file" "${HOME}/.ssh/$file" && chmod 600 "${HOME}/.ssh/$file"
+        cp "$(pwd)/ssh/$file" "${ssh_dir}/$file" && chmod 600 "${ssh_dir}/$file"
     done
-
-    sshsetup() {
-        export spinner_icon="🔑"
-        export spinner_msg="Fetching $1 public SSH key for $2 vault"
-        ./zsh/spinner.zsh op read --force --out-file "$3" "op://$2/$1/ssh/$4"
-    }
 
     item_list=$(op item list --favorite)
     item_list=$(echo "$item_list" | tr '[:upper:]' '[:lower:]')
 
     for vault in "personal" "work"; do
         for service in "github" "gitlab"; do
-            pub_key="${HOME}/.ssh/${service}.${vault}.pub"
-            priv_key="${HOME}/.ssh/${service}.${vault}"
+            pub_key="${ssh_dir}/${service}.${vault}.pub"
+            priv_key="${ssh_dir}/${service}.${vault}"
 
-            if echo "$item_list" | grep "${service}" | grep "${vault}" >/dev/null; then
+            if echo "$item_list" | grep -q "${service}.*${vault}"; then
                 info "Fetching $service keys for $vault vault"
                 [ ! -f "${pub_key}" ] && sshsetup $service $vault $pub_key public
                 [ ! -f "${priv_key}" ] && {
@@ -199,7 +203,9 @@ if [ "$ssh" = true ]; then
                 }
                 if [ -f "${priv_key}" ]; then
                     if ! ssh-add -l | grep -q "${priv_key}"; then
-                        ssh-add "${priv_key}"
+                        ssh-add "${priv_key}" || {
+                            error "Failed to add $priv_key to SSH agent"
+                        }
                     fi
                 fi
             fi
