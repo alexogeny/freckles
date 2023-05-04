@@ -263,18 +263,36 @@ if ! command -v spotify >/dev/null 2>&1; then
     ./zsh/spinner.zsh sudo apt-get update && sudo apt-get install -qqy spotify-client
 fi
 
-if [ "$slack" = true ]; then
-    info "Installing slack"
+if [[ "$slack" == "true" ]]; then
     if ! command -v slack >/dev/null 2>&1; then
+        info "Installing slack"
         check_sudo
         export spinner_icon="📥"
         export spinner_msg="Installing slack"
-        content=$(curl -s https://slack.com/intl/en-au/downloads/instructions/ubuntu)
-        deb_link=$(echo "$content" | grep -oP 'https://downloads\.slack-edge\.com/releases/linux/\K[0-9.]+/prod/x64/slack-desktop-[0-9.]+-amd64\.deb')
+
+        content=$(curl -s https://slack.com/intl/en-au/downloads/instructions/ubuntu) || {
+            error "Failed to download Slack information"
+            exit 1
+        }
+        deb_link=$(echo "$content" | grep -oP 'https://downloads\.slack-edge\.com/releases/linux/\K[0-9.]+/prod/x64/slack-desktop-[0-9.]+-amd64\.deb') || {
+            error "Failed to extract Slack deb package link"
+            exit 1
+        }
         deb_link="https://downloads.slack-edge.com/releases/linux/$deb_link"
-        curl -sS "$deb_link" -o slack.deb
-        ./zsh/spinner.zsh sudo apt-get install -qqy ./slack.deb
-        rm slack.deb
+        slack_tempfile=$(mktemp)
+        curl -sS "$deb_link" -o "$slack_tempfile" || {
+            error "Failed to download Slack deb package"
+            rm -f "$slack_tempfile"
+            exit 1
+        }
+        
+        ./zsh/spinner.zsh sudo dpkg -i "$slack_tempfile" || {
+            ./zsh/spinner.zsh sudo apt-get install -qqy -f
+            success "Dependencies fixed and Slack installed"
+        }
+        
+        rm -f "$slack_tempfile"
+
     else
         warning "Slack is already installed"
     fi
