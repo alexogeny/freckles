@@ -3,3 +3,6 @@
 # eval "$(pyenv init -)"
 
 # export PATH="$HOME/.local/bin:$PATH"
+
+export CFLAGS="-I$(brew --prefix openssl)/include"
+export LDFLAGS="-L$(brew --prefix openssl)/lib"
