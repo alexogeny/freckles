@@ -3,7 +3,8 @@
 declare -A flags
 flags=(
     ["--all"]="firefox git node python ssh unsnap zsh"
-    ["--initial"]="firefox git node python unsnap zsh slack"
+    ["--pop"]="node python ssh zsh slack git"
+    ["--ubuntu"]="firefox git node python unsnap zsh slack"
     ["--firefox"]="firefox"
     ["--git"]="git"
     ["--node"]="node"
