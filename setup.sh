@@ -280,6 +280,15 @@ if ! command -v spotify >/dev/null 2>&1; then
     ./zsh/spinner.zsh sudo apt-get update && sudo apt-get install -qqy spotify-client
 fi
 
+if ! command -v aws >/dev/null 2>&1; then
+    check_sudo
+    export spinner_icon="📥"
+    export spinner_msg="Installing aws cli"
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    unzip awscliv2.zip
+    sudo ./aws/install
+fi
+
 if [[ "$slack" == "true" ]]; then
     if ! command -v slack >/dev/null 2>&1; then
         info "Installing slack"
