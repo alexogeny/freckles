@@ -40,11 +40,10 @@ function clone_repo() {
 
   mkdir -p "$target_dir"
   export spinner_icon="🧬"
-  export spinner_msg="Cloning ${namespace_repo} to ${target_dir}"
+  export spinner_msg="Cloning to ${target_dir}"
   ~/.spinner git clone "$repo_url" "$target_dir" --quiet
   git --git-dir="$target_dir/.git" --work-tree="$target_dir" config --local include.path "$gitconfig"
 
-  echo "Repository cloned to $target_dir"
 }
 
 alias gcl="clone_repo"
