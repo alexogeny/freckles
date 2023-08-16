@@ -86,7 +86,7 @@ if [ "$unsnap" = true ]; then
     fi
 fi
 
-packages_to_install='git,curl,libbz2-dev,cargo,build-essential'
+packages_to_install='git,curl,libbz2-dev,cargo,build-essential,libsqlite3-dev'
 missing_packages=''
 
 IFS=',' read -ra packages <<< "$packages_to_install"
@@ -266,7 +266,8 @@ if [ "$node" = true ]; then
         export spinner_icon="📦"
         export spinner_msg="Installing nodejs"
         check_sudo
-        ./zsh/spinner.zsh brew install node
+        ./zsh/spinner.zsh brew install node nvm
+        mkdir -p "$HOME/.nvm"
     fi
 fi
 
