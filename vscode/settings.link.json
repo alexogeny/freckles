@@ -1,4 +1,7 @@
 {
+  "[html]": {
+    "editor.defaultFormatter": "vscode.html-language-features"
+  },
   "[json]": {
     "editor.defaultFormatter": "vscode.json-language-features"
   },
@@ -6,9 +9,16 @@
     "editor.defaultFormatter": "vscode.json-language-features"
   },
   "[python]": {
-    "editor.defaultFormatter": "ms-python.python"
+    "editor.defaultFormatter": "ms-python.python",
+    "editor.tabSize": 4
+  },
+  "[shellscript]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
   },
   "diffEditor.codeLens": true,
+  "diffEditor.experimental.collapseUnchangedRegions": true,
+  "diffEditor.experimental.showMoves": true,
+  "diffEditor.experimental.useVersion2": true,
   "editor.accessibilitySupport": "off",
   "editor.autoClosingBrackets": "always",
   "editor.autoClosingQuotes": "always",
@@ -16,7 +26,8 @@
   "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
   "editor.codeActionsOnSave": {
     "addMissingImports": true,
-    "source.fixAll": true
+    "source.fixAll": true,
+    "source.organizeImports": true
   },
   "editor.cursorBlinking": "phase",
   "editor.cursorSmoothCaretAnimation": true,
@@ -27,6 +38,7 @@
   "editor.defaultFormatter": "vscode.typescript-language-features",
   "editor.dragAndDrop": false,
   "editor.emptySelectionClipboard": false,
+  "editor.experimental.asyncTokenization": true,
   "editor.folding": false,
   "editor.fontFamily": "'Cascadia Code', 'Fira Code', 'Droid Sans Mono', 'monospace', monospace",
   "editor.fontLigatures": true,
@@ -48,6 +60,7 @@
   "editor.tabCompletion": "on",
   "editor.tabSize": 2,
   "editor.unusualLineTerminators": "auto",
+  "editor.wordWrap": "bounded",
   "emmet.includeLanguages": {
     "javascript": "javascriptreact"
   },
@@ -55,7 +68,9 @@
   "eslint.alwaysShowStatus": true,
   "explorer.confirmDelete": false,
   "extensions.ignoreRecommendations": true,
+  "files.autoGuessEncoding": true,
   "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 10000,
   "files.eol": "\n",
   "files.exclude": {
     "**/.git": true,
@@ -65,6 +80,7 @@
     "**/vendor": true,
     "dist": true
   },
+  "files.hotExit": "off",
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
   "files.trimTrailingWhitespace": true,
@@ -76,6 +92,12 @@
     "**/vendor/**": true
   },
   "git.confirmSync": false,
+  "gitlens.defaultGravatarsStyle": "retro",
+  "gitlens.outputLevel": "silent",
+  "gitlens.plusFeatures.enabled": false,
+  "gitlens.showWelcomeOnInstall": false,
+  "gitlens.showWhatsNewAfterUpgrades": false,
+  "gitlens.telemetry.enabled": false,
   "javascript.format.insertSpaceAfterOpeningAndBeforeClosingJsxExpressionBraces": true,
   "javascript.format.insertSpaceAfterOpeningAndBeforeClosingNonemptyBrackets": true,
   "javascript.format.insertSpaceAfterOpeningAndBeforeClosingTemplateStringBraces": true,
@@ -90,18 +112,30 @@
   "javascript.preferences.quoteStyle": "single",
   "javascript.suggest.completeFunctionCalls": true,
   "javascript.updateImportsOnFileMove.enabled": "always",
+  "liveshare.accessibility.accessibilityFeaturesEnabled": "off",
+  "liveshare.accessibility.soundsEnabled": false,
+  "liveshare.accessibility.soundVolume": 0,
+  "liveshare.accessibility.voiceEnabled": false,
+  "liveshare.accessibility.voiceVolume": 0,
+  "liveshare.anonymousGuestApproval": "reject",
+  "liveshare.launcherClient": "visualStudioCode",
+  "liveshare.nameTagVisibility": "Always",
   "python.formatting.provider": "black",
   "redhat.telemetry.enabled": false,
-  "security.workspace.trust.untrustedFiles": "open",
   "scm.diffDecorationsGutterWidth": 5,
+  "security.workspace.trust.untrustedFiles": "open",
+  "telemetry.telemetryLevel": "off",
+  "typescript.format.insertSpaceAfterConstructor": true,
+  "typescript.locale": "en",
   "typescript.preferences.importModuleSpecifier": "non-relative",
   "typescript.preferences.quoteStyle": "single",
+  "typescript.suggest.completeFunctionCalls": true,
   "typescript.updateImportsOnFileMove.enabled": "always",
   "window.autoDetectColorScheme": true,
   "window.autoDetectHighContrast": false,
   "window.menuBarVisibility": "toggle",
-  "window.restoreWindows": "none",
   "window.newWindowDimensions": "inherit",
+  "window.restoreWindows": "none",
   "workbench.colorTheme": "Cobalt2",
   "workbench.editor.closeOnFileDelete": true,
   "workbench.editor.limit.enabled": true,
@@ -128,11 +162,5 @@
     "respawn",
     "UEFI",
     "zstd"
-  ],
-  "[html]": {
-    "editor.defaultFormatter": "vscode.html-language-features"
-  },
-  "[shellscript]": {
-    "editor.defaultFormatter": "foxundermoon.shell-format"
-  }
+  ]
 }
