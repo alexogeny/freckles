@@ -47,3 +47,24 @@ function clone_repo() {
 }
 
 alias gcl="clone_repo"
+
+hg() {
+  # open the current repo in the browser
+  # hg = hosted git
+  current_dir=$(pwd)
+  if [[ $current_dir == *'Github'* ]]; then
+    base_url='https://github.com'
+  elif [[ $current_dir == *'Gitlab'* ]]; then
+    base_url='https://gitlab.com'
+  else
+    echo "Neither Github nor Gitlab found in directory path."
+    return 1
+  fi
+
+  repo_path=${current_dir#*Github/}
+  repo_path=${repo_path#*Gitlab/}
+
+  full_url="$base_url/$repo_path"
+
+  xdg-open $full_url
+}
