@@ -92,6 +92,12 @@
     "**/vendor/**": true
   },
   "git.confirmSync": false,
+  "git.fetchOnPull": true,
+  "git.inputValidationSubjectLength": 128,
+  "git.inputValidationLength": 152,
+  "git.mergeEditor": true,
+  "git.pruneOnFetch": true,
+  "git.pullBeforeCheckout": true,
   "gitlens.defaultGravatarsStyle": "retro",
   "gitlens.outputLevel": "silent",
   "gitlens.plusFeatures.enabled": false,
