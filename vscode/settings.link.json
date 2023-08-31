@@ -60,7 +60,7 @@
   "editor.tabCompletion": "on",
   "editor.tabSize": 2,
   "editor.unusualLineTerminators": "auto",
-  "editor.wordWrap": "bounded",
+  "editor.wordWrap": "default",
   "emmet.includeLanguages": {
     "javascript": "javascriptreact"
   },
@@ -142,7 +142,9 @@
   "window.menuBarVisibility": "toggle",
   "window.newWindowDimensions": "inherit",
   "window.restoreWindows": "none",
-  "workbench.colorTheme": "Cobalt2",
+  "window.title": "${dirty} ${activeEditorMedium}${separator}${rootName}",
+  "window.titleBarStyle": "custom",
+  "workbench.colorTheme": "GitHub Dark Default",
   "workbench.editor.closeOnFileDelete": true,
   "workbench.editor.limit.enabled": true,
   "workbench.editor.limit.perEditorGroup": true,
