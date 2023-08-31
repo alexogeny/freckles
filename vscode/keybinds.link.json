@@ -2,7 +2,7 @@
   {
     "key": "ctrl+j",
     "command": "workbench.action.focusActiveEditorGroup",
-    "when": "terminalFocus"
+    "when": "!editorTextFocus"
   },
   {
     "key": "ctrl+k",
@@ -134,5 +134,21 @@
   {
     "key": "ctrl+k z",
     "command": "-workbench.action.toggleZenMode"
+  },
+  {
+    "key": "ctrl+t",
+    "command": "-workbench.action.showAllSymbols"
+  },
+  {
+    "key": "ctrl+-",
+    "command": "-workbench.action.zoomOut"
+  },
+  {
+    "key": "ctrl+alt+i",
+    "command": "-workbench.panel.chatSidebar.copilot"
+  },
+  {
+    "key": "ctrl+t",
+    "command": "workbench.panel.chatSidebar.copilot"
   }
 ]
