@@ -1,6 +1,13 @@
 {
+  "[astro]": {
+    "editor.defaultFormatter": "astro-build.astro-vscode"
+  },
   "[html]": {
     "editor.defaultFormatter": "vscode.html-language-features"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2
   },
   "[json]": {
     "editor.defaultFormatter": "vscode.json-language-features"
@@ -15,10 +22,34 @@
   "[shellscript]": {
     "editor.defaultFormatter": "foxundermoon.shell-format"
   },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "cSpell.userWords": [
+    "actioning",
+    "automagically",
+    "bootloader",
+    "Btrfs",
+    "filesystems",
+    "luks",
+    "mklabel",
+    "mkpart",
+    "nvme",
+    "prefs",
+    "prepended",
+    "respawn",
+    "UEFI",
+    "zstd"
+  ],
   "diffEditor.codeLens": true,
   "diffEditor.experimental.collapseUnchangedRegions": true,
   "diffEditor.experimental.showMoves": true,
   "diffEditor.experimental.useVersion2": true,
+  "diffEditor.hideUnchangedRegions.enabled": true,
   "editor.accessibilitySupport": "off",
   "editor.autoClosingBrackets": "always",
   "editor.autoClosingQuotes": "always",
@@ -144,7 +175,7 @@
   "window.restoreWindows": "none",
   "window.title": "${dirty} ${activeEditorMedium}${separator}${rootName}",
   "window.titleBarStyle": "custom",
-  "workbench.colorTheme": "GitHub Dark Default",
+  "workbench.colorTheme": "Solarized Dark",
   "workbench.editor.closeOnFileDelete": true,
   "workbench.editor.limit.enabled": true,
   "workbench.editor.limit.perEditorGroup": true,
@@ -152,23 +183,9 @@
   "workbench.editor.tabCloseButton": "off",
   "workbench.editor.wrapTabs": true,
   "workbench.enableExperiments": false,
+  "workbench.preferredDarkColorTheme": "Solarized Dark",
+  "workbench.preferredLightColorTheme": "Solarized Light",
   "workbench.sideBar.location": "right",
   "workbench.startupEditor": "none",
-  "workbench.tips.enabled": false,
-  "cSpell.userWords": [
-    "actioning",
-    "automagically",
-    "bootloader",
-    "Btrfs",
-    "filesystems",
-    "luks",
-    "mklabel",
-    "mkpart",
-    "nvme",
-    "prefs",
-    "prepended",
-    "respawn",
-    "UEFI",
-    "zstd"
-  ]
+  "workbench.tips.enabled": false
 }
