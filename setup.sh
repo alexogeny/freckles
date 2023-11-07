@@ -3,7 +3,7 @@
 declare -A flags
 flags=(
     ["--all"]="firefox git node python ssh unsnap zsh"
-    ["--pop"]="brew node python ssh zsh slack git vscode"
+    ["--pop"]="brew node python ssh zsh slack git vscode bun"
     ["--ubuntu"]="firefox git node python unsnap zsh slack"
     ["--firefox"]="firefox"
     ["--git"]="git"
@@ -15,6 +15,7 @@ flags=(
     ["--zsh"]="zsh"
     ["--brew"]="brew"
     ["--vscode"]="vscode"
+    ["--bun"]="bun"
 )
 
 info() {
@@ -272,6 +273,19 @@ if [ "$node" = true ]; then
         mkdir -p "$HOME/.nvm"
     fi
 fi
+
+if [ "$bun" = true ]; then
+    info "Installing bun"
+    if ! command -v bun >/dev/null 2>&1; then
+        export spinner_icon="📦"
+        export spinner_msg="Adding bun tap"
+        check_sudo
+        ./zsh/spinner.zsh brew tap oven-sh/bun
+        export spinner_msg="Installing bun"
+        ./zsh/spinner.zsh brew install bun
+    fi
+fi
+
 
 if ! command -v spotify >/dev/null 2>&1; then
     check_sudo
