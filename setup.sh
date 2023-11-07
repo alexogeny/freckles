@@ -3,7 +3,7 @@
 declare -A flags
 flags=(
     ["--all"]="firefox git node python ssh unsnap zsh"
-    ["--pop"]="node python ssh zsh slack git"
+    ["--pop"]="brew node python ssh zsh slack git"
     ["--ubuntu"]="firefox git node python unsnap zsh slack"
     ["--firefox"]="firefox"
     ["--git"]="git"
@@ -13,6 +13,7 @@ flags=(
     ["--ssh"]="ssh"
     ["--unsnap"]="unsnap"
     ["--zsh"]="zsh"
+    ["--brew"]="brew"
 )
 
 info() {
