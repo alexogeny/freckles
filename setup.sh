@@ -341,6 +341,13 @@ if [[ "$vscode" == "true" ]]; then
     info "Copying vscode files"
     cp "$(pwd)/vscode/settings.link.json" "${HOME}/.config/Code/User/settings.json"
     cp "$(pwd)/vscode/keybinds.link.json" "${HOME}/.config/Code/User/keybindings.json"
+    while read -r extension; do
+        [[ -z "$extension" ]] && continue
+        code --list-extensions | grep -q "$extension" && continue
+        info "Installing vscode extension: $extension"
+        code --install-extension "$extension"
+    done < "$(pwd)/vscode/extensions.txt"
+
 fi
 
 disable_swap() {
