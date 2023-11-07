@@ -3,7 +3,7 @@
 declare -A flags
 flags=(
     ["--all"]="firefox git node python ssh unsnap zsh"
-    ["--pop"]="brew node python ssh zsh slack git"
+    ["--pop"]="brew node python ssh zsh slack git vscode"
     ["--ubuntu"]="firefox git node python unsnap zsh slack"
     ["--firefox"]="firefox"
     ["--git"]="git"
@@ -14,6 +14,7 @@ flags=(
     ["--unsnap"]="unsnap"
     ["--zsh"]="zsh"
     ["--brew"]="brew"
+    ["--vscode"]="vscode"
 )
 
 info() {
@@ -320,6 +321,12 @@ if [[ "$slack" == "true" ]]; then
 
         rm -f "$slack_tempfile"
     fi
+fi
+
+if [[ "$vscode" == "true" ]]; then
+    info "Copying vscode files"
+    cp "$(pwd)/vscode/settings.link.json" "${HOME}/.config/Code/User/settings.json"
+    cp "$(pwd)/vscode/keybinds.link.json" "${HOME}/.config/Code/User/keybindings.json"
 fi
 
 disable_swap() {
