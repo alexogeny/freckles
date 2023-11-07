@@ -148,7 +148,7 @@ configure_zsh_files() {
     info "Configuring zsh files"
     cp "$(pwd)/zsh/.zshrc" "${HOME}/.zshrc"
     mkdir -p "${HOME}/.zsh-things"
-    files=("git.zsh" "aliases.zsh" "python.zsh" "node.zsh" "spinner.zsh" "rust.zsh")
+    files=("git.zsh" "aliases.zsh" "python.zsh" "node.zsh" "spinner.zsh" "rust.zsh" "cds_helper.py")
     for file in "${files[@]}"; do
         cp "$(pwd)/zsh/${file}" "${HOME}/.zsh-things/${file}"
     done
