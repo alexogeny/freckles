@@ -16,6 +16,7 @@ flags=(
     ["--brew"]="brew"
     ["--vscode"]="vscode"
     ["--bun"]="bun"
+    ["--docker"]="docker"
 )
 
 info() {
@@ -92,9 +93,9 @@ fi
 packages_to_install='git,curl,libbz2-dev,cargo,build-essential,libsqlite3-dev'
 missing_packages=''
 
-IFS=',' read -ra packages <<< "$packages_to_install"
+IFS=',' read -ra packages <<<"$packages_to_install"
 for package in "${packages[@]}"; do
-    if ! dpkg -s "$package" > /dev/null 2>&1; then
+    if ! dpkg -s "$package" >/dev/null 2>&1; then
         missing_packages="${missing_packages} ${package}"
     fi
 done
@@ -134,6 +135,18 @@ if [ "$firefox" = "true" ]; then
         mkdir -p ~/.config
         cp -f ./firefox/mimeapps.list ~/.config/mimeapps.list
         success "Installed Firefox"
+    fi
+fi
+
+if [ "$docker" = "true" ]; then
+    if ! command -v docker >/dev/null 2>&1; then
+        info "Setting up docker"
+        check_sudo
+        curl -fsSL https://get.docker.com -o get-docker.sh
+        sudo sh get-docker.sh
+        sudo usermod -aG docker $USER
+        newgrp docker
+        rm -f get-docker.sh
     fi
 fi
 
@@ -286,7 +299,6 @@ if [ "$bun" = true ]; then
     fi
 fi
 
-
 if ! command -v spotify >/dev/null 2>&1; then
     check_sudo
     export spinner_icon="📥"
@@ -346,7 +358,7 @@ if [[ "$vscode" == "true" ]]; then
         code --list-extensions | grep -q "$extension" && continue
         info "Installing vscode extension: $extension"
         code --install-extension "$extension"
-    done < "$(pwd)/vscode/extensions.txt"
+    done <"$(pwd)/vscode/extensions.txt"
 
 fi
 
