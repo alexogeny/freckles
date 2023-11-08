@@ -15,4 +15,5 @@ ms-python.python
 ms-python.vscode-pylance
 ms-vsliveshare.vsliveshare
 njpwerner.autodocstring
+pjmiravalle.terraform-advanced-syntax-highlighting
 rangav.vscode-thunder-client
