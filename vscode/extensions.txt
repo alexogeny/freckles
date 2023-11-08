@@ -1,7 +1,11 @@
+1Password.op-vscode
+astro-build.astro-vscode
 be5invis.toml
 cweijan.vscode-postgresql-client2
 DavidAnson.vscode-markdownlint
 eamodio.gitlens
+esbenp.prettier-vscode
+foxundermoon.shell-format
 GitHub.copilot
 GitHub.copilot-chat
 GitLab.gitlab-workflow
