@@ -3,7 +3,7 @@
 declare -A flags
 flags=(
     ["--all"]="firefox git node python ssh unsnap zsh"
-    ["--pop"]="brew node python ssh zsh slack git vscode bun"
+    ["--pop"]="brew node python ssh zsh slack git vscode bun noisetorch"
     ["--ubuntu"]="firefox git node python unsnap zsh slack"
     ["--firefox"]="firefox"
     ["--git"]="git"
@@ -17,6 +17,7 @@ flags=(
     ["--vscode"]="vscode"
     ["--bun"]="bun"
     ["--docker"]="docker"
+    ["--noisetorch"]="noisetorch"
 )
 
 info() {
@@ -147,6 +148,40 @@ if [ "$docker" = "true" ]; then
         sudo usermod -aG docker $USER
         newgrp docker
         rm -f get-docker.sh
+    fi
+fi
+
+if [ "$noisetorch" = "true" ]; then
+    if ! command -v noisetorch >/dev/null 2>&1; then
+        info "Installing NoiseTorch"
+        check_sudo
+        RELEASES_URL="https://api.github.com/repos/noisetorch/NoiseTorch/releases/latest"
+        RELEASE_DATA=$(curl -s $RELEASES_URL)
+        ASSET_URL=$(echo $RELEASE_DATA | jq -r '.assets[] | select(.name | test(".tgz$")) | .browser_download_url')
+        CHECKSUM=$(echo $RELEASE_DATA | jq -r '.assets[] | select(.name | test("sha512sum")) | .browser_download_url')
+
+        if [ -z "$ASSET_URL" ] || [ -z "$CHECKSUM" ]; then
+            error "Failed to find the download URL or checksum for the x64 asset."
+            exit 1
+        fi
+        info "Downloading NoiseTorch latest release..."
+        curl -L -o noisetorch-x64.tar.gz $ASSET_URL
+        curl -L -o noisetorch-x64.sha512sum $CHECKSUM
+        info "Verifying checksum..."
+        read -r CHECKSUM_FILE CHECKSUM_FILE_NAME <<<$(cat noisetorch-x64.sha512sum)
+        CHECKSUM_CALCULATED=$(sha512sum noisetorch-x64.tar.gz | awk '{print $1}')
+        if [ "$CHECKSUM_FILE" != "$CHECKSUM_CALCULATED" ]; then
+            error "Checksum verification failed. Expected $CHECKSUM_FILE_NAME to be $CHECKSUM_FILE, but got $CHECKSUM_CALCULATED"
+            exit 1
+        fi
+        info "Unpacking NoiseTorch..."
+        tar -C $HOME -h -xzf noisetorch-x64.tar.gz
+        info "Updating icon cache..."
+        gtk-update-icon-cache
+        info "Setting capabilities on NoiseTorch..."
+        sudo setcap 'CAP_SYS_RESOURCE=+ep' "$HOME/.local/bin/noisetorch"
+        rm -f noisetorch-x64.tar.gz noisetorch-x64.sha512sum
+        success "NoiseTorch installed successfully!"
     fi
 fi
 

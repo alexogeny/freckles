@@ -168,6 +168,7 @@ PROMPT='$(final-prompt)'
 
 export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
 export PATH="/usr/lib/firefox:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 
 cds() {
   target_path=$(python -c "import sys; sys.path.append('/home/alexogeny/.zsh-things'); from cds_helper import fuzzy_cd; print(fuzzy_cd('$1'))")
