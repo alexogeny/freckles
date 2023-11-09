@@ -178,3 +178,10 @@ cds() {
     echo "Directory not found!"
   fi
 }
+
+pdf-unencrypt() {
+  : "Usage: <file>
+Uses ghostscript to rewrite the file without encryption."
+  local in="$1"
+  gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile="${in:r}_unencrypted.pdf" -f "$in"
+}
