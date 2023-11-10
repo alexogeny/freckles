@@ -2,35 +2,45 @@
 
 Freckles are alexogeny's dotfiles.
 
-Built using ansible. To run:
+Mostly hand-rolled bash scripts for intalling and configuring my system.
 
 ```shell
-sh setup.sh
+./setup.sh
 ```
 
-## Important Notes
+## Some Notes
 
-**SYMLINKS** - Keep in mind that this will do symlinks to this folder, and it
-WILL override existing config files. Make sure to back up files you might want
-to keep and also run the script from a place where you won't be moving the
- repository.
+- only really works on linux. haven't really tested on macos or wsl
+- currently only supports debian flavors of linux
+- is opinionated, like me
 
-**OS SUPPORT** - This will likely only work on popos (and maybe vanilla debian).
-Will likely not work on the latest Ubuntu due to the abomination that is `snapd`
-but anything before `22.04` should work (mostly due to the hijacking of `apt
-install firefox` being redirected to `snap install` without the user's consent).
+## Features
 
-### Zsh
+- installs and configures zsh with `--zsh`
+- installs and configures vscode (including extensions) with `--vscode`
+- installs and configures git, including both my personal and work configs with `--git`
+- installs and configures brew with `--brew`
+  - python 3 is installed with brew and set as the default python interpreter
+  - node is installed with brew
+  - bun is installed with brew
+- installs docker with `--docker`
+  - a bit janky, but that's just docker for you
+- installs noisetorch with `--noisetorch` (linux only)
+- installs slack, discord, and spotify
+- configures ssh with `--ssh`
+  - uses 1password to retrieve ssh keys
+  - uses .zshrc to set up ssh-agent on login
+- turns off swap
 
-Includes zsh, and some plugins to show icons for software that you
-may or may not be using. Pretty clean. Constantly improving it. Should not slow
-down your terminal by much (i.e. should be imperceptible).
+Ubuntu specific:
 
-### Git
+- removes snap
+- replaces firefox snap with direct binary install
 
-Configures my global `.gitconfig` with sane defaults and switches my commit
-email based on whether I'm `~/Work/**` or `~/Personal/**` (I wanted to change my git
-commit email based on host, not directory, so this was a happy middle ground).
+## TODO
 
-Then it checks whether in Github or Gitlab folder and uses relevant ssh key
-accordingly.
+Just a general list of things I want to do with this project. I may or may not actually do them.
+
+- [ ] add support for a $user.json file that can be used to configure the system instead of just using my own config
+- [ ] add support for macos
+- [ ] add support for wsl
