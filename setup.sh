@@ -425,3 +425,12 @@ fs_watchers() {
 }
 
 fs_watchers
+
+if [ ! -f "$HOME/.face" ]; then
+    info "Setting user avatar"
+    curl -s "https://avatars.githubusercontent.com/u/6896115?v=4" -o "$HOME/.face"
+fi
+if [ "$(md5sum "$HOME/.face" | awk '{print $1}')" != "$(md5sum /var/lib/AccountsService/icons/$(whoami) | awk '{print $1}')" ]; then
+    info "Updating user avatar"
+    sudo cp "$HOME/.face" "/var/lib/AccountsService/icons/$(whoami)"
+fi
