@@ -421,3 +421,14 @@ disable_swap() {
 }
 
 disable_swap
+
+fs_watchers() {
+    if [ "$(sysctl fs.inotify.max_user_watches | awk '{print $3}')" -lt 524288 ]; then
+        check_sudo
+        info "Increasing fs.inotify.max_user_watches"
+        sudo sysctl -w fs.inotify.max_user_watches=524288
+        sudo sysctl -p
+    fi
+}
+
+fs_watchers
