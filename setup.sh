@@ -21,19 +21,19 @@ flags=(
 )
 
 info() {
-    printf "\033[1;34m👗 INFO: $1\033[0m\n"
+    printf "\033[1;34m🐾 INFO: $1\033[0m\n"
 }
 
 warning() {
-    printf "\033[1;33m👜 WARNING: $1\033[0m\n"
+    printf "\033[1;33m🐉 WARNING: $1\033[0m\n"
 }
 
 error() {
-    printf "\033[1;31m👠 ERROR: $1\033[0m\n"
+    printf "\033[1;31m💥 ERROR: $1\033[0m\n"
 }
 
 success() {
-    printf "\033[1;32m🎀 SUCCESS: $1\033[0m\n"
+    printf "\033[1;32m💃🏻 SUCCESS: $1\033[0m\n"
 }
 
 if ! command -v apt-get >/dev/null 2>&1; then
