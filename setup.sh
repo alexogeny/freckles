@@ -53,6 +53,11 @@ while [[ "$#" -gt 0 ]]; do
     fi
 done
 
+spinner() {
+    export spinner_icon=${1:-"📦"}
+    export spinner_msg=$2
+}
+
 function check_sudo() {
     if [[ $(sudo -n uptime 2>&1 | grep "load" | wc -l) -eq 0 ]]; then
         info "Sudo password needed to continue."
@@ -64,12 +69,11 @@ function install_from_deb_link {
     [ -n "$3" ] && command -v "$3" >/dev/null 2>&1 && return
     info "Installing ${1}"
     check_sudo
-    export spinner_icon="📦"
-    export spinner_msg="Downloading ${1}"
+    spinner "Downloading ${1}"
     ./zsh/spinner.zsh curl -fsSL "${2}" -o "${1}"
-    export spinner_msg="Installing ${1}"
+    spinner "Installing ${1}"
     ./zsh/spinner.zsh sudo apt-get install -qqy "./${1}"
-    export spinner_msg="Cleaning up ${1}"
+    spinner "Cleaning up ${1}"
     ./zsh/spinner.zsh rm "${1}"
 }
 
@@ -79,8 +83,7 @@ if [ "$unsnap" = true ]; then
         check_sudo
         if [ -n "$(snap list)" ]; then
             check_sudo
-            export spinner_icon="📦"
-            export spinner_msg="Removing snap packages"
+            spinner "Removing snap packages"
             ./zsh/spinner.zsh sudo snap remove --purge $(snap list | awk '{print $1}')
         fi
         sudo apt remove --autoremove snap snapd
@@ -103,14 +106,12 @@ done
 
 if [ -n "$missing_packages" ]; then
     check_sudo
-    export spinner_icon="📦"
-    export spinner_msg="Installing missing packages: ${missing_packages}"
+    spinner "Installing missing packages: ${missing_packages}"
     ./zsh/spinner.zsh sudo apt-get update -qq && sudo apt-get install -qqy $missing_packages
 fi
 
 if ! command -v brew >/dev/null 2>&1; then
-    export spinner_icon="📦"
-    export spinner_msg="Installing brew"
+    spinner "Installing brew"
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
     brew install gcc libffi
@@ -188,8 +189,7 @@ fi
 install_zsh() {
     if ! command -v zsh >/dev/null 2>&1; then
         check_sudo
-        export spinner_icon="📦"
-        export spinner_msg="Installing zsh"
+        spinner "Installing zsh"
         ./zsh/spinner.zsh brew install zsh
     fi
 }
@@ -230,8 +230,7 @@ install_from_deb_link "1password-latest.deb" "https://downloads.1password.com/li
 install_from_deb_link "1password-cli-amd64-latest.deb" "https://downloads.1password.com/linux/debian/amd64/stable/1password-cli-amd64-latest.deb" "op"
 
 sshsetup() {
-    export spinner_icon="🔑"
-    export spinner_msg="Fetching $1 $4 SSH key for $2 vault"
+    spinner "🔑" "Fetching $1 $4 SSH key for $2 vault"
     "$(dirname "$0")/zsh/spinner.zsh" op read --force --out-file "$3" "op://$2/$1/ssh/$4" || {
         error "Failed to fetch $1 $4 SSH key for $2 vault"
         return 1
@@ -301,8 +300,7 @@ fi
 if [ "$python" = true ]; then
     info "Installing python"
     if ! command -v python >/dev/null 2>&1; then
-        export spinner_icon="📦"
-        export spinner_msg="Installing python"
+        spinner "Installing python"
         check_sudo
         ./zsh/spinner.zsh brew install python pyenv pipenv
         info "Configuring python files"
@@ -314,8 +312,7 @@ fi
 if [ "$node" = true ]; then
     info "Installing node"
     if ! command -v node >/dev/null 2>&1; then
-        export spinner_icon="📦"
-        export spinner_msg="Installing nodejs"
+        spinner "Installing nodejs"
         check_sudo
         ./zsh/spinner.zsh brew install node nvm
         mkdir -p "$HOME/.nvm"
@@ -325,8 +322,7 @@ fi
 if [ "$bun" = true ]; then
     info "Installing bun"
     if ! command -v bun >/dev/null 2>&1; then
-        export spinner_icon="📦"
-        export spinner_msg="Adding bun tap"
+        spinner "Adding bun tap"
         check_sudo
         ./zsh/spinner.zsh brew tap oven-sh/bun
         export spinner_msg="Installing bun"
@@ -336,8 +332,7 @@ fi
 
 if ! command -v spotify >/dev/null 2>&1; then
     check_sudo
-    export spinner_icon="📥"
-    export spinner_msg="Installing spotify"
+    spinner "📥" "Installing spotify"
     curl -sS https://download.spotify.com/debian/pubkey_7A3A762FAFD4A51F.gpg | sudo gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg
     echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
     ./zsh/spinner.zsh sudo apt-get update && sudo apt-get install -qqy spotify-client
@@ -345,8 +340,7 @@ fi
 
 if ! command -v aws >/dev/null 2>&1; then
     check_sudo
-    export spinner_icon="📥"
-    export spinner_msg="Installing aws cli"
+    spinner "📥" "Installing aws cli"
     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
     unzip awscliv2.zip
     sudo ./aws/install
@@ -356,8 +350,7 @@ if [[ "$slack" == "true" ]]; then
     if ! command -v slack >/dev/null 2>&1; then
         info "Installing slack"
         check_sudo
-        export spinner_icon="📥"
-        export spinner_msg="Installing slack"
+        spinner "📥" "Installing slack"
 
         content=$(curl -s https://slack.com/intl/en-au/downloads/instructions/ubuntu) || {
             error "Failed to download Slack information"
