@@ -433,4 +433,5 @@ fi
 if [ "$(md5sum "$HOME/.face" | awk '{print $1}')" != "$(md5sum /var/lib/AccountsService/icons/$(whoami) | awk '{print $1}')" ]; then
     info "Updating user avatar"
     sudo cp "$HOME/.face" "/var/lib/AccountsService/icons/$(whoami)"
+    dbus-send --system --print-reply --dest=org.freedesktop.Accounts /org/freedesktop/Accounts/User$(id -u) org.freedesktop.Accounts.User.SetIconFile string:"/var/lib/AccountsService/icons/$(whoami)"
 fi
