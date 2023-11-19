@@ -17,7 +17,10 @@
   },
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
-    "editor.tabSize": 4
+    "editor.tabSize": 4,
+    "editor.rulers": [
+      88
+    ]
   },
   "[shellscript]": {
     "editor.defaultFormatter": "foxundermoon.shell-format"
@@ -29,22 +32,6 @@
   "[yaml]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "cSpell.userWords": [
-    "actioning",
-    "automagically",
-    "bootloader",
-    "Btrfs",
-    "filesystems",
-    "luks",
-    "mklabel",
-    "mkpart",
-    "nvme",
-    "prefs",
-    "prepended",
-    "respawn",
-    "UEFI",
-    "zstd"
-  ],
   "diffEditor.codeLens": true,
   "diffEditor.experimental.collapseUnchangedRegions": true,
   "diffEditor.experimental.showMoves": true,
@@ -91,12 +78,10 @@
   "editor.tabCompletion": "on",
   "editor.tabSize": 2,
   "editor.unusualLineTerminators": "auto",
-  "editor.wordWrap": "default",
   "emmet.includeLanguages": {
     "javascript": "javascriptreact"
   },
   "emmet.triggerExpansionOnTab": true,
-  "eslint.alwaysShowStatus": true,
   "explorer.confirmDelete": false,
   "extensions.ignoreRecommendations": true,
   "files.autoGuessEncoding": true,
