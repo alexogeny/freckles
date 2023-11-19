@@ -6,14 +6,14 @@
     "editor.defaultFormatter": "vscode.html-language-features"
   },
   "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.defaultFormatter": "biomejs.biome",
     "editor.tabSize": 2
   },
   "[json]": {
-    "editor.defaultFormatter": "vscode.json-language-features"
+    "editor.defaultFormatter": "biomejs.biome"
   },
   "[jsonc]": {
-    "editor.defaultFormatter": "vscode.json-language-features"
+    "editor.defaultFormatter": "biomejs.biome"
   },
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
@@ -44,7 +44,9 @@
   "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
   "editor.codeActionsOnSave": {
     "addMissingImports": true,
+    "quickfix.biome": true,
     "source.fixAll": true,
+    "source.organizeImports.biome": true,
     "source.organizeImports": true
   },
   "editor.cursorBlinking": "phase",
