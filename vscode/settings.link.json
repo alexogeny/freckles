@@ -16,7 +16,7 @@
     "editor.defaultFormatter": "vscode.json-language-features"
   },
   "[python]": {
-    "editor.defaultFormatter": "ms-python.python",
+    "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.tabSize": 4
   },
   "[shellscript]": {
@@ -157,8 +157,15 @@
   "liveshare.anonymousGuestApproval": "reject",
   "liveshare.launcherClient": "visualStudioCode",
   "liveshare.nameTagVisibility": "Always",
-  "python.formatting.provider": "black",
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.inlayHints.functionReturnTypes": true,
+  "python.analysis.inlayHints.variableTypes": true,
   "redhat.telemetry.enabled": false,
+  "ruff.lint.run": "onSave",
+  "ruff.path": [
+    "~/.rye/tools/ruff/ruff"
+  ],
+  "ruff.showNotifications": "onWarning",
   "scm.diffDecorationsGutterWidth": 5,
   "security.workspace.trust.untrustedFiles": "open",
   "telemetry.telemetryLevel": "off",

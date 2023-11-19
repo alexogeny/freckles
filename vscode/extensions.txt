@@ -1,6 +1,7 @@
 1Password.op-vscode
 astro-build.astro-vscode
 be5invis.toml
+charliermarsh.ruff
 cweijan.vscode-postgresql-client2
 DavidAnson.vscode-markdownlint
 eamodio.gitlens
@@ -9,8 +10,6 @@ foxundermoon.shell-format
 GitHub.copilot
 GitHub.copilot-chat
 GitLab.gitlab-workflow
-ms-python.black-formatter
-ms-python.isort
 ms-python.python
 ms-python.vscode-pylance
 ms-vsliveshare.vsliveshare

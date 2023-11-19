@@ -444,6 +444,13 @@ rye_rust() {
         spinner "Installing rye"
         curl -sSf https://rye-up.com/get | bash
     fi
+    # if the path $HOME/.rye/tools/ruff does not exist, then run `rye install ruff`
+    if [ ! -d "$HOME/.rye/tools/ruff" ]; then
+        info "Installing ruff"
+        check_sudo
+        spinner "Installing ruff"
+        "$HOME/.rye/shims/rye" install ruff ruff-lsp
+    fi
 }
 
 rye_rust
