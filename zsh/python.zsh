@@ -6,3 +6,6 @@
 
 export CFLAGS="-I$(brew --prefix openssl)/include"
 export LDFLAGS="-L$(brew --prefix openssl)/lib"
+
+# source "$HOME/.rye/env"
+export PATH="$HOME/.rye/shims:$PATH"

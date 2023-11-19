@@ -435,3 +435,15 @@ if [ "$(md5sum "$HOME/.face" | awk '{print $1}')" != "$(md5sum /var/lib/Accounts
     sudo cp "$HOME/.face" "/var/lib/AccountsService/icons/$(whoami)"
     dbus-send --system --print-reply --dest=org.freedesktop.Accounts /org/freedesktop/Accounts/User$(id -u) org.freedesktop.Accounts.User.SetIconFile string:"/var/lib/AccountsService/icons/$(whoami)"
 fi
+
+rye_rust() {
+    # if the rye command does not exist
+    if ! command -v rye >/dev/null 2>&1; then
+        info "Installing rye"
+        check_sudo
+        spinner "Installing rye"
+        curl -sSf https://rye-up.com/get | bash
+    fi
+}
+
+rye_rust
