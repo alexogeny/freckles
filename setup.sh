@@ -449,7 +449,8 @@ rye_rust() {
         info "Installing ruff"
         check_sudo
         spinner "Installing ruff"
-        "$HOME/.rye/shims/rye" install ruff ruff-lsp
+        "$HOME/.rye/shims/rye" install ruff
+        "$HOME/.rye/shims/rye" install ruff-lsp
     fi
 }
 

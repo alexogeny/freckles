@@ -6,14 +6,23 @@
     "editor.defaultFormatter": "vscode.html-language-features"
   },
   "[javascript]": {
-    "editor.defaultFormatter": "biomejs.biome",
-    "editor.tabSize": 2
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2,
+    "editor.rulers": [
+      111
+    ]
   },
   "[json]": {
-    "editor.defaultFormatter": "biomejs.biome"
+    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.rulers": [
+      111
+    ]
   },
   "[jsonc]": {
-    "editor.defaultFormatter": "biomejs.biome"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.rulers": [
+      111
+    ]
   },
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
@@ -27,15 +36,20 @@
   },
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode",
-    "editor.tabSize": 2
+    "editor.tabSize": 2,
+    "editor.rulers": [
+      111
+    ]
   },
   "[yaml]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.autoIndent": "advanced",
+    "diffEditor.ignoreTrimWhitespace": false,
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "diffEditor.codeLens": true,
-  "diffEditor.experimental.collapseUnchangedRegions": true,
   "diffEditor.experimental.showMoves": true,
-  "diffEditor.experimental.useVersion2": true,
   "diffEditor.hideUnchangedRegions.enabled": true,
   "editor.accessibilitySupport": "off",
   "editor.autoClosingBrackets": "always",
@@ -50,7 +64,7 @@
     "source.organizeImports": true
   },
   "editor.cursorBlinking": "phase",
-  "editor.cursorSmoothCaretAnimation": true,
+  "editor.cursorSmoothCaretAnimation": "on",
   "editor.cursorStyle": "block",
   "editor.cursorSurroundingLines": 2,
   "editor.cursorSurroundingLinesStyle": "all",
@@ -88,7 +102,7 @@
   "extensions.ignoreRecommendations": true,
   "files.autoGuessEncoding": true,
   "files.autoSave": "afterDelay",
-  "files.autoSaveDelay": 10000,
+  "files.autoSaveDelay": 5000,
   "files.eol": "\n",
   "files.exclude": {
     "**/.git": true,
@@ -117,7 +131,7 @@
   "git.pruneOnFetch": true,
   "git.pullBeforeCheckout": true,
   "gitlens.defaultGravatarsStyle": "retro",
-  "gitlens.outputLevel": "silent",
+  "gitlens.outputLevel": "off",
   "gitlens.plusFeatures.enabled": false,
   "gitlens.showWelcomeOnInstall": false,
   "gitlens.showWhatsNewAfterUpgrades": false,
@@ -147,7 +161,6 @@
   "python.analysis.autoImportCompletions": true,
   "python.analysis.inlayHints.functionReturnTypes": true,
   "python.analysis.inlayHints.variableTypes": true,
-  "redhat.telemetry.enabled": false,
   "ruff.lint.run": "onSave",
   "ruff.path": [
     "~/.rye/tools/ruff/ruff"
@@ -181,5 +194,11 @@
   "workbench.preferredLightColorTheme": "Solarized Light",
   "workbench.sideBar.location": "right",
   "workbench.startupEditor": "none",
-  "workbench.tips.enabled": false
+  "workbench.tips.enabled": false,
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": true,
+    "markdown": true,
+    "scminput": false
+  }
 }
