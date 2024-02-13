@@ -1,0 +1,17 @@
+127.0.0.1     localhost
+::1           localhost
+127.0.1.1     pop-os.localdomain  pop-os
+
+127.0.0.1     ui.plan.local
+127.0.0.1     creator.plan.local
+127.0.0.1     settings.plan.local
+127.0.0.1     reports.plan.local
+127.0.0.1     transition.plan.local
+
+127.0.0.1     ui.manage.local
+127.0.0.1     core.manage.local
+127.0.0.1     connect.manage.local
+127.0.0.1     telemetry.manage.local
+127.0.0.1     alerts.manage.local
+
+127.0.0.1     chat.ops.local
