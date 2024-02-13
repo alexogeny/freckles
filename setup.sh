@@ -94,7 +94,7 @@ if [ "$unsnap" = true ]; then
     fi
 fi
 
-packages_to_install='git,curl,libbz2-dev,cargo,build-essential,libsqlite3-dev'
+packages_to_install='git,curl,libbz2-dev,cargo,build-essential,libsqlite3-dev,nginx'
 missing_packages=''
 
 IFS=',' read -ra packages <<<"$packages_to_install"
@@ -376,6 +376,15 @@ if [[ "$slack" == "true" ]]; then
         rm -f "$slack_tempfile"
     fi
 fi
+
+configure_nginx() {
+    info "Configuring nginx"
+    sudo cp "$(pwd)/dev/hosts" "/etc/hosts"
+    sudo cp "$(pwd)/dev/nginx.conf" "/etc/nginx/nginx.conf"
+    sudo systemctl restart nginx
+}
+
+configure_nginx
 
 if [[ "$vscode" == "true" ]]; then
     info "Copying vscode files"
