@@ -435,15 +435,51 @@ fs_watchers() {
 
 fs_watchers
 
+check_and_set_avatar() {
 if [ ! -f "$HOME/.face" ]; then
     info "Setting user avatar"
     curl -s "https://avatars.githubusercontent.com/u/6896115?v=4" -o "$HOME/.face"
 fi
-if [ "$(md5sum "$HOME/.face" | awk '{print $1}')" != "$(md5sum /var/lib/AccountsService/icons/$(whoami) | awk '{print $1}')" ]; then
+}
+
+update_avatar_if_different() {
+    local_avatar_hash=$(md5sum "$HOME/.face" | awk '{print $1}')
+    accounts_service_avatar_hash=$(md5sum "/var/lib/AccountsService/icons/$(whoami)" | awk '{print $1}')
+
+    if [ "$local_avatar_hash" != "$accounts_service_avatar_hash" ]; then
     info "Updating user avatar"
     sudo cp "$HOME/.face" "/var/lib/AccountsService/icons/$(whoami)"
     dbus-send --system --print-reply --dest=org.freedesktop.Accounts /org/freedesktop/Accounts/User$(id -u) org.freedesktop.Accounts.User.SetIconFile string:"/var/lib/AccountsService/icons/$(whoami)"
 fi
+}
+
+check_and_update_from_remote() {
+    if [ ! -f "$HOME/.face" ]; then
+        info "No local avatar to update from remote."
+        return
+    fi
+
+    tmp_file=$(mktemp)
+    curl -s "https://avatars.githubusercontent.com/u/6896115?v=4" -o "$tmp_file"
+    remote_hash=$(md5sum "$tmp_file" | awk '{print $1}')
+    local_hash=$(md5sum "$HOME/.face" | awk '{print $1}')
+
+    if [ "$remote_hash" != "$local_hash" ]; then
+        info "Remote avatar has changed. Updating local avatar."
+        mv "$tmp_file" "$HOME/.face"
+        update_avatar_if_different
+    else
+        info "Local avatar is up-to-date with remote."
+        rm "$tmp_file"
+    fi
+}
+
+if [ ! -f "$HOME/.face" ]; then
+    check_and_set_avatar
+else
+    check_and_update_from_remote
+fi
+update_avatar_if_different
 
 rye_rust() {
     # if the rye command does not exist
