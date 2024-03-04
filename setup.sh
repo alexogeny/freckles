@@ -198,7 +198,15 @@ configure_zsh_files() {
     info "Configuring zsh files"
     cp "$(pwd)/zsh/.zshrc" "${HOME}/.zshrc"
     mkdir -p "${HOME}/.zsh-things"
-    files=("git.zsh" "aliases.zsh" "python.zsh" "node.zsh" "spinner.zsh" "rust.zsh" "cds_helper.py")
+    pass=$(op read "op://personal/github/encrypted files")
+    if [ ! -f "$(pwd)/salt" ]; then
+        op read --force --out-file "$(pwd)/salt" op://personal/github/salt
+    fi
+    if [ ! -f "$(pwd)/zsh/services.zsh" ]; then
+        openssl enc -aes-256-cbc -d -salt -pbkdf2 -iter 500000 -in "$(pwd)/zsh/secure/services.zsh.enc" \
+            -out "$(pwd)/zsh/services.zsh" -pass "pass:$pass"
+    fi
+    files=("git.zsh" "aliases.zsh" "python.zsh" "node.zsh" "spinner.zsh" "rust.zsh" "start.zsh" "cds_helper.py" "services.zsh")
     for file in "${files[@]}"; do
         cp "$(pwd)/zsh/${file}" "${HOME}/.zsh-things/${file}"
     done
@@ -216,13 +224,6 @@ set_zsh_as_default() {
 source_zshrc() {
     source "${HOME}/.zshrc"
 }
-
-if [[ "$zsh" == true ]]; then
-    install_zsh
-    configure_zsh_files
-    set_zsh_as_default
-    source_zshrc
-fi
 
 install_from_deb_link "code_latest_amd64.deb" "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64" "code"
 install_from_deb_link "discord.deb" "https://discord.com/api/download?platform=linux&format=deb" "discord"
@@ -277,6 +278,13 @@ if [ "$ssh" = true ]; then
             fi
         done
     done
+fi
+
+if [[ "$zsh" == true ]]; then
+    install_zsh
+    configure_zsh_files
+    set_zsh_as_default
+    source_zshrc
 fi
 
 if [ "$git" = true ]; then
@@ -436,10 +444,10 @@ fs_watchers() {
 fs_watchers
 
 check_and_set_avatar() {
-if [ ! -f "$HOME/.face" ]; then
-    info "Setting user avatar"
-    curl -s "https://avatars.githubusercontent.com/u/6896115?v=4" -o "$HOME/.face"
-fi
+    if [ ! -f "$HOME/.face" ]; then
+        info "Setting user avatar"
+        curl -s "https://avatars.githubusercontent.com/u/6896115?v=4" -o "$HOME/.face"
+    fi
 }
 
 update_avatar_if_different() {
@@ -447,10 +455,10 @@ update_avatar_if_different() {
     accounts_service_avatar_hash=$(md5sum "/var/lib/AccountsService/icons/$(whoami)" | awk '{print $1}')
 
     if [ "$local_avatar_hash" != "$accounts_service_avatar_hash" ]; then
-    info "Updating user avatar"
-    sudo cp "$HOME/.face" "/var/lib/AccountsService/icons/$(whoami)"
-    dbus-send --system --print-reply --dest=org.freedesktop.Accounts /org/freedesktop/Accounts/User$(id -u) org.freedesktop.Accounts.User.SetIconFile string:"/var/lib/AccountsService/icons/$(whoami)"
-fi
+        info "Updating user avatar"
+        sudo cp "$HOME/.face" "/var/lib/AccountsService/icons/$(whoami)"
+        dbus-send --system --print-reply --dest=org.freedesktop.Accounts /org/freedesktop/Accounts/User$(id -u) org.freedesktop.Accounts.User.SetIconFile string:"/var/lib/AccountsService/icons/$(whoami)"
+    fi
 }
 
 check_and_update_from_remote() {

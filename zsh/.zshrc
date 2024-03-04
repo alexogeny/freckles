@@ -186,3 +186,6 @@ Uses ghostscript to rewrite the file without encryption."
   local in="$1"
   gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile="${in:r}_unencrypted.pdf" -f "$in"
 }
+
+source "${HOME}/.zsh-things/services.zsh"
+alias start="${HOME}/.zsh-things/start.zsh"
