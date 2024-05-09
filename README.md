@@ -44,3 +44,14 @@ Just a general list of things I want to do with this project. I may or may not a
 - [ ] add support for a $user.json file that can be used to configure the system instead of just using my own config
 - [ ] add support for macos
 - [ ] add support for wsl
+
+
+popping these here for later
+
+```shell
+flatpak remote-delete flathub
+flatpak repair --user
+sudo apt remove --purge "libreoffice*"
+sudo apt autoremove
+sudo apt autoclean
+```
