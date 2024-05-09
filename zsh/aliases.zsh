@@ -7,7 +7,7 @@ alias ghp="cd ~/Personal/Github"
 alias glp="cd ~/Personal/Gitlab"
 
 alias ls="ls --color=auto"
-function cs () {
+function cs() {
     cd "$1" && ls
 }
 
@@ -37,3 +37,7 @@ alias ln='ln -i'
 
 alias python=python3
 alias pip=pip3
+
+alias gpl="git pull --rebase --autostash --prune"
+alias gps="git push"
+alias gpsf="git push --force-with-lease"
