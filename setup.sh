@@ -257,10 +257,14 @@ if [ "$ssh" = true ]; then
     item_list=$(op item list --favorite)
     item_list=$(echo "$item_list" | tr '[:upper:]' '[:lower:]')
 
-    for vault in "personal" "work"; do
+    for vault in "private" "work"; do
         for service in "github" "gitlab"; do
-            pub_key="${ssh_dir}/${service}.${vault}.pub"
-            priv_key="${ssh_dir}/${service}.${vault}"
+            case $vault in
+            private) save_vault="personal" ;;
+            *) save_vault=$vault ;;
+            esac
+            pub_key="${ssh_dir}/${service}.${save_vault}.pub"
+            priv_key="${ssh_dir}/${service}.${save_vault}"
 
             if echo "$item_list" | grep -q "${service}.*${vault}"; then
                 [ ! -f "${pub_key}" ] && sshsetup $service $vault $pub_key public
