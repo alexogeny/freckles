@@ -2,16 +2,16 @@
 
 declare -A flags
 flags=(
-    ["--all"]="firefox git node python ssh unsnap zsh"
-    ["--pop"]="brew node python ssh zsh slack git vscode bun noisetorch"
-    ["--ubuntu"]="firefox git node python unsnap zsh slack"
+    # ["--all"]="firefox git node python ssh unsnap zsh"
+    # ["--pop"]="brew node python ssh zsh slack git vscode bun noisetorch"
+    # ["--ubuntu"]="firefox git node python unsnap zsh slack"
     ["--firefox"]="firefox"
     ["--git"]="git"
     ["--node"]="node"
     ["--python"]="python"
     ["--slack"]="slack"
     ["--ssh"]="ssh"
-    ["--unsnap"]="unsnap"
+    # ["--unsnap"]="unsnap"
     ["--zsh"]="zsh"
     ["--brew"]="brew"
     ["--vscode"]="vscode"
@@ -77,22 +77,22 @@ function install_from_deb_link {
     ./zsh/spinner.zsh rm "${1}"
 }
 
-if [ "$unsnap" = true ]; then
-    info "Removing snap packages"
-    if command -v snap >/dev/null 2>&1; then
-        check_sudo
-        if [ -n "$(snap list)" ]; then
-            check_sudo
-            spinner "Removing snap packages"
-            ./zsh/spinner.zsh sudo snap remove --purge $(snap list | awk '{print $1}')
-        fi
-        sudo apt remove --autoremove snap snapd
-        sudo mkdir -p /etc/apt/preferences.d/
-        echo -e "Package: snapd\nPin: release a=*n\nPin-Priority: -10\n" | sudo tee /etc/apt/preferences.d/nosnap.pref
-        sudo apt update
-        success "Removed snap packages"
-    fi
-fi
+# if [ "$unsnap" = true ]; then
+#     info "Removing snap packages"
+#     if command -v snap >/dev/null 2>&1; then
+#         check_sudo
+#         if [ -n "$(snap list)" ]; then
+#             check_sudo
+#             spinner "Removing snap packages"
+#             ./zsh/spinner.zsh sudo snap remove --purge $(snap list | awk '{print $1}')
+#         fi
+#         sudo apt remove --autoremove snap snapd
+#         sudo mkdir -p /etc/apt/preferences.d/
+#         echo -e "Package: snapd\nPin: release a=*n\nPin-Priority: -10\n" | sudo tee /etc/apt/preferences.d/nosnap.pref
+#         sudo apt update
+#         success "Removed snap packages"
+#     fi
+# fi
 
 packages_to_install='git,curl,libbz2-dev,cargo,build-essential,libsqlite3-dev,nginx'
 missing_packages=''
@@ -110,35 +110,35 @@ if [ -n "$missing_packages" ]; then
     ./zsh/spinner.zsh sudo apt-get update -qq && sudo apt-get install -qqy $missing_packages
 fi
 
-if ! command -v brew >/dev/null 2>&1; then
-    spinner "Installing brew"
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
-    brew install gcc libffi
-    success "Installed brew"
-fi
+# if ! command -v brew >/dev/null 2>&1; then
+#     spinner "Installing brew"
+#     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+#     export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+#     brew install gcc libffi
+#     success "Installed brew"
+# fi
 
-if [ "$firefox" = "true" ]; then
-    if ! command -v firefox >/dev/null 2>&1; then
-        info "Installing Firefox"
-        check_sudo
-        if ! curl -fsSL "https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US" -o "firefox.tar.bz2"; then
-            error "Failed to download Firefox"
-            exit 1
-        fi
-        if ! sudo tar -xjf "firefox.tar.bz2" -C /opt/; then
-            error "Failed to extract Firefox"
-            exit 1
-        fi
-        sudo mkdir -p /usr/lib/firefox
-        sudo ln -s /opt/firefox/firefox /usr/lib/firefox/firefox
-        sudo find ~/.local/share/applications -name "*Firefox*.desktop" -exec rm -f {} \;
-        cp -f ./firefox/Firefox.desktop ~/.local/share/applications/Firefox.desktop
-        mkdir -p ~/.config
-        cp -f ./firefox/mimeapps.list ~/.config/mimeapps.list
-        success "Installed Firefox"
-    fi
-fi
+# if [ "$firefox" = "true" ]; then
+#     if ! command -v firefox >/dev/null 2>&1; then
+#         info "Installing Firefox"
+#         check_sudo
+#         if ! curl -fsSL "https://download.mozilla.org/?product=firefox-latest-ssl&os=linux64&lang=en-US" -o "firefox.tar.bz2"; then
+#             error "Failed to download Firefox"
+#             exit 1
+#         fi
+#         if ! sudo tar -xjf "firefox.tar.bz2" -C /opt/; then
+#             error "Failed to extract Firefox"
+#             exit 1
+#         fi
+#         sudo mkdir -p /usr/lib/firefox
+#         sudo ln -s /opt/firefox/firefox /usr/lib/firefox/firefox
+#         sudo find ~/.local/share/applications -name "*Firefox*.desktop" -exec rm -f {} \;
+#         cp -f ./firefox/Firefox.desktop ~/.local/share/applications/Firefox.desktop
+#         mkdir -p ~/.config
+#         cp -f ./firefox/mimeapps.list ~/.config/mimeapps.list
+#         success "Installed Firefox"
+#     fi
+# fi
 
 if [ "$docker" = "true" ]; then
     if ! command -v docker >/dev/null 2>&1; then
@@ -309,46 +309,46 @@ if [ "$git" = true ]; then
     done
 fi
 
-if [ "$python" = true ]; then
-    info "Installing python"
-    if ! command -v python >/dev/null 2>&1; then
-        spinner "Installing python"
-        check_sudo
-        ./zsh/spinner.zsh brew install python pyenv pipenv
-        info "Configuring python files"
-        mkdir -p "$HOME/.config/pip"
-        [[ ! -f "$HOME/.config/pip/pip.conf" ]] && cp "$(pwd)/python/pip.conf" "$HOME/.config/pip/pip.conf"
-    fi
-fi
+# if [ "$python" = true ]; then
+#     info "Installing python"
+#     if ! command -v python >/dev/null 2>&1; then
+#         spinner "Installing python"
+#         check_sudo
+#         ./zsh/spinner.zsh brew install python pyenv pipenv
+#         info "Configuring python files"
+#         mkdir -p "$HOME/.config/pip"
+#         [[ ! -f "$HOME/.config/pip/pip.conf" ]] && cp "$(pwd)/python/pip.conf" "$HOME/.config/pip/pip.conf"
+#     fi
+# fi
 
-if [ "$node" = true ]; then
-    info "Installing node"
-    if ! command -v node >/dev/null 2>&1; then
-        spinner "Installing nodejs"
-        check_sudo
-        ./zsh/spinner.zsh brew install node nvm
-        mkdir -p "$HOME/.nvm"
-    fi
-fi
+# if [ "$node" = true ]; then
+#     info "Installing node"
+#     if ! command -v node >/dev/null 2>&1; then
+#         spinner "Installing nodejs"
+#         check_sudo
+#         ./zsh/spinner.zsh brew install node nvm
+#         mkdir -p "$HOME/.nvm"
+#     fi
+# fi
 
-if [ "$bun" = true ]; then
-    info "Installing bun"
-    if ! command -v bun >/dev/null 2>&1; then
-        spinner "Adding bun tap"
-        check_sudo
-        ./zsh/spinner.zsh brew tap oven-sh/bun
-        export spinner_msg="Installing bun"
-        ./zsh/spinner.zsh brew install bun
-    fi
-fi
+# if [ "$bun" = true ]; then
+#     info "Installing bun"
+#     if ! command -v bun >/dev/null 2>&1; then
+#         spinner "Adding bun tap"
+#         check_sudo
+#         ./zsh/spinner.zsh brew tap oven-sh/bun
+#         export spinner_msg="Installing bun"
+#         ./zsh/spinner.zsh brew install bun
+#     fi
+# fi
 
-if ! command -v spotify >/dev/null 2>&1; then
-    check_sudo
-    spinner "📥" "Installing spotify"
-    curl -sS https://download.spotify.com/debian/pubkey_6224F9941A8AA6D1.gpg | sudo gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg
-    echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
-    ./zsh/spinner.zsh sudo apt-get update && sudo apt-get install -qqy spotify-client
-fi
+# if ! command -v spotify >/dev/null 2>&1; then
+#     check_sudo
+#     spinner "📥" "Installing spotify"
+#     curl -sS https://download.spotify.com/debian/pubkey_6224F9941A8AA6D1.gpg | sudo gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg
+#     echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
+#     ./zsh/spinner.zsh sudo apt-get update && sudo apt-get install -qqy spotify-client
+# fi
 
 if ! command -v aws >/dev/null 2>&1; then
     check_sudo
@@ -358,36 +358,36 @@ if ! command -v aws >/dev/null 2>&1; then
     sudo ./aws/install
 fi
 
-if [[ "$slack" == "true" ]]; then
-    if ! command -v slack >/dev/null 2>&1; then
-        info "Installing slack"
-        check_sudo
-        spinner "📥" "Installing slack"
+# if [[ "$slack" == "true" ]]; then
+#     if ! command -v slack >/dev/null 2>&1; then
+#         info "Installing slack"
+#         check_sudo
+#         spinner "📥" "Installing slack"
 
-        content=$(curl -s https://slack.com/intl/en-au/downloads/instructions/ubuntu) || {
-            error "Failed to download Slack information"
-            exit 1
-        }
-        deb_link=$(echo "$content" | grep -oP 'https://downloads\.slack-edge\.com/releases/linux/\K[0-9.]+/prod/x64/slack-desktop-[0-9.]+-amd64\.deb') || {
-            error "Failed to extract Slack deb package link"
-            exit 1
-        }
-        deb_link="https://downloads.slack-edge.com/releases/linux/$deb_link"
-        slack_tempfile=$(mktemp)
-        curl -sS "$deb_link" -o "$slack_tempfile" || {
-            error "Failed to download Slack deb package"
-            rm -f "$slack_tempfile"
-            exit 1
-        }
+#         content=$(curl -s https://slack.com/intl/en-au/downloads/instructions/ubuntu) || {
+#             error "Failed to download Slack information"
+#             exit 1
+#         }
+#         deb_link=$(echo "$content" | grep -oP 'https://downloads\.slack-edge\.com/releases/linux/\K[0-9.]+/prod/x64/slack-desktop-[0-9.]+-amd64\.deb') || {
+#             error "Failed to extract Slack deb package link"
+#             exit 1
+#         }
+#         deb_link="https://downloads.slack-edge.com/releases/linux/$deb_link"
+#         slack_tempfile=$(mktemp)
+#         curl -sS "$deb_link" -o "$slack_tempfile" || {
+#             error "Failed to download Slack deb package"
+#             rm -f "$slack_tempfile"
+#             exit 1
+#         }
 
-        ./zsh/spinner.zsh sudo dpkg -i "$slack_tempfile" || {
-            ./zsh/spinner.zsh sudo apt-get install -qqy -f
-            success "Dependencies fixed and Slack installed"
-        }
+#         ./zsh/spinner.zsh sudo dpkg -i "$slack_tempfile" || {
+#             ./zsh/spinner.zsh sudo apt-get install -qqy -f
+#             success "Dependencies fixed and Slack installed"
+#         }
 
-        rm -f "$slack_tempfile"
-    fi
-fi
+#         rm -f "$slack_tempfile"
+#     fi
+# fi
 
 configure_nginx() {
     info "Configuring nginx"
@@ -411,30 +411,30 @@ if [[ "$vscode" == "true" ]]; then
 
 fi
 
-disable_swap() {
-    readarray -t swapfiles < <(awk 'NR > 1 {print $1}' /proc/swaps)
+# disable_swap() {
+#     readarray -t swapfiles < <(awk 'NR > 1 {print $1}' /proc/swaps)
 
-    if [ "${#swapfiles[@]}" -gt 0 ]; then
-        check_sudo
-        info "Disabling swap"
-        for swapfile in "${swapfiles[@]}"; do
-            sudo swapoff "$swapfile" || {
-                error "Error: swapoff failed for $swapfile" >&2
-                exit 1
-            }
-            sudo rm "$swapfile" || {
-                error "Error: failed to remove $swapfile" >&2
-                exit 1
-            }
-        done
-        sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab || {
-            error "Error: failed to modify /etc/fstab" >&2
-            exit 1
-        }
-    fi
-}
+#     if [ "${#swapfiles[@]}" -gt 0 ]; then
+#         check_sudo
+#         info "Disabling swap"
+#         for swapfile in "${swapfiles[@]}"; do
+#             sudo swapoff "$swapfile" || {
+#                 error "Error: swapoff failed for $swapfile" >&2
+#                 exit 1
+#             }
+#             sudo rm "$swapfile" || {
+#                 error "Error: failed to remove $swapfile" >&2
+#                 exit 1
+#             }
+#         done
+#         sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab || {
+#             error "Error: failed to modify /etc/fstab" >&2
+#             exit 1
+#         }
+#     fi
+# }
 
-disable_swap
+# disable_swap
 
 fs_watchers() {
     if [ "$(sysctl fs.inotify.max_user_watches | awk '{print $3}')" -lt 524288 ]; then
@@ -499,7 +499,7 @@ rye_rust() {
         info "Installing rye"
         check_sudo
         spinner "Installing rye"
-        curl -sSf https://rye-up.com/get | bash
+        curl -sSf https://rye.astral.sh/get | bash
     fi
     # if the path $HOME/.rye/tools/ruff does not exist, then run `rye install ruff`
     if [ ! -d "$HOME/.rye/tools/ruff" ]; then
