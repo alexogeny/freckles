@@ -28,11 +28,11 @@
 [url "git@gitlab.com:"]
   insteadOf = https://gitlab.com/
 
-[includeIf "gitdir:/home/alexogeny/Personal/Github/**"]
-  path = /home/alexogeny/.github.gitconfig
+[includeIf "gitdir:~/private/github/**/.git"]
+  path = .private.github.gitconfig
 
-[includeIf "gitdir:/home/alexogeny/Personal/Gitlab/**"]
-  path = /home/alexogeny/.gitlab.gitconfig
+[includeIf "gitdir:~/private/github/**/.git"]
+  path = .private.gitlab.gitconfig
 
-[includeIf "gitdir:/home/alexogeny/Work/**"]
-  path = /home/alexogeny/.work.gitconfig
+[includeIf "gitdir:~/work/gitlab"]
+  path = .work.gitlab.gitconfig

@@ -142,13 +142,5 @@
   {
     "key": "ctrl+-",
     "command": "-workbench.action.zoomOut"
-  },
-  {
-    "key": "ctrl+alt+i",
-    "command": "-workbench.panel.chatSidebar.copilot"
-  },
-  {
-    "key": "ctrl+t",
-    "command": "workbench.panel.chatSidebar.copilot"
   }
 ]

@@ -166,7 +166,6 @@ final-prompt() {
 
 PROMPT='$(final-prompt)'
 
-export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
 export PATH="/usr/lib/firefox:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 
