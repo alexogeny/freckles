@@ -1,7 +1,4 @@
 {
-  "[astro]": {
-    "editor.defaultFormatter": "astro-build.astro-vscode"
-  },
   "[html]": {
     "editor.defaultFormatter": "vscode.html-language-features"
   },
@@ -13,7 +10,7 @@
     ]
   },
   "[json]": {
-    "editor.defaultFormatter": "vscode.json-language-features",
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.rulers": [
       111
     ]
@@ -57,11 +54,11 @@
   "editor.bracketPairColorization.enabled": true,
   "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
   "editor.codeActionsOnSave": {
-    "addMissingImports": true,
-    "quickfix.biome": true,
-    "source.fixAll": true,
-    "source.organizeImports.biome": true,
-    "source.organizeImports": true
+    "addMissingImports": "explicit",
+    "quickfix.biome": "explicit",
+    "source.fixAll": "explicit",
+    "source.organizeImports.biome": "explicit",
+    "source.organizeImports": "explicit"
   },
   "editor.cursorBlinking": "phase",
   "editor.cursorSmoothCaretAnimation": "on",
@@ -73,13 +70,12 @@
   "editor.dragAndDrop": false,
   "editor.emptySelectionClipboard": false,
   "editor.experimental.asyncTokenization": true,
-  "editor.folding": false,
   "editor.fontFamily": "'Cascadia Code', 'Fira Code', 'Droid Sans Mono', 'monospace', monospace",
   "editor.fontLigatures": true,
   "editor.formatOnSave": true,
-  "editor.guides.bracketPairs": "active",
-  "editor.padding.bottom": 20,
-  "editor.padding.top": 20,
+  "editor.guides.bracketPairs": true,
+  "editor.padding.bottom": 26,
+  "editor.padding.top": 26,
   "editor.renderLineHighlight": "all",
   "editor.renderWhitespace": "all",
   "editor.rulers": [
@@ -167,6 +163,7 @@
   ],
   "ruff.showNotifications": "onWarning",
   "scm.diffDecorationsGutterWidth": 5,
+  "security.workspace.trust.enabled": false,
   "security.workspace.trust.untrustedFiles": "open",
   "telemetry.telemetryLevel": "off",
   "typescript.format.insertSpaceAfterConstructor": true,
@@ -187,12 +184,17 @@
   "workbench.editor.limit.enabled": true,
   "workbench.editor.limit.perEditorGroup": true,
   "workbench.editor.limit.value": 6,
-  "workbench.editor.tabCloseButton": "off",
   "workbench.editor.wrapTabs": true,
   "workbench.enableExperiments": false,
   "workbench.preferredDarkColorTheme": "Solarized Dark",
   "workbench.preferredLightColorTheme": "Solarized Light",
   "workbench.sideBar.location": "right",
   "workbench.startupEditor": "none",
-  "workbench.tips.enabled": false
+  "workbench.tips.enabled": false,
+  "workbench.editor.tabActionCloseVisibility": false,
+  "editor.guides.bracketPairsHorizontal": true,
+  "editor.inlayHints.enabled": "offUnlessPressed",
+  "editor.inlayHints.padding": true,
+  "editor.lightbulb.enabled": "off",
+  "editor.lineNumbers": "relative"
 }
