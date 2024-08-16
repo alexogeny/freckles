@@ -2,6 +2,7 @@ from utils import (
     DebFile,
     DebRepository,
     configure_git,
+    configure_shell,
     configure_ssh,
     configure_vscode,
     install_software_list,
@@ -37,3 +38,4 @@ install_software_list(software_list)
 configure_vscode()
 configure_ssh()
 configure_git()
+configure_shell()

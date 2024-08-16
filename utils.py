@@ -1,13 +1,16 @@
 import json
 import re
+import shutil
 import subprocess
 import textwrap
 import time
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Union, Literal
+from typing import List, Optional, Union
+
 REPOSITORY_LATEST = "https://raw.githubusercontent.com/alexogeny/freckles/prime/"
+
 
 @dataclass
 class DebFile:
@@ -128,7 +131,6 @@ def ensure_op_connected():
         time.sleep(5)
 
 
-
 HOME = Path.home()
 SSH_DIR = HOME / ".ssh"
 KNOWN_HOSTS = SSH_DIR / "known_hosts"
@@ -166,33 +168,32 @@ def setup_ssh_key(vault, git_provider, item_list):
         op_path = f"op://{vault}/{git_provider}/ssh"
         run(f'op read --force --out-file "{key}.pub" "{op_path}/public"')
         run(f'op read --force --out-file "{key}" "{op_path}/private"')
-        if key.name not in run("ssh-add -l").stdout.lower():
-            run(f'ssh-add "{key}"')
+        run(f'ssh-add "{key}"')
 
 
 def add_ssh_config(vault, git):
-    suffix = "-work" if vault == "work" else ""
     config_entry = textwrap.dedent(f"""
-        Host {git}.com{suffix}
+        Host {git}.com-{vault}
             HostName {git}.com
             AddKeysToAgent yes
             IdentityFile ~/.ssh/{vault}.{git}
             User git
     """)
-    existing_config = SSH_CONFIG.read_text() if SSH_CONFIG.exists() else ""
-    if f"Host {git}.com{suffix}" not in existing_config:
-        with SSH_CONFIG.open("a") as fh:
-            fh.write(config_entry)
+    with SSH_CONFIG.open("a") as fh:
+        fh.write(config_entry)
 
 
 def configure_ssh():
     ensure_op_connected()
     write_known_hosts()
-
-    item_list = get_favorite_git_items()
-
+    item_list = []
+    existing_config = SSH_CONFIG.read_text() if SSH_CONFIG.exists() else ""
     for vault in ["private", "work"]:
         for git_provider in ["github", "gitlab"]:
+            if f"Host {git_provider}.com-{vault}" in existing_config:
+                continue
+            if len(item_list) == 0:
+                item_list = get_favorite_git_items()
             setup_ssh_key(vault, git_provider, item_list)
             add_ssh_config(vault, git_provider)
 
@@ -201,8 +202,8 @@ def configure_git():
     for filename in [
         ".gitconfig",
         ".gitignore",
-        ".personal.gitlab.gitconfig",
-        ".personal.github.gitconfig",
+        ".private.gitlab.gitconfig",
+        ".private.github.gitconfig",
     ]:
         local_path = HOME / filename
         if not local_path.exists():
@@ -212,30 +213,14 @@ def configure_git():
             )
 
 
-def clone_repository(
-    repository_path,
-    hostname: Literal["github"] | Literal["gitlab"],
-    account_type: Literal["private"] | Literal["work"],
-):
-    local = f"~/{account_type}/{hostname}/{repository_path}"
-    if Path(local).exists():
-        raise ValueError("Already exists")
-    else:
-        Path(local).mkdir(parents=True)
-    suffix: Literal["-work"] | Literal[""] = "-work" if account_type == "work" else ""
-    repository_path = f"git@{hostname}{suffix}:{repository_path}.git"
-    git_config = f"~/.{account_type}.{hostname}.gitconfig"
-    run(
-        f'git --git-dir="{local}.git" --work-tree="{local}" config --local include.path "{git_config}"'
-    )
-
-
-def browser():
-    current_directory = str(Path.cwd()).lower()
-    url = None
-    if "/github/" in current_directory:
-        url = "https://github.com/" + current_directory.split("/github/")[-1]
-        run(f"xdg-open {url}")
-    elif "/gitlab/" in current_directory:
-        url = "https://gitlab.com/" + current_directory.split("/gitlab/")[-1]
-        run(f"xdg-open {url}")
+def configure_shell():
+    source = Path("./shell")
+    destination = Path.home() / ".shell"
+    destination.mkdir(parents=True, exist_ok=True)
+    for item in source.iterdir():
+        if (destination / item.name).exists():
+            continue
+        if item.is_dir():
+            shutil.copytree(item, destination / item.name, dirs_exist_ok=True)
+        else:
+            shutil.copy(item, destination / item.name)
