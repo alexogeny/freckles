@@ -1,4 +1,4 @@
-from time import time
+import time
 
 from .debian import run
 
