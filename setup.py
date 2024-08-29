@@ -1,12 +1,15 @@
-from utils import (
+from utils.debian import (
     DebFile,
     DebRepository,
-    configure_git,
-    configure_shell,
-    configure_ssh,
-    configure_vscode,
-    install_software_list,
+    is_debian_12_bookworm,
+    replace_bookworm_with_trixie,
+    run_apt_update_and_upgrade,
 )
+from utils.git import configure_git
+from utils.shell import configure_shell
+from utils.ssh import configure_ssh
+from utils.vscode import configure_vscode
+from utils.web import install_software_list
 
 software_list = [
     DebFile(
@@ -39,3 +42,8 @@ configure_vscode()
 configure_ssh()
 configure_git()
 configure_shell()
+if is_debian_12_bookworm() is True:
+    replace_bookworm_with_trixie()
+    run_apt_update_and_upgrade()
+else:
+    print("Not upgrading to trixie")

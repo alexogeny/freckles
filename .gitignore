@@ -3,3 +3,4 @@ zsh/services.zsh
 zsh/secure/services.zsh.bk
 salt
 salt.bk
+__pycache__
