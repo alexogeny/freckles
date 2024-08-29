@@ -4,3 +4,4 @@ zsh/secure/services.zsh.bk
 salt
 salt.bk
 __pycache__
+**.xpi

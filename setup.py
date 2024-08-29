@@ -5,6 +5,13 @@ from utils.debian import (
     replace_bookworm_with_trixie,
     run_apt_update_and_upgrade,
 )
+from utils.firefox import (
+    EXTENSIONS_TO_INSTALL,
+    extension_already_installed,
+    find_firefox_profile,
+    get_extension_json,
+    install_firefox_extension,
+)
 from utils.git import configure_git
 from utils.shell import configure_shell
 from utils.ssh import configure_ssh
@@ -47,3 +54,15 @@ if is_debian_12_bookworm() is True:
     run_apt_update_and_upgrade()
 else:
     print("Not upgrading to trixie")
+# if get_firefox_version().endswith("esr"):
+#     print("Upgrading from firefox esr")
+#     upgrade_firefox()
+# else:
+#     print("Already on firefox main channel")
+
+profile = find_firefox_profile()
+extension_data = get_extension_json(profile)
+for extension_id, extension_name in EXTENSIONS_TO_INSTALL.items():
+    if extension_already_installed(extension_data, extension_name):
+        continue
+    install_firefox_extension(extension_id)
