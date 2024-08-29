@@ -1,33 +1,40 @@
 import os
+import pickle
 import sys
 from pathlib import Path
-import pickle
 
 CACHE_FILE = os.path.expanduser("~/.cdd_cache.pkl")
 EXCLUDE_DIRS = {os.path.expanduser("~/.cache").lower()}
 
+
 def load_cache():
     if Path(CACHE_FILE).exists():
-        with open(CACHE_FILE, 'rb') as f:
+        with open(CACHE_FILE, "rb") as f:
             return pickle.load(f)
     return {}
 
+
 def save_cache(cache):
-    with open(CACHE_FILE, 'wb') as f:
+    with open(CACHE_FILE, "wb") as f:
         pickle.dump(cache, f)
+
 
 def update_cache(path, cache):
     """Update cache for the given path."""
     path_lower = str(path).lower()
     if path_lower not in cache and path_lower not in EXCLUDE_DIRS:
         if path.exists() and path.is_dir():
-            cache[path_lower] = {d.lower(): d for d in os.listdir(path) if (path / d).is_dir()}
+            cache[path_lower] = {
+                d.lower(): d for d in os.listdir(path) if (path / d).is_dir()
+            }
             save_cache(cache)
+
 
 def is_sequential_match(part, directory):
     """Check if letters in 'part' appear in sequence in 'directory'."""
     it = iter(directory)
     return all(letter in it for letter in part)
+
 
 def match_directory(part, matches):
     """Perform matching based on the specified algorithm."""
@@ -51,6 +58,7 @@ def match_directory(part, matches):
 
     raise ValueError(f"No suitable match found for '{part}'")
 
+
 def best_guess_match(path_parts, start_dir, cache):
     current_dir = start_dir
     for part in path_parts:
@@ -64,6 +72,7 @@ def best_guess_match(path_parts, start_dir, cache):
             matched_dir = match_directory(part_lower, matches)
             current_dir = current_dir / matched_dir
     return current_dir
+
 
 def dynamic_navigate(path_arg, cache):
     if path_arg.startswith("/"):
@@ -82,6 +91,7 @@ def dynamic_navigate(path_arg, cache):
     else:
         # Navigate using best guess match
         return best_guess_match(path_parts, start_dir, cache)
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
