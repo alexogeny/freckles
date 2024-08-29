@@ -159,7 +159,7 @@
   "python.analysis.inlayHints.variableTypes": true,
   "ruff.lint.run": "onSave",
   "ruff.path": [
-    "~/.rye/tools/ruff/ruff"
+    "~/.local/bin/ruff"
   ],
   "ruff.showNotifications": "onWarning",
   "scm.diffDecorationsGutterWidth": 5,
