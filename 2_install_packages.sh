@@ -34,7 +34,7 @@ if [ ${#to_install[@]} -eq 0 ]; then
 else
     echo "Installing packages: ${to_install[*]}"
     sudo apt-get install -y "${to_install[@]}"
-    
+
     # Verify the installation
     for package in "${to_install[@]}"; do
         if dpkg -l | grep -q "^ii  $package"; then
@@ -45,14 +45,14 @@ else
     done
 fi
 
-if ! command -v rye >/dev/null 2>&1; then
-  curl -sSf https://rye.astral.sh/get | bash
-  if [ ! -d "$HOME/.rye/tools/ruff" ]; then
-    "$HOME/.rye/shims/rye" install ruff
-    "$HOME/.rye/shims/rye" install ruff-lsp
+if ! command -v uv >/dev/null 2>&1; then
+  curl -sSfL https://astral.sh/uv/install.sh | bash
+  if [ ! -d "$HOME/.local/bin/ruff" ]; then
+    "$HOME/.cargo/bin/uv" tool install ruff
+    "$HOME/.cargo/bin/uv" tool install ruff-lsp
   fi
-  if [ ! -d "$HOME/.rye/tools/pipenv" ]; then
-    "$HOME/.rye/shims/rye" install pipenv
+  if [ ! -d "$HOME/.local/bin/pipenv" ]; then
+    "$HOME/.cargo/bin/uv" install pipenv
   fi
 fi
 
