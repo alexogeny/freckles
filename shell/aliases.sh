@@ -10,8 +10,17 @@ function install() {
   sudo apt install $@
 }
 
-alias gcl="$(which python) ~/.shell/clone_repository.py"
-alias browse="$(which python) ~/.shell/open_repository_in_browser.py"
+alias gcl="uv run ~/.shell/clone_repository.py"
+alias browse="uv run ~/.shell/open_repository_in_browser.py"
+alias dynamic_navigate="uv run ~/.shell/dynamic_navigate.py"
+function nn() {
+    local target_dir=$(uv run ~/.shell/dynamic_navigate.py "$1")
+    if [ -n "$target_dir" ]; then
+        cd "$target_dir" || echo "Failed to change directory"
+    else
+        echo "Failed to determine target directory"
+    fi
+}
 alias ls="ls --color=auto"
 
 function cs() {
@@ -34,9 +43,8 @@ alias gps="git push"
 alias gpsf="git push --force-with-lease"
 
 get_prompt_parts() {
-  local python=$(which python)
-  local hostname_part=$(python ~/.shell/hostname.py)
-  local pathname_part=$(python ~/.shell/pathname.py)
+  local hostname_part=$(uv run ~/.shell/hostname.py)
+  local pathname_part=$(uv run ~/.shell/pathname.py)
   echo "${hostname_part} ${pathname_part} "
 }
 
