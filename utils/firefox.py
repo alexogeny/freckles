@@ -76,7 +76,6 @@ def wait_for_firefox_profile():
 def extension_already_installed(extension_data, extension_name):
     for addon in extension_data.get("addons", []):
         if addon.get("defaultLocale", {}).get("name", "") == extension_name:
-            print(f"Extension {extension_name} is already installed.")
             return True
     return False
 

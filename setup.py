@@ -1,5 +1,3 @@
-from time import sleep
-
 from utils.debian import (
     DebFile,
     DebRepository,
@@ -54,8 +52,6 @@ configure_shell()
 if is_debian_12_bookworm() is True:
     replace_bookworm_with_trixie()
     run_apt_update_and_upgrade()
-else:
-    print("Not upgrading to trixie")
 # if get_firefox_version().endswith("esr"):
 #     print("Upgrading from firefox esr")
 #     upgrade_firefox()
@@ -68,4 +64,3 @@ for extension_id, extension_name in EXTENSIONS_TO_INSTALL.items():
     if extension_already_installed(extension_data, extension_name):
         continue
     install_firefox_extension(extension_id)
-    sleep(5)

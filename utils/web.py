@@ -50,7 +50,6 @@ def get_and_install_from_download_link(link, command):
 def install_software_list(software_list: List[Union[DebFile, DebRepository]]):
     for software in software_list:
         if check_if_installed(software.name) is True:
-            print(f"Already installed {software.name}")
             continue
         if isinstance(software, DebFile):
             if software.search_url and not software.direct_link:
