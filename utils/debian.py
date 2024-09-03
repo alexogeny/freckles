@@ -1,6 +1,5 @@
 import os
 import re
-import shutil
 import subprocess
 from dataclasses import dataclass
 from typing import Optional
@@ -69,7 +68,7 @@ def replace_bookworm_with_trixie():
         return False
 
     try:
-        shutil.copy2(sources_list_path, backup_path)
+        subprocess.run(["sudo", "cp", sources_list_path, backup_path], check=True)
         print(f"Backup of sources.list created at {backup_path}.")
     except Exception as e:
         print(f"Failed to create a backup: {e}")
@@ -81,12 +80,18 @@ def replace_bookworm_with_trixie():
 
         content = content.replace("bookworm", "trixie")
 
-        with open(sources_list_path, "w") as file:
-            file.write(content)
+        subprocess.run(
+            ["sudo", "tee", sources_list_path],
+            input=content.encode("utf-8"),
+            check=True,
+        )
 
         print(f"Replaced 'bookworm' with 'trixie' in {sources_list_path}.")
-    except Exception as e:
+    except subprocess.CalledProcessError as e:
         print(f"Failed to modify {sources_list_path}: {e}")
+        return False
+    except Exception as e:
+        print(f"An error occurred: {e}")
         return False
 
     return True
