@@ -1,3 +1,5 @@
+from time import sleep
+
 from utils.debian import (
     DebFile,
     DebRepository,
@@ -66,3 +68,4 @@ for extension_id, extension_name in EXTENSIONS_TO_INSTALL.items():
     if extension_already_installed(extension_data, extension_name):
         continue
     install_firefox_extension(extension_id)
+    sleep(5)
