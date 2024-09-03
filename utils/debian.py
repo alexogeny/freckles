@@ -33,6 +33,14 @@ def install_with_apt(package_list: list[str]) -> subprocess.CompletedProcess[str
     return run("sudo apt install " + " ".join(package_list) + " -yqq")
 
 
+def purge_unwanted_packages(
+    package_list: list[str],
+) -> subprocess.CompletedProcess[str]:
+    run("sudo apt purge " + " ".join(package_list) + " -y")
+    run("sudo apt autoremove -y")
+    return run("sudo apt autoclean")
+
+
 def is_debian_12_bookworm():
     import os
 

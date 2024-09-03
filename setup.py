@@ -2,6 +2,7 @@ from utils.debian import (
     DebFile,
     DebRepository,
     is_debian_12_bookworm,
+    purge_unwanted_packages,
     replace_bookworm_with_trixie,
     run_apt_update_and_upgrade,
 )
@@ -44,6 +45,17 @@ software_list = [
     ),
 ]
 
+unwanted_software = [
+    "gnome-games",
+    "gnome-music",
+    "shotwell",
+    "rhythmbox",
+    "gnome-contacts",
+    "libreoffice-*",
+    "transmission-*",
+]
+
+purge_unwanted_packages(unwanted_software)
 install_software_list(software_list)
 configure_vscode()
 configure_ssh()
@@ -52,6 +64,7 @@ configure_shell()
 if is_debian_12_bookworm() is True:
     replace_bookworm_with_trixie()
     run_apt_update_and_upgrade()
+    purge_unwanted_packages(unwanted_software)
 # if get_firefox_version().endswith("esr"):
 #     print("Upgrading from firefox esr")
 #     upgrade_firefox()
