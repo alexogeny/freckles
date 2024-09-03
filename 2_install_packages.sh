@@ -46,7 +46,7 @@ if ! command -v uv >/dev/null 2>&1; then
     "$HOME/.cargo/bin/uv" tool install ruff-lsp
   fi
   if [ ! -d "$HOME/.local/bin/pipenv" ]; then
-    "$HOME/.cargo/bin/uv" install pipenv
+    "$HOME/.cargo/bin/uv" tool install pipenv
   fi
 fi
 
