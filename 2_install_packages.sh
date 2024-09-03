@@ -1,9 +1,7 @@
 #!/bin/bash
 
-# Update the package list to ensure you have the latest information
 sudo apt-get update
 
-# List of packages to install
 packages=(
     nginx
     git
@@ -15,10 +13,8 @@ packages=(
     ca-certificates
 )
 
-# Array to hold packages that need to be installed
 to_install=()
 
-# Check each package
 for package in "${packages[@]}"; do
     if dpkg -l | grep -q "^ii  $package"; then
         echo "$package is already installed."
@@ -28,14 +24,12 @@ for package in "${packages[@]}"; do
     fi
 done
 
-# Install only the necessary packages
 if [ ${#to_install[@]} -eq 0 ]; then
     echo "All packages are already installed."
 else
     echo "Installing packages: ${to_install[*]}"
     sudo apt-get install -y "${to_install[@]}"
 
-    # Verify the installation
     for package in "${to_install[@]}"; do
         if dpkg -l | grep -q "^ii  $package"; then
             echo "$package was installed successfully."
