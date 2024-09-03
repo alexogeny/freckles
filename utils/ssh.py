@@ -16,6 +16,7 @@ github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+V
 
 
 def get_favorite_git_items():
+    ensure_op_connected()
     return [
         i
         for i in run("op item list --favorite").stdout.lower().splitlines()
@@ -53,7 +54,6 @@ def add_ssh_config(vault, git):
 
 
 def configure_ssh():
-    ensure_op_connected()
     write_known_hosts()
     item_list = []
     existing_config = SSH_CONFIG.read_text() if SSH_CONFIG.exists() else ""
