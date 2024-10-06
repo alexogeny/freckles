@@ -53,6 +53,8 @@ unwanted_software = [
     "gnome-contacts",
     "libreoffice-*",
     "transmission-*",
+    "cups",
+    "cups-*",
 ]
 
 purge_unwanted_packages(unwanted_software)
