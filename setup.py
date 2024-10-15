@@ -12,6 +12,11 @@ from utils.firefox import (
     find_firefox_profile,
     get_extension_json,
     install_firefox_extension,
+    install_regular_firefox,
+    is_firefox_esr_installed,
+    purge_esr_profiles,
+    purge_firefox_esr,
+    setup_mozilla_repo,
 )
 from utils.git import configure_git
 from utils.shell import configure_shell
@@ -67,11 +72,12 @@ if is_debian_12_bookworm() is True:
     replace_bookworm_with_trixie()
     run_apt_update_and_upgrade()
     purge_unwanted_packages(unwanted_software)
-# if get_firefox_version().endswith("esr"):
-#     print("Upgrading from firefox esr")
-#     upgrade_firefox()
-# else:
-#     print("Already on firefox main channel")
+if is_firefox_esr_installed():
+    print("Firefox ESR detected. Purging and installing regular Firefox.")
+    purge_firefox_esr()
+    setup_mozilla_repo()
+    install_regular_firefox()
+    purge_esr_profiles()
 
 profile = find_firefox_profile()
 extension_data = get_extension_json(profile)
