@@ -1,3 +1,4 @@
+from utils.avatar import manage_avatar
 from utils.debian import (
     DebFile,
     DebRepository,
@@ -68,6 +69,7 @@ configure_vscode()
 configure_ssh()
 configure_git()
 configure_shell()
+manage_avatar()
 if is_debian_12_bookworm() is True:
     replace_bookworm_with_trixie()
     run_apt_update_and_upgrade()
