@@ -34,6 +34,8 @@ alias .....='cs ../../../..'
 alias ......='cs ../../../../..'
 alias .......='cs ../../../../../..'
 
+alias c="clear"
+
 alias sha1='openssl sha1'
 alias sha256='openssl sha256'
 alias sha512='openssl sha512'
@@ -57,7 +59,9 @@ export NVM_DIR="$HOME/.nvm"
 get_prompt_parts() {
   local hostname_part=$(uv run --no-project ~/.shell/hostname.py)
   local pathname_part=$(uv run --no-project ~/.shell/pathname.py)
-  echo "${hostname_part} ${pathname_part} "
+  local git_branch_part=$(uv run --no-project ~/.shell/gitname.py)
+  local endpart=$(uv run --no-project ~/.shell/endpart.py)
+  echo "${hostname_part} ${pathname_part} ${git_branch_part}${endpart}"
 }
 
 export PS1='$(get_prompt_parts)'

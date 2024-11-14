@@ -62,7 +62,7 @@ def dynamic_navigate(path_arg):
         start_dir = Path(HOME)
         path_parts = path_arg.split("/")
     else:
-        return os.path.expanduser("~")
+        return HOME
 
     if path_arg.startswith(".."):
         up_levels = path_arg.count("..")

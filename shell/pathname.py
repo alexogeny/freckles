@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from nailpolish import blue, reset
+from nailpolish import GREEN, RESET
 
 
 def truncate_path(path):
@@ -20,7 +20,7 @@ def truncate_path(path):
 def path_name():
     current_path = os.getcwd()
     truncated_path = truncate_path(current_path)
-    return f"{blue}{truncated_path}{reset}"
+    return f"{GREEN}{truncated_path}{RESET}"
 
 
 if __name__ == "__main__":

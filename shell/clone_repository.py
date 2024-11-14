@@ -33,7 +33,7 @@ def clone_repository(
         Path(local).mkdir(parents=True)
     repo = f"git@{host_arg}.com-{context_arg}:{repo}.git"
     config = f"{home}/.{context_arg}.{host_arg}.gitconfig"
-    run(f"git clone {repo} {local} --quiet --depth 15")
+    run(f"git clone {repo} {local} --quiet --depth 1")
     os.chdir(local)
     run(f'git config --local include.path "{config}"')
 

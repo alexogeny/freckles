@@ -1,4 +1,4 @@
-from nailpolish import pink, purple, reset
+from nailpolish import PINK, PURPLE, RESET
 
 
 def host_name():
@@ -6,7 +6,7 @@ def host_name():
 
     user = os.getenv("USER", "user")
     host = os.uname().nodename
-    return f"{pink}{user}{purple}@{pink}{host}{reset}"
+    return f"{PINK}{user}{PURPLE}@{PINK}{host}{RESET}"
 
 
 if __name__ == "__main__":
