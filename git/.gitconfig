@@ -2,7 +2,7 @@
   excludesfile = /home/alexogeny/.gitignore
 
 [push]
-  default = current
+  default = upstream
 
 [pull]
   rebase = true
@@ -36,3 +36,9 @@
 
 [includeIf "gitdir:~/work/gitlab"]
   path = .work.gitlab.gitconfig
+
+[branch "master"]
+  remote = origin
+
+[branch "main"]
+  remote = origin
