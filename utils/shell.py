@@ -36,16 +36,24 @@ def ensure_shell_loader(shell_rc: Path) -> None:
 
 def configure_shell():
     source = Path("./shell")
+    if not source.exists():
+        raise FileNotFoundError("Expected ./shell directory to exist next to setup script")
+
     destination = Path.home() / ".shell"
     destination.mkdir(parents=True, exist_ok=True)
+
     for item in source.iterdir():
-        target = destination / item.name
-        if target.exists():
+        # Skip Python bytecode or other transient artefacts that may have been
+        # generated locally.
+        if item.name.endswith(".pyc") or item.name == "__pycache__":
             continue
+
+        target = destination / item.name
         if item.is_dir():
             shutil.copytree(item, target, dirs_exist_ok=True)
         else:
-            shutil.copy(item, target)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(item, target)
 
     ensure_shell_loader(Path.home() / ".bashrc")
     ensure_shell_loader(Path.home() / ".zshrc")
