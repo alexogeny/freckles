@@ -179,11 +179,56 @@ def _ensure_config_entry(
     match = pattern.search(existing_config)
     if match:
         current_block = match.group(1)
-        if not current_block.endswith("\n"):
-            current_block += "\n"
-        if current_block == new_block:
+        normalized_current = current_block
+        if not normalized_current.endswith("\n"):
+            normalized_current += "\n"
+
+        identity_line = f"    IdentityFile {_format_identity_path(identity_path)}"
+        identity_value = identity_line.split(None, 1)[1]
+        slug_fragment = f"{account.slug}.{account.provider}"
+        identity_pattern = re.compile(r"^(\s*)IdentityFile\s+(.+)$", re.IGNORECASE)
+
+        lines = normalized_current.rstrip("\n").split("\n")
+        header, *rest = lines
+        new_rest = []
+        identity_present = False
+
+        for line in rest:
+            match_identity = identity_pattern.match(line)
+            if not match_identity:
+                new_rest.append(line)
+                continue
+
+            indent, value = match_identity.groups()
+            value = value.strip()
+            unquoted = value.strip('"\'')
+
+            if unquoted == identity_value:
+                identity_present = True
+                new_rest.append(f"{indent}IdentityFile {identity_value}")
+                continue
+
+            if slug_fragment in unquoted:
+                identity_present = True
+                if unquoted != identity_value:
+                    new_rest.append(f"{indent}IdentityFile {identity_value}")
+                else:
+                    new_rest.append(line)
+                continue
+
+            new_rest.append(line)
+
+        if not identity_present:
+            new_rest.append(identity_line)
+
+        updated_block = "\n".join([header] + new_rest)
+        if not updated_block.endswith("\n"):
+            updated_block += "\n"
+
+        if updated_block == normalized_current:
             return existing_config, False
-        updated = existing_config[: match.start()] + new_block + existing_config[match.end() :]
+
+        updated = existing_config[: match.start()] + updated_block + existing_config[match.end() :]
         return updated, True
 
     updated_config = existing_config
