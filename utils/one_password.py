@@ -153,6 +153,7 @@ def update_item_fields(vault: str, item: str, fields: Iterable[OnePasswordField]
     """
 
     field_entries = []
+    ensured_sections: set[str] = set()
     temp_files: List[Path] = []
     for field in fields:
         fd, temp_path = tempfile.mkstemp(prefix="freckles-op-")
@@ -160,14 +161,21 @@ def update_item_fields(vault: str, item: str, fields: Iterable[OnePasswordField]
         path = Path(temp_path)
         temp_files.append(path)
         path.write_text(field.value)
-        parts = []
+        section_prefix = ""
         if field.section:
-            parts.append(f"section={field.section}")
-        parts.append(f"label={field.label}")
+            section_prefix = f"{field.section}."
+            if field.section not in ensured_sections:
+                ensured_sections.add(field.section)
+                field_entries.append(
+                    shlex.quote(f"{field.section}[label]={field.section}")
+                )
+
+        field_identifier = f"{section_prefix}{field.label}"
+        field_entries.append(shlex.quote(f"{field_identifier}[label]={field.label}"))
         if field.concealed:
-            parts.append("type=concealed")
-        parts.append(f"value@={path.as_posix()}")
-        field_entries.append(f"--field {shlex.quote(' '.join(parts))}")
+            field_entries.append(shlex.quote(f"{field_identifier}[type]=concealed"))
+        field_entries.append(
+            shlex.quote(f"{field_identifier}[value]=@{path.as_posix()}"))
 
     reference = _item_reference(vault, item)
     command = " ".join([f"op item edit {shlex.quote(reference)}"] + field_entries)
@@ -206,7 +214,12 @@ def _has_section(payload: Dict, label: str) -> bool:
 def _create_secure_note(vault: str, item: str) -> bool:
     """Create a secure note for ``vault``/``item`` when it is missing."""
 
-    parts = ["op item create", "--category secure-note", f"--title {shlex.quote(item)}"]
+    parts = [
+        "op item create",
+        "--category",
+        shlex.quote("Secure Note"),
+        f"--title {shlex.quote(item)}",
+    ]
     if vault:
         parts.append(f"--vault {shlex.quote(vault)}")
     command = " ".join(parts)
