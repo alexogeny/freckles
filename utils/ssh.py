@@ -133,19 +133,44 @@ def _provision_ssh_material(account: GitAccount) -> Optional[SshMaterial]:
     local_private = _read_text(key_path)
     local_public = _read_text(public_path)
 
-    remote_public = get_field_value(item, "ssh", "public") or ""
-    remote_private = get_field_value(item, "ssh", "private") or ""
+    remote_public_raw = get_field_value(item, "ssh", "public") or ""
+    remote_private_raw = get_field_value(item, "ssh", "private") or ""
     remote_fingerprint = get_field_value(item, "ssh", "fingerprint") or ""
 
-    if not local_public and remote_public:
-        local_public = remote_public.strip()
-    if not local_private and remote_private:
-        local_private = remote_private.strip()
+    remote_public_valid = _looks_like_public_key(remote_public_raw)
+    remote_private_valid = _looks_like_private_key(remote_private_raw)
+
+    remote_public = remote_public_raw.strip() if remote_public_valid else ""
+    remote_private = remote_private_raw.strip() if remote_private_valid else ""
+
+    if not local_public and remote_public_valid:
+        local_public = remote_public
+    if not local_private and remote_private_valid:
+        local_private = remote_private
+
+    derived_public: Optional[str] = None
+    if remote_private_valid and (not remote_public_valid or not local_public):
+        derived_public = _derive_public_from_private(remote_private)
+        if derived_public and not local_public:
+            local_public = derived_public.strip()
+
+    if remote_public_valid and not remote_private_valid and not local_private:
+        print(
+            "Skipping SSH provisioning for"
+            f" {account.display_name} ({account.provider}) because the"
+            " 1Password item contains an SSH public key but the private key is"
+            " missing or malformed. Manual intervention is required."
+        )
+        return None
 
     created = False
-    remote_has_material = bool(remote_public.strip() and remote_private.strip())
+    should_generate = (
+        not remote_public_valid
+        and not remote_private_valid
+        and (not local_public or not local_private)
+    )
 
-    if not remote_has_material and (not local_public or not local_private):
+    if should_generate:
         generated = _generate_local_key(account, key_path, public_path)
         if not generated:
             return None
@@ -167,57 +192,58 @@ def _provision_ssh_material(account: GitAccount) -> Optional[SshMaterial]:
         fingerprint = remote_fingerprint.strip()
 
     fields: List[OnePasswordField] = []
-    if not remote_has_material:
-        if created:
-            fields.extend(
-                [
-                    OnePasswordField(
-                        section="ssh",
-                        label="public",
-                        value=local_public + "\n",
-                    ),
-                    OnePasswordField(
-                        section="ssh",
-                        label="private",
-                        value=local_private + "\n",
-                        concealed=True,
-                    ),
-                ]
+    if created:
+        fields.extend(
+            [
+                OnePasswordField(
+                    section="ssh",
+                    label="public",
+                    value=local_public + "\n",
+                ),
+                OnePasswordField(
+                    section="ssh",
+                    label="private",
+                    value=local_private + "\n",
+                    concealed=True,
+                ),
+            ]
+        )
+        if fingerprint:
+            fields.append(
+                OnePasswordField(
+                    section="ssh",
+                    label="fingerprint",
+                    value=fingerprint,
+                )
             )
-            if fingerprint:
-                fields.append(
-                    OnePasswordField(
-                        section="ssh",
-                        label="fingerprint",
-                        value=fingerprint,
-                    )
-                )
-        else:
-            if not remote_public.strip():
+    else:
+        if local_public and not remote_public_valid:
+            public_value = (derived_public or local_public).strip()
+            if public_value:
                 fields.append(
                     OnePasswordField(
                         section="ssh",
                         label="public",
-                        value=local_public + "\n",
+                        value=public_value + "\n",
                     )
                 )
-            if not remote_private.strip():
-                fields.append(
-                    OnePasswordField(
-                        section="ssh",
-                        label="private",
-                        value=local_private + "\n",
-                        concealed=True,
-                    )
+        if local_private and not remote_private_valid:
+            fields.append(
+                OnePasswordField(
+                    section="ssh",
+                    label="private",
+                    value=local_private + "\n",
+                    concealed=True,
+                ),
+            )
+        if fingerprint and not remote_fingerprint.strip():
+            fields.append(
+                OnePasswordField(
+                    section="ssh",
+                    label="fingerprint",
+                    value=fingerprint,
                 )
-            if fingerprint and not remote_fingerprint.strip():
-                fields.append(
-                    OnePasswordField(
-                        section="ssh",
-                        label="fingerprint",
-                        value=fingerprint,
-                    )
-                )
+            )
 
     missing_item = item is None
     prepared = ensure_ssh_container(
@@ -638,3 +664,70 @@ def configure_ssh():
             print(material.public_key)
             if material.fingerprint:
                 print(f"Fingerprint: {material.fingerprint}")
+
+
+def _looks_like_public_key(value: Optional[str]) -> bool:
+    """Return ``True`` when ``value`` resembles an SSH public key."""
+
+    if value is None:
+        return False
+
+    text = value.strip()
+    if not text:
+        return False
+
+    parts = text.split()
+    if len(parts) < 2:
+        return False
+
+    prefix = parts[0].lower()
+    valid_prefixes = (
+        "ssh-",
+        "ecdsa-",
+        "sk-",
+        "ecdsa-sk-",
+    )
+    return any(prefix.startswith(candidate) for candidate in valid_prefixes)
+
+
+def _looks_like_private_key(value: Optional[str]) -> bool:
+    """Return ``True`` when ``value`` resembles an SSH private key."""
+
+    if value is None:
+        return False
+
+    text = value.strip()
+    if not text:
+        return False
+
+    if "-----BEGIN" not in text or "PRIVATE KEY-----" not in text:
+        return False
+
+    return "-----END" in text and "PRIVATE KEY-----" in text.split("-----END")[-1]
+
+
+def _derive_public_from_private(private_key: str) -> Optional[str]:
+    """Return the public key derived from ``private_key`` when possible."""
+
+    if not private_key.strip():
+        return None
+
+    with tempfile.NamedTemporaryFile("w", delete=False) as handle:
+        temp_path = Path(handle.name)
+        handle.write(private_key.strip() + "\n")
+
+    try:
+        result = run(
+            "ssh-keygen -y -f " + shlex.quote(temp_path.as_posix())
+        )
+    finally:
+        temp_path.unlink(missing_ok=True)
+
+    if result.returncode != 0:
+        return None
+
+    output = (result.stdout or "").strip()
+    if not output:
+        return None
+    return output
+
