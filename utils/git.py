@@ -137,7 +137,7 @@ def _summarise_accounts(config: AccountConfig) -> None:
     ]
     for account in config.accounts:
         message.append(
-            f"  - {account.provider} ({account.scope}) -> {account.directory}"
+            f"  - {account.alias_slug}: {account.provider} ({account.scope}) -> {account.directory}"
         )
     print("\n".join(message))
 

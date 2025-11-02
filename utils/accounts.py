@@ -40,6 +40,7 @@ class GitAccount:
     display_name: str
     email: str
     directory: str
+    alias: Optional[str] = None
     username: Optional[str] = None
     signing_key: Optional[str] = None
     op_vault: Optional[str] = None
@@ -52,6 +53,8 @@ class GitAccount:
         self.display_name = self.display_name.strip()
         self.email = self.email.strip()
         self.directory = _normalise_directory(self.directory.strip())
+        if self.alias:
+            self.alias = self.alias.strip()
         if self.username:
             self.username = self.username.strip()
         if self.signing_key:
@@ -64,15 +67,21 @@ class GitAccount:
             self.ssh_host = self.ssh_host.strip()
 
     @property
-    def slug(self) -> str:
+    def alias_slug(self) -> str:
+        if self.alias:
+            return _slugify(self.alias)
         return _slugify(f"{self.scope}-{self.provider}")
+
+    @property
+    def slug(self) -> str:
+        return self.alias_slug
 
     @property
     def ssh_alias(self) -> str:
         alias = self.ssh_host
         if alias:
             return alias
-        return f"{self.provider}.com-{self.slug}"
+        return f"{self.provider}.com-{self.alias_slug}"
 
     def as_serialisable(self) -> dict:
         data = asdict(self)
@@ -208,6 +217,12 @@ def _prompt_account(existing: Optional[GitAccount] = None) -> GitAccount:
     display_default = existing.display_name if existing else scope.title()
     display_name = _prompt("Commit author name", default=display_default)
 
+    alias_default = existing.alias if existing and existing.alias else scope
+    alias_value = _prompt(
+        "Short alias for this identity (used in SSH/git config)",
+        default=alias_default,
+    )
+
     username_default = existing.username if existing and existing.username else ""
     username = _prompt("Account username", default=username_default, allow_empty=True)
 
@@ -262,6 +277,7 @@ def _prompt_account(existing: Optional[GitAccount] = None) -> GitAccount:
         display_name=display_name,
         email=email,
         directory=directory,
+        alias=alias_value or None,
         username=username or None,
         signing_key=signing_key or None,
         op_vault=op_vault,
@@ -276,9 +292,10 @@ def _prompt_default_account(accounts: List[GitAccount], default_slug: str) -> st
     print("\nSelect the default git identity:")
     for index, account in enumerate(accounts, start=1):
         marker = "*" if account.slug == default_slug else " "
+        alias = account.alias or account.scope
         print(
             f"  {index}. [{marker}] {account.display_name} <{account.email}> "
-            f"({account.provider} @ {account.scope})"
+            f"({account.provider} @ {alias})"
         )
     while True:
         choice = _prompt("Enter the number for the default identity", default="1")
@@ -293,7 +310,8 @@ def prompt_for_account_config(existing: Optional[AccountConfig] = None) -> Accou
     accounts: List[GitAccount] = []
     if existing:
         for account in existing.accounts:
-            print(f"\nReviewing configuration for {account.provider} ({account.scope})")
+            label = account.alias or account.scope
+            print(f"\nReviewing configuration for {label} ({account.provider})")
             accounts.append(_prompt_account(existing=account))
         add_more = _prompt_yes_no("Would you like to add another git account?", default=False)
     else:
@@ -311,7 +329,7 @@ def prompt_for_account_config(existing: Optional[AccountConfig] = None) -> Accou
     for account in accounts:
         if account.slug in seen:
             raise RuntimeError(
-                "Duplicate account scopes detected. Please choose unique scopes for each provider."
+                "Duplicate account aliases detected. Please choose unique aliases for each identity."
             )
         seen.add(account.slug)
 

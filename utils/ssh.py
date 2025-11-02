@@ -6,7 +6,7 @@ import sys
 import textwrap
 from typing import Dict, List, Optional, Tuple
 
-from .accounts import get_account_config, save_account_config
+from .accounts import GitAccount, get_account_config, save_account_config
 from .debian import run
 from .meta import KNOWN_HOSTS, SSH_CONFIG, SSH_DIR
 from .one_password import OnePasswordItem, ensure_op_connected, list_items
@@ -25,18 +25,28 @@ def write_known_hosts() -> None:
         KNOWN_HOSTS.write_text(known_hosts_content)
 
 
-def _score_item(account, item: OnePasswordItem) -> int:
+def _score_item(account: GitAccount, item: OnePasswordItem) -> int:
     """Return a simple relevance score between an account and 1Password item."""
 
     text = f"{item.title} {item.vault}".lower()
     score = 0
     provider = account.provider.lower()
     scope = account.scope.lower()
+    alias = (account.alias or "").lower()
+    display = account.display_name.lower()
 
     if provider and provider in text:
         score += 3
     if scope and scope in text:
         score += 2
+    if alias and alias in text:
+        score += 3
+    if display and display in text:
+        score += 1
+    alias_tokens = [token for token in alias.replace("/", " ").replace("-", " ").split() if token]
+    for token in alias_tokens:
+        if token and token in text:
+            score += 1
     if account.username and account.username.lower() in text:
         score += 2
     if "ssh" in item.title.lower():
@@ -94,6 +104,31 @@ def _prompt_for_item(account, catalog: List[OnePasswordItem]) -> Optional[Tuple[
             return selected.vault, selected.title
 
         print("Please choose a valid option.")
+
+
+def _auto_assign_items(
+    accounts: List[GitAccount], catalog: List[OnePasswordItem]
+) -> Dict[str, Tuple[str, str]]:
+    """Return automatic vault/item assignments keyed by account slug."""
+
+    assignments: Dict[str, Tuple[str, str]] = {}
+    for account in accounts:
+        ranked = sorted(
+            catalog,
+            key=lambda item: (_score_item(account, item), item.title.lower()),
+            reverse=True,
+        )
+        if not ranked:
+            continue
+        best = ranked[0]
+        best_score = _score_item(account, best)
+        if best_score <= 0:
+            continue
+        second_score = _score_item(account, ranked[1]) if len(ranked) > 1 else None
+        unique_high = second_score is None or best_score >= (second_score + 2)
+        if best_score >= 5 or unique_high:
+            assignments[account.slug] = (best.vault, best.title)
+    return assignments
 
 
 def _ensure_config_entry(account, existing_config: str) -> str:
@@ -170,18 +205,40 @@ def configure_ssh():
     SSH_DIR.mkdir(parents=True, exist_ok=True)
 
     catalog: List[OnePasswordItem] = []
-    needs_mapping = [account for account in config.accounts if not account.op_vault or not account.op_item]
+    needs_mapping = [
+        account for account in config.accounts if not account.op_vault or not account.op_item
+    ]
 
     updated_config = False
-    if needs_mapping and interactive:
+    if needs_mapping:
         catalog = list_items()
+        auto_assignments = _auto_assign_items(needs_mapping, catalog)
+        for account in needs_mapping:
+            if account.slug in auto_assignments:
+                vault, item = auto_assignments[account.slug]
+                account.op_vault, account.op_item = vault, item
+                updated_config = True
+                print(
+                    f"Automatically mapped {account.display_name} ({account.provider})"
+                    f" -> {vault}/{item}"
+                )
+        needs_mapping = [
+            account
+            for account in needs_mapping
+            if not account.op_vault or not account.op_item
+        ]
+
+    if needs_mapping and interactive:
         for account in needs_mapping:
             selection = _prompt_for_item(account, catalog)
             if selection:
                 account.op_vault, account.op_item = selection
                 updated_config = True
     elif needs_mapping:
-        print("Skipping SSH key assignment for accounts without 1Password metadata in non-interactive mode.")
+        print(
+            "Skipping SSH key assignment for accounts without 1Password metadata "
+            "in non-interactive mode."
+        )
 
     if updated_config:
         save_account_config(config)
