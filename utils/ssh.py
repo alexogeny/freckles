@@ -14,6 +14,7 @@ from .accounts import GitAccount, get_account_config, save_account_config
 from .debian import run
 from .meta import KNOWN_HOSTS, SSH_CONFIG, SSH_DIR
 from .one_password import (
+    MultipleItemsFoundError,
     OnePasswordField,
     OnePasswordItem,
     ensure_op_connected,
@@ -21,6 +22,7 @@ from .one_password import (
     get_field_value,
     get_item,
     list_items,
+    resolve_item_identifier,
     update_item_fields,
 )
 
@@ -254,7 +256,7 @@ def _score_item(account: GitAccount, item: OnePasswordItem) -> int:
     return score
 
 
-def _prompt_for_item(account, catalog: List[OnePasswordItem]) -> Optional[Tuple[str, str]]:
+def _prompt_for_item(account, catalog: List[OnePasswordItem]) -> Optional[OnePasswordItem]:
     """Prompt the user to associate a 1Password item with an account."""
 
     if not catalog:
@@ -299,17 +301,17 @@ def _prompt_for_item(account, catalog: List[OnePasswordItem]) -> Optional[Tuple[
             continue
         if answer in option_map:
             selected = option_map[answer]
-            return selected.vault, selected.title
+            return selected
 
         print("Please choose a valid option.")
 
 
 def _auto_assign_items(
     accounts: List[GitAccount], catalog: List[OnePasswordItem]
-) -> Dict[str, Tuple[str, str]]:
+) -> Dict[str, OnePasswordItem]:
     """Return automatic vault/item assignments keyed by account slug."""
 
-    assignments: Dict[str, Tuple[str, str]] = {}
+    assignments: Dict[str, OnePasswordItem] = {}
     for account in accounts:
         ranked = sorted(
             catalog,
@@ -325,7 +327,7 @@ def _auto_assign_items(
         second_score = _score_item(account, ranked[1]) if len(ranked) > 1 else None
         unique_high = second_score is None or best_score >= (second_score + 2)
         if best_score >= 5 or unique_high:
-            assignments[account.slug] = (best.vault, best.title)
+            assignments[account.slug] = best
     return assignments
 
 
@@ -426,8 +428,63 @@ def configure_ssh():
     needs_mapping = [
         account for account in config.accounts if not account.op_vault or not account.op_item
     ]
+
+    catalog: List[OnePasswordItem] = []
+    updated_config = False
+
     if accounts_with_items or needs_mapping:
         ensure_op_connected()
+
+    if accounts_with_items:
+        catalog = list_items()
+        for account in list(accounts_with_items):
+            try:
+                resolved = resolve_item_identifier(
+                    account.op_vault or "", account.op_item or "", catalog
+                )
+            except MultipleItemsFoundError as exc:
+                reference = f"{account.op_vault}/{account.op_item}".strip("/")
+                print(
+                    "Multiple 1Password items match "
+                    f"'{reference or account.display_name}' for {account.display_name}."
+                )
+                if interactive and exc.matches:
+                    selection = _prompt_for_item(account, list(exc.matches))
+                    if selection:
+                        account.op_vault = selection.vault
+                        account.op_item = selection.identifier
+                        updated_config = True
+                        continue
+                account.op_item = None
+                updated_config = True
+                continue
+
+            if resolved and resolved != account.op_item:
+                account.op_item = resolved
+                updated_config = True
+            elif resolved is None:
+                reference = f"{account.op_vault}/{account.op_item}".strip("/")
+                print(
+                    "Unable to find 1Password item "
+                    f"'{reference or account.display_name}' for {account.display_name}."
+                )
+                if interactive and catalog:
+                    selection = _prompt_for_item(account, catalog)
+                    if selection:
+                        account.op_vault = selection.vault
+                        account.op_item = selection.identifier
+                        updated_config = True
+                        continue
+                account.op_item = None
+                updated_config = True
+
+    accounts_with_items = [
+        account for account in config.accounts if account.op_vault and account.op_item
+    ]
+    needs_mapping = [
+        account for account in config.accounts if not account.op_vault or not account.op_item
+    ]
+
     provisioned: List[Tuple[GitAccount, SshMaterial]] = []
     for account in accounts_with_items:
         material = _provision_ssh_material(account)
@@ -436,20 +493,19 @@ def configure_ssh():
     existing_config = SSH_CONFIG.read_text() if SSH_CONFIG.exists() else ""
     SSH_DIR.mkdir(parents=True, exist_ok=True)
 
-    catalog: List[OnePasswordItem] = []
-
-    updated_config = False
     if needs_mapping:
-        catalog = list_items()
+        if not catalog:
+            catalog = list_items()
         auto_assignments = _auto_assign_items(needs_mapping, catalog)
         for account in needs_mapping:
             if account.slug in auto_assignments:
-                vault, item = auto_assignments[account.slug]
-                account.op_vault, account.op_item = vault, item
+                selection = auto_assignments[account.slug]
+                account.op_vault = selection.vault
+                account.op_item = selection.identifier
                 updated_config = True
                 print(
                     f"Automatically mapped {account.display_name} ({account.provider})"
-                    f" -> {vault}/{item}"
+                    f" -> {selection.vault}/{selection.title}"
                 )
         needs_mapping = [
             account
@@ -461,7 +517,8 @@ def configure_ssh():
         for account in needs_mapping:
             selection = _prompt_for_item(account, catalog)
             if selection:
-                account.op_vault, account.op_item = selection
+                account.op_vault = selection.vault
+                account.op_item = selection.identifier
                 updated_config = True
     elif needs_mapping:
         print(
@@ -493,7 +550,8 @@ def configure_ssh():
             selection = _prompt_for_item(account, catalog)
             if not selection:
                 continue
-            account.op_vault, account.op_item = selection
+            account.op_vault = selection.vault
+            account.op_item = selection.identifier
             updated_config = True
             success, error = _install_keys_for_account(account)
             if success:

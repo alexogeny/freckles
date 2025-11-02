@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shlex
 import tempfile
 import time
@@ -21,6 +22,7 @@ class OnePasswordItem:
 
     title: str
     vault: str
+    identifier: str
     favorite: bool = False
 
     def label(self) -> str:
@@ -74,11 +76,69 @@ def list_items() -> List[OnePasswordItem]:
             OnePasswordItem(
                 title=entry.get("title", ""),
                 vault=vault_name,
+                identifier=entry.get("id", ""),
                 favorite=bool(entry.get("favorite", False)),
             )
         )
 
     return items
+
+
+class MultipleItemsFoundError(Exception):
+    """Raised when more than one 1Password item matches a query."""
+
+    def __init__(self, vault: str, item: str, matches: List[OnePasswordItem]):
+        self.vault = vault
+        self.item = item
+        self.matches = matches
+        resolved_vault = vault or "default"
+        super().__init__(
+            f"Multiple items matched '{item}' in vault '{resolved_vault}'."
+        )
+
+
+_ITEM_IDENTIFIER_PATTERN = re.compile(r"^[a-z0-9]{26}$")
+
+
+def _is_item_identifier(value: str) -> bool:
+    return bool(value) and bool(_ITEM_IDENTIFIER_PATTERN.fullmatch(value))
+
+
+def resolve_item_identifier(
+    vault: str, item: str, catalog: Optional[List[OnePasswordItem]] = None
+) -> Optional[str]:
+    """Return the stable identifier for ``item`` within ``vault`` when possible."""
+
+    candidate = (item or "").strip()
+    if _is_item_identifier(candidate):
+        return candidate
+
+    normalised_vault = (vault or "").strip().lower()
+    items = catalog if catalog is not None else list_items()
+    matches: List[OnePasswordItem] = []
+    for entry in items:
+        if normalised_vault and entry.vault.strip().lower() != normalised_vault:
+            continue
+        if entry.title.strip().lower() == candidate.lower():
+            matches.append(entry)
+
+    if not matches:
+        return None
+
+    if len(matches) == 1:
+        identifier = matches[0].identifier.strip()
+        return identifier or None
+
+    exact_case = [match for match in matches if match.title.strip() == candidate]
+    if len(exact_case) == 1:
+        identifier = exact_case[0].identifier.strip()
+        return identifier or None
+
+    favourites = [match for match in matches if match.favorite and match.identifier.strip()]
+    if len(favourites) == 1:
+        return favourites[0].identifier.strip()
+
+    raise MultipleItemsFoundError(vault, item, matches)
 
 
 def _item_reference(vault: str, item: str) -> str:
@@ -101,7 +161,30 @@ def get_item(
     """Return the raw JSON payload for a 1Password item."""
 
     reference = _item_reference(vault, item)
-    command_parts = ["op item get", *_item_command_args(vault, item), "--format", "json"]
+    try:
+        resolved_item = resolve_item_identifier(vault, item)
+    except MultipleItemsFoundError as exc:
+        print(
+            "Failed to resolve a unique 1Password item for "
+            f"{reference}. Multiple items matched the provided name."
+        )
+        for match in exc.matches:
+            print(f"  - {match.label()} [{match.identifier}]")
+        print("Please update the configuration to reference the desired item by ID.")
+        return None
+    if resolved_item is None and item:
+        print(
+            "Failed to locate 1Password item "
+            f"{reference}. Please verify the vault and item names."
+        )
+        return None
+
+    command_parts = [
+        "op item get",
+        *_item_command_args(vault, resolved_item or item),
+        "--format",
+        "json",
+    ]
     result = run(" ".join(command_parts))
     if result.returncode != 0:
         message = result.stderr.strip() or result.stdout.strip() or "unknown error"
@@ -161,6 +244,26 @@ def update_item_fields(vault: str, item: str, fields: Iterable[OnePasswordField]
     pitfalls when invoking the CLI.
     """
 
+    try:
+        resolved_item = resolve_item_identifier(vault, item)
+    except MultipleItemsFoundError as exc:
+        reference = _item_reference(vault, item)
+        print(
+            "Failed to resolve a unique 1Password item for "
+            f"{reference}. Multiple items matched the provided name."
+        )
+        for match in exc.matches:
+            print(f"  - {match.label()} [{match.identifier}]")
+        print("Please update the configuration to reference the desired item by ID.")
+        return False
+    if resolved_item is None:
+        reference = _item_reference(vault, item)
+        print(
+            "Failed to locate 1Password item "
+            f"{reference}. Please verify the vault and item names."
+        )
+        return False
+
     field_entries = []
     ensured_sections: set[str] = set()
     temp_files: List[Path] = []
@@ -187,7 +290,10 @@ def update_item_fields(vault: str, item: str, fields: Iterable[OnePasswordField]
             shlex.quote(f"{field_identifier}[value]=@{path.as_posix()}"))
 
     reference = _item_reference(vault, item)
-    command_parts = ["op item edit", *_item_command_args(vault, item)] + field_entries
+    command_parts = [
+        "op item edit",
+        *_item_command_args(vault, resolved_item),
+    ] + field_entries
     command = " ".join(command_parts)
     result = run(command)
 
