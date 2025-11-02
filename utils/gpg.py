@@ -8,6 +8,28 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+
+def _has_material_value(value: Optional[str]) -> bool:
+    """Return ``True`` when ``value`` appears to contain actual key material."""
+
+    if value is None:
+        return False
+
+    stripped = value.strip()
+    if not stripped:
+        return False
+
+    if stripped.startswith("@"):
+        remainder = stripped[1:]
+        if not remainder:
+            return False
+        if remainder.startswith(("/", "\\", "~")):
+            return False
+        if len(remainder) >= 2 and remainder[1] == ":" and remainder[0].isalpha():
+            return False
+
+    return True
+
 from .accounts import AccountConfig, GitAccount, save_account_config
 from .debian import run
 from .one_password import (
@@ -64,7 +86,7 @@ def _import_remote_key(account: GitAccount, item: Optional[Dict]) -> Optional[Tu
         return None
 
     private_key = get_field_value(item, "gpg", "private") or ""
-    if not private_key.strip():
+    if not _has_material_value(private_key):
         return None
 
     with tempfile.NamedTemporaryFile("w", delete=False) as handle:
@@ -148,13 +170,17 @@ def _export_material(key_id: str) -> Optional[GpgMaterial]:
     )
 
 
-def _needs_update(item: Optional[Dict], field: str) -> bool:
+def _needs_update(
+    item: Optional[Dict], field: str, *, expected: Optional[str] = None
+) -> bool:
     if not item:
         return True
     value = get_field_value(item, "gpg", field)
-    if value is None:
+    if not _has_material_value(value):
         return True
-    return not str(value).strip()
+    if expected is None:
+        return False
+    return (value or "").strip() != expected.strip()
 
 
 def provision_gpg_material(config: AccountConfig) -> List[Tuple[GitAccount, GpgMaterial]]:
@@ -176,10 +202,12 @@ def provision_gpg_material(config: AccountConfig) -> List[Tuple[GitAccount, GpgM
         item = get_item(account.op_vault, account.op_item, suppress_missing=True)
         remote_public = (get_field_value(item, "gpg", "public") or "") if item else ""
         remote_private = (get_field_value(item, "gpg", "private") or "") if item else ""
-        remote_has_material = bool(remote_public.strip() and remote_private.strip())
+        remote_has_material = _has_material_value(remote_public) and _has_material_value(
+            remote_private
+        )
         details = _discover_existing_key(account)
         generated_new_key = False
-        if details is None and remote_private.strip():
+        if details is None and _has_material_value(remote_private):
             details = _import_remote_key(account, item)
             if details is None:
                 continue
@@ -203,8 +231,8 @@ def provision_gpg_material(config: AccountConfig) -> List[Tuple[GitAccount, GpgM
             signing_changed = True
 
         fields: List[OnePasswordField] = []
-        if not remote_has_material and material is not None:
-            if _needs_update(item, "public"):
+        if material is not None:
+            if _needs_update(item, "public", expected=material.public_key):
                 fields.append(
                     OnePasswordField(
                         section="gpg",
@@ -212,7 +240,7 @@ def provision_gpg_material(config: AccountConfig) -> List[Tuple[GitAccount, GpgM
                         value=material.public_key + "\n",
                     )
                 )
-            if _needs_update(item, "private"):
+            if _needs_update(item, "private", expected=material.private_key):
                 fields.append(
                     OnePasswordField(
                         section="gpg",
@@ -221,22 +249,22 @@ def provision_gpg_material(config: AccountConfig) -> List[Tuple[GitAccount, GpgM
                         concealed=True,
                     )
                 )
-            if _needs_update(item, "key_id"):
-                fields.append(
-                    OnePasswordField(
-                        section="gpg",
-                        label="key_id",
-                        value=key_id,
-                    )
+        if _needs_update(item, "key_id", expected=key_id):
+            fields.append(
+                OnePasswordField(
+                    section="gpg",
+                    label="key_id",
+                    value=key_id,
                 )
-            if fingerprint and _needs_update(item, "fingerprint"):
-                fields.append(
-                    OnePasswordField(
-                        section="gpg",
-                        label="fingerprint",
-                        value=fingerprint,
-                    )
+            )
+        if fingerprint and _needs_update(item, "fingerprint", expected=fingerprint):
+            fields.append(
+                OnePasswordField(
+                    section="gpg",
+                    label="fingerprint",
+                    value=fingerprint,
                 )
+            )
 
         fields_updated = False
         if fields:
