@@ -189,17 +189,16 @@ def _configure_repository(
     _ensure_directory(APT_KEYRING_DIR, 0o755)
     keyring_path = APT_KEYRING_DIR / f"{repository.name}.gpg"
 
-    if not keyring_path.exists():
-        gpg_command = (
-            f"gpg --dearmor --yes -o {keyring_path.as_posix()} {repository.name}.gpg"
-        )
-        result = run(gpg_command)
-        if result.returncode != 0:
-            result = run(f"sudo {gpg_command}")
-        _ensure_success(
-            result,
-            f"Failed to install GPG key for {repository.name}",
-        )
+    gpg_command = (
+        f"gpg --dearmor --yes -o {keyring_path.as_posix()} {repository.name}.gpg"
+    )
+    result = run(gpg_command)
+    if result.returncode != 0:
+        result = run(f"sudo {gpg_command}")
+    _ensure_success(
+        result,
+        f"Failed to install GPG key for {repository.name}",
+    )
 
     try:
         keyring_path.chmod(0o644)

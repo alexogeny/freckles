@@ -75,8 +75,16 @@ def test_configure_repository_is_idempotent(monkeypatch):
     commands.clear()
     web._configure_repository(repo)
 
-    # No additional configuration should be required on subsequent runs.
-    assert commands == []
+    # Subsequent runs should only refresh the keyring without rewriting other state.
+    expected_gpg_command = (
+        f"gpg --dearmor --yes -o {(web.APT_KEYRING_DIR / 'spotify.gpg').as_posix()} spotify.gpg"
+    )
+    assert commands, "Expected the repository key to be refreshed on subsequent runs"
+    assert commands[0] == expected_gpg_command
+    if len(commands) == 2:
+        assert commands[1] == f"sudo {expected_gpg_command}"
+    else:
+        assert len(commands) == 1
 
     # Ensure the first run actually executed the expected operations.
     assert any("gpg --dearmor" in cmd for cmd in first_commands)
