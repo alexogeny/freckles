@@ -11,6 +11,22 @@ function cs() {
     cd "$1" && ls
 }
 
+function nn() {
+    local target_dir
+    if [ $# -eq 0 ]; then
+        target_dir=$(uv run --no-project ~/.shell/dynamic_navigate.py)
+    else
+        target_dir=$(uv run --no-project ~/.shell/dynamic_navigate.py "$*")
+    fi
+    local status=$?
+    if [ $status -eq 0 ] && [ -n "$target_dir" ]; then
+        cd "$target_dir" || echo "Failed to change directory"
+    else
+        echo "Failed to determine target directory"
+        return $status
+    fi
+}
+
 alias ..='cs ..'
 alias ...='cs ../..'
 alias ....='cs ../../..'
@@ -41,3 +57,6 @@ alias pip=pip3
 alias gpl="git pull --rebase --autostash --prune"
 alias gps="git push"
 alias gpsf="git push --force-with-lease"
+alias gfs="git fs"
+alias grb="git rb"
+alias gdb="git db"

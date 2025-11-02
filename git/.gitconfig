@@ -42,3 +42,8 @@
 
 [branch "main"]
   remote = origin
+
+[alias]
+  fs = "!f() { python3 ~/.shell/git_tools.py fresh-switch \"$@\"; }; f"
+  rb = "!python3 ~/.shell/git_tools.py remote-branches \"$@\""
+  db = "!python3 ~/.shell/git_tools.py default-branch \"$@\""
