@@ -30,30 +30,12 @@ from utils.git import configure_git
 from utils.shell import configure_shell
 from utils.ssh import configure_ssh
 from utils.vscode import configure_vscode
-from utils.web import install_software_list
+from utils.web import ensure_repositories_configured, install_software_list
 from utils.ubuntu import ensure_firefox_from_apt, purge_snapd
 
 
 if not is_debian_like():
     sys.exit("Freckles currently supports Debian and Ubuntu systems only.")
-
-apt_update_result = run("sudo apt-get update -yqq")
-if apt_update_result.returncode != 0:
-    message = apt_update_result.stderr.strip() or apt_update_result.stdout.strip()
-    sys.exit(f"Failed to refresh apt package lists: {message}")
-
-core_packages = [
-    "curl",
-    "git",
-    "ca-certificates",
-    "gnupg",
-    "lsb-release",
-]
-
-essential_install = install_with_apt(core_packages)
-if essential_install.returncode != 0:
-    message = essential_install.stderr.strip() or essential_install.stdout.strip()
-    sys.exit(f"Failed to install required base packages: {message}")
 
 software_list = [
     DebFile(
@@ -101,6 +83,30 @@ unwanted_software = [
     "cups",
     "cups-*",
 ]
+
+apt_update_result = run("sudo apt-get update -yqq")
+if apt_update_result.returncode != 0:
+    combined_output = (apt_update_result.stderr or "") + (apt_update_result.stdout or "")
+    if "NO_PUBKEY" in combined_output:
+        ensure_repositories_configured(software_list)
+        apt_update_result = run("sudo apt-get update -yqq")
+
+if apt_update_result.returncode != 0:
+    message = (apt_update_result.stderr or "").strip() or (apt_update_result.stdout or "").strip()
+    sys.exit(f"Failed to refresh apt package lists: {message}")
+
+core_packages = [
+    "curl",
+    "git",
+    "ca-certificates",
+    "gnupg",
+    "lsb-release",
+]
+
+essential_install = install_with_apt(core_packages)
+if essential_install.returncode != 0:
+    message = essential_install.stderr.strip() or essential_install.stdout.strip()
+    sys.exit(f"Failed to install required base packages: {message}")
 
 if is_ubuntu():
     purge_snapd()

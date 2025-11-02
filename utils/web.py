@@ -98,6 +98,46 @@ def get_and_install_from_download_link(link, command):
     file_name.unlink(missing_ok=True)
 
 
+def _configure_repository(repository: DebRepository) -> None:
+    download_file(repository.gpg, f"{repository.name}.gpg", overwrite=True)
+    _ensure_success(
+        run("sudo install -m 0755 -d /etc/apt/keyrings"),
+        f"Failed to create keyring directory for {repository.name}",
+    )
+    keyring_path = Path("/etc/apt/keyrings") / f"{repository.name}.gpg"
+    _ensure_success(
+        run(f"sudo gpg --dearmor --yes -o {keyring_path} {repository.name}.gpg"),
+        f"Failed to install GPG key for {repository.name}",
+    )
+    _ensure_success(
+        run(f"sudo chmod 644 {keyring_path}"),
+        f"Failed to set permissions on keyring for {repository.name}",
+    )
+    Path(f"{repository.name}.gpg").unlink(missing_ok=True)
+    repo_line = f"deb [signed-by={keyring_path}] {repository.repository}"
+    _ensure_success(
+        run(
+            f'echo "{repo_line}" | '
+            f"sudo tee /etc/apt/sources.list.d/{repository.name}.list > /dev/null"
+        ),
+        f"Failed to configure repository for {repository.name}",
+    )
+
+
+def ensure_repositories_configured(
+    software_list: List[Union[DebFile, DebRepository]]
+) -> bool:
+    configured = False
+    for software in software_list:
+        if isinstance(software, DebRepository):
+            try:
+                _configure_repository(software)
+                configured = True
+            except RuntimeError as error:
+                print(error)
+    return configured
+
+
 def install_software_list(software_list: List[Union[DebFile, DebRepository]]):
     update_result = run("sudo apt-get update -yqq")
     _ensure_success(update_result, "Failed to refresh apt package lists")
@@ -124,30 +164,7 @@ def install_software_list(software_list: List[Union[DebFile, DebRepository]]):
                 continue
             get_and_install_from_download_link(software.direct_link, software.name)
         elif isinstance(software, DebRepository):
-            download_file(software.gpg, f"{software.name}.gpg", overwrite=True)
-            _ensure_success(
-                run("sudo install -m 0755 -d /etc/apt/keyrings"),
-                f"Failed to create keyring directory for {software.name}",
-            )
-            keyring_path = Path("/etc/apt/keyrings") / f"{software.name}.gpg"
-            _ensure_success(
-                run(
-                    f"sudo gpg --dearmor --yes -o {keyring_path} {software.name}.gpg"
-                ),
-                f"Failed to install GPG key for {software.name}",
-            )
-            _ensure_success(
-                run(f"sudo chmod 644 {keyring_path}"),
-                f"Failed to set permissions on keyring for {software.name}",
-            )
-            Path(f"{software.name}.gpg").unlink(missing_ok=True)
-            repo_line = f"deb [signed-by={keyring_path}] {software.repository}"
-            _ensure_success(
-                run(
-                    f'echo "{repo_line}" | sudo tee /etc/apt/sources.list.d/{software.name}.list > /dev/null'
-                ),
-                f"Failed to configure repository for {software.name}",
-            )
+            _configure_repository(software)
             update_result = run("sudo apt-get update -yqq")
             _ensure_success(update_result, f"Failed to update apt cache for {software.name}")
             print(f"installing {software.name}")
