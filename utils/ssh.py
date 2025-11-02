@@ -17,8 +17,8 @@ from .one_password import (
     OnePasswordField,
     OnePasswordItem,
     ensure_op_connected,
+    ensure_ssh_container,
     get_field_value,
-    get_item,
     list_items,
     update_item_fields,
 )
@@ -125,14 +125,16 @@ def _provision_ssh_material(account: GitAccount) -> Optional[SshMaterial]:
     if not account.op_vault or not account.op_item:
         return None
 
-    item = get_item(account.op_vault, account.op_item)
+    item = ensure_ssh_container(account.op_vault, account.op_item)
+    if item is None:
+        return None
     key_path, public_path = _key_paths(account)
     local_private = _read_text(key_path)
     local_public = _read_text(public_path)
 
-    remote_public = (get_field_value(item, "ssh", "public") or "") if item else ""
-    remote_private = (get_field_value(item, "ssh", "private") or "") if item else ""
-    remote_fingerprint = (get_field_value(item, "ssh", "fingerprint") or "") if item else ""
+    remote_public = get_field_value(item, "ssh", "public") or ""
+    remote_private = get_field_value(item, "ssh", "private") or ""
+    remote_fingerprint = get_field_value(item, "ssh", "fingerprint") or ""
 
     if not local_public and remote_public:
         local_public = remote_public.strip()
@@ -345,6 +347,13 @@ def _install_keys_for_account(account) -> Tuple[bool, Optional[str]]:
 
     if not account.op_vault or not account.op_item:
         return False, None
+
+    prepared = ensure_ssh_container(account.op_vault, account.op_item)
+    if prepared is None:
+        return False, (
+            f"Unable to prepare 1Password item for {account.display_name} "
+            f"({account.provider})."
+        )
 
     key_path = SSH_DIR / f"{account.slug}.{account.provider}"
     public_key = key_path.with_suffix(".pub")

@@ -175,3 +175,109 @@ def update_item_fields(vault: str, item: str, fields: Iterable[OnePasswordField]
         return False
 
     return True
+
+
+def _has_section(payload: Dict, label: str) -> bool:
+    """Return ``True`` when ``payload`` contains ``label`` section."""
+
+    sections = payload.get("sections")
+    if not isinstance(sections, Iterable):
+        return False
+    for section in sections:
+        if not isinstance(section, dict):
+            continue
+        section_label = (section.get("label") or section.get("name") or "").strip().lower()
+        section_id = (section.get("id") or "").strip().lower()
+        if label.strip().lower() in {section_label, section_id}:
+            return True
+    return False
+
+
+def _create_ssh_item(vault: str, item: str) -> bool:
+    """Create a minimal secure note prepared for SSH key material."""
+
+    parts = ["op", "item", "create", "--category", shlex.quote("Secure Note"), "--title", shlex.quote(item)]
+    if vault:
+        parts.extend(["--vault", shlex.quote(vault)])
+    parts.extend(["--section", shlex.quote("id=ssh;label=ssh")])
+
+    def _field_arg(label: str, *, concealed: bool = False) -> str:
+        components = ["section=ssh", f"label={label}"]
+        if concealed:
+            components.append("type=concealed")
+        else:
+            components.append("type=string")
+        components.append("value=")
+        return "--field " + shlex.quote(";".join(components))
+
+    parts.append(_field_arg("public"))
+    parts.append(_field_arg("private", concealed=True))
+    parts.append(_field_arg("fingerprint"))
+
+    command = " ".join(parts)
+    result = run(command)
+    if result.returncode != 0:
+        reference = _item_reference(vault, item)
+        message = result.stderr.strip() or result.stdout.strip() or "unknown error"
+        print(f"Failed to create 1Password item {reference}: {message}")
+        return False
+    return True
+
+
+def _ensure_section(vault: str, item: str, label: str) -> bool:
+    """Ensure ``label`` section exists on ``item``."""
+
+    reference = _item_reference(vault, item)
+    section_spec = shlex.quote(f"id={label};label={label}")
+    command = f"op item edit {shlex.quote(reference)} --section {section_spec}"
+    result = run(command)
+    if result.returncode != 0:
+        message = result.stderr.strip() or result.stdout.strip() or "unknown error"
+        print(f"Failed to ensure section {label} on 1Password item {reference}: {message}")
+        return False
+    return True
+
+
+def ensure_ssh_container(vault: str, item: str) -> Optional[Dict]:
+    """Ensure ``vault``/``item`` exists with an ``ssh`` section and base fields."""
+
+    payload = get_item(vault, item)
+    if payload is None:
+        if not _create_ssh_item(vault, item):
+            return None
+        payload = get_item(vault, item)
+        if payload is None:
+            return None
+
+    if not _has_section(payload, "ssh"):
+        if not _ensure_section(vault, item, "ssh"):
+            return None
+        payload = get_item(vault, item)
+        if payload is None:
+            return None
+
+    placeholders: List[OnePasswordField] = []
+    for label, concealed in (
+        ("public", False),
+        ("private", True),
+        ("fingerprint", False),
+    ):
+        if get_field_value(payload, "ssh", label) is None:
+            value = "\n" if label != "fingerprint" else ""
+            placeholders.append(
+                OnePasswordField(
+                    section="ssh",
+                    label=label,
+                    value=value,
+                    concealed=concealed,
+                )
+            )
+
+    if placeholders:
+        if not update_item_fields(vault, item, placeholders):
+            return None
+        payload = get_item(vault, item)
+        if payload is None:
+            return None
+
+    return payload
