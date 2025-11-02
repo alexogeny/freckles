@@ -404,6 +404,37 @@ def _install_keys_for_account(account) -> Tuple[bool, Optional[str]]:
         )
 
     try:
+        public_text = public_key.read_text()
+    except FileNotFoundError:
+        public_text = ""
+    try:
+        private_text = key_path.read_text()
+    except FileNotFoundError:
+        private_text = ""
+
+    if not public_text.strip() or "ssh-" not in public_text:
+        for path in (key_path, public_key):
+            try:
+                path.unlink()
+            except FileNotFoundError:
+                pass
+        return False, (
+            f"The 1Password item {account.op_vault}/{account.op_item} does not contain "
+            "an SSH public key. Please update the item manually and rerun the command."
+        )
+
+    if "PRIVATE KEY" not in private_text:
+        for path in (key_path, public_key):
+            try:
+                path.unlink()
+            except FileNotFoundError:
+                pass
+        return False, (
+            f"The 1Password item {account.op_vault}/{account.op_item} does not contain "
+            "an SSH private key. Please update the item manually and rerun the command."
+        )
+
+    try:
         private_key_path = key_path
         private_key_path.chmod(0o600)
         public_key.chmod(0o644)

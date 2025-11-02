@@ -259,6 +259,10 @@ def update_item_fields(vault: str, item: str, fields: Iterable[OnePasswordField]
     pitfalls when invoking the CLI.
     """
 
+    field_list = list(fields)
+    if not field_list:
+        return True
+
     try:
         resolved_item = resolve_item_identifier(vault, item)
     except MultipleItemsFoundError as exc:
@@ -279,38 +283,46 @@ def update_item_fields(vault: str, item: str, fields: Iterable[OnePasswordField]
         )
         return False
 
-    field_entries = []
-    temp_files: List[Path] = []
-    for field in fields:
+    reference = _item_reference(vault, item)
+    for field in field_list:
         fd, temp_path = tempfile.mkstemp(prefix="freckles-op-")
         os.close(fd)
         path = Path(temp_path)
-        temp_files.append(path)
         path.write_text(field.value)
         section_prefix = f"{field.section}." if field.section else ""
         field_identifier = f"{section_prefix}{field.label}"
         type_suffix = "[concealed]" if field.concealed else ""
-        field_entries.append(
-            shlex.quote(f"{field_identifier}{type_suffix}=@{path.as_posix()}"))
+        field_entry = shlex.quote(
+            f"{field_identifier}{type_suffix}=@{path.as_posix()}"
+        )
 
-    reference = _item_reference(vault, item)
-    command_parts = [
-        "op item edit",
-        *_item_command_args(vault, resolved_item),
-    ] + field_entries
-    command = " ".join(command_parts)
-    result = run(command)
+        command_parts = [
+            "op item edit",
+            *_item_command_args(vault, resolved_item),
+            field_entry,
+        ]
+        command = " ".join(command_parts)
+        result = run(command)
 
-    for path in temp_files:
         try:
             os.unlink(path)
         except OSError:
             pass
 
-    if result.returncode != 0:
-        message = result.stderr.strip() or result.stdout.strip() or "unknown error"
-        print(f"Failed to update 1Password item {reference}: {message}")
-        return False
+        if result.returncode != 0:
+            message = (
+                result.stderr.strip() or result.stdout.strip() or "unknown error"
+            )
+            print(f"Failed to update 1Password item {reference}: {message}")
+            normalized = message.lower()
+            if "panic" in normalized or "sigsegv" in normalized or "segmentation" in normalized:
+                print(
+                    "The 1Password CLI encountered an unexpected crash while editing "
+                    f"{reference}. Ensure the desktop app and CLI are up to date, "
+                    "then retry the operation. If the issue persists, update the "
+                    "fields manually in 1Password."
+                )
+            return False
 
     return True
 
