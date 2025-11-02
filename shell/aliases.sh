@@ -14,11 +14,18 @@ alias gcl="uv run --no-project ~/.shell/clone_repository.py"
 alias browse="uv run --no-project ~/.shell/open_repository_in_browser.py"
 alias dynamic_navigate="uv run --no-project ~/.shell/dynamic_navigate.py"
 function nn() {
-    local target_dir=$(uv run --no-project ~/.shell/dynamic_navigate.py "$1")
-    if [ -n "$target_dir" ]; then
+    local target_dir
+    if [ $# -eq 0 ]; then
+        target_dir=$(uv run --no-project ~/.shell/dynamic_navigate.py)
+    else
+        target_dir=$(uv run --no-project ~/.shell/dynamic_navigate.py "$*")
+    fi
+    local status=$?
+    if [ $status -eq 0 ] && [ -n "$target_dir" ]; then
         cd "$target_dir" || echo "Failed to change directory"
     else
         echo "Failed to determine target directory"
+        return $status
     fi
 }
 alias ls="ls --color=auto"
@@ -43,6 +50,9 @@ alias sha512='openssl sha512'
 alias gpl="git pull --rebase --autostash --prune"
 alias gps="git push"
 alias gpsf="git push --force-with-lease"
+alias gfs="git fs"
+alias grb="git rb"
+alias gdb="git db"
 
 . "$HOME/.cargo/env"
 

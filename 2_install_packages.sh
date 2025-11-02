@@ -1,5 +1,11 @@
 #!/bin/bash
 
+set -euo pipefail
+
+source /etc/os-release
+OS_ID="${ID:-debian}"
+OS_CODENAME="${VERSION_CODENAME:-stable}"
+
 sudo apt-get update
 
 packages=(
@@ -56,14 +62,14 @@ fi
 
 if ! command -v docker >/dev/null 2>&1; then
   sudo install -m 0755 -d /etc/apt/keyrings
-  sudo curl -fsSL "https://download.docker.com/linux/debian/gpg" -o /etc/apt/keyrings/docker.asc
+  sudo curl -fsSL "https://download.docker.com/linux/$OS_ID/gpg" -o /etc/apt/keyrings/docker.asc
   sudo chmod a+r /etc/apt/keyrings/docker.asc
   echo \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
-  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/$OS_ID \
+  $OS_CODENAME stable" | \
   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-  sudo apt update
-  DEBIAN_FRONTEND=noninteractive sudo apt install -y -qq docker-ce docker-ce-cli containerd.io docker-compose-plugin docker-ce-rootless-extras docker-buildx-plugin >/dev/null
+  sudo apt-get update
+  DEBIAN_FRONTEND=noninteractive sudo apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-compose-plugin docker-ce-rootless-extras docker-buildx-plugin >/dev/null
   if ! getent group docker > /dev/null; then
     sudo groupadd docker
   fi

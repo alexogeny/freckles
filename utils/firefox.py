@@ -151,7 +151,7 @@ def get_extension_json(profile_dir):
 def install_firefox_extension(extension_id):
     try:
         url = f"https://addons.mozilla.org/firefox/downloads/latest/{extension_id}/addon-{extension_id}-latest.xpi"
-        download_file(url, extension_id + ".xpi")
+        download_file(url, extension_id + ".xpi", overwrite=True)
         subprocess.run(["firefox", extension_id + ".xpi"], check=True)
         print(f"Extension {extension_id} installed.")
     except subprocess.CalledProcessError as e:

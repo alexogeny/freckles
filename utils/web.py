@@ -24,14 +24,21 @@ def find_download_link_from_html(html, pattern):
     return None
 
 
-def download_file(url, file_name):
-    if not Path(file_name).exists():
-        urllib.request.urlretrieve(url, file_name)
+def download_file(url, file_name, overwrite: bool = False) -> Path:
+    destination = Path(file_name)
+    if overwrite and destination.exists():
+        destination.unlink()
+    if not destination.exists():
+        urllib.request.urlretrieve(url, destination.as_posix())
+    return destination
 
 
 def get_and_install_from_download_link(link, command):
-    file_name = f"{command}.deb"
-    download_file(link, file_name)
+    if not link:
+        raise ValueError(f"Unable to determine a download link for {command}")
+
+    file_name = Path(f"{command}.deb")
+    download_file(link, file_name, overwrite=True)
 
     package_info = run(f"dpkg -I {file_name}")
     dependencies = []
@@ -41,10 +48,14 @@ def get_and_install_from_download_link(link, command):
             dependencies += clean.split("Depends: ")[-1].split(", ")
         if clean.startswith("Recommends: "):
             dependencies += clean.split("Recommends: ")[-1].split(", ")
-    install_with_apt(list(set([d.split()[0] for d in dependencies if d])))
+
+    dependency_names = sorted({d.split()[0] for d in dependencies if d})
+    if dependency_names:
+        install_with_apt(dependency_names)
+
     run(f"sudo dpkg -i {file_name}")
 
-    Path(file_name).unlink()
+    file_name.unlink(missing_ok=True)
 
 
 def install_software_list(software_list: List[Union[DebFile, DebRepository]]):
@@ -58,15 +69,24 @@ def install_software_list(software_list: List[Union[DebFile, DebRepository]]):
                 software.direct_link = find_download_link_from_html(
                     html, software.pattern
                 )
+            if not software.direct_link:
+                print(
+                    f"Skipping {software.name}; unable to determine a download link."
+                )
+                continue
             get_and_install_from_download_link(software.direct_link, software.name)
         elif isinstance(software, DebRepository):
-            download_file(software.gpg, f"{software.name}.gpg")
+            download_file(software.gpg, f"{software.name}.gpg", overwrite=True)
+            run("sudo install -m 0755 -d /etc/apt/keyrings")
+            keyring_path = Path("/etc/apt/keyrings") / f"{software.name}.gpg"
             run(
-                f"sudo gpg --dearmor --yes -o /etc/apt/trusted.gpg.d/spotify.gpg {software.name}.gpg"
+                f"sudo gpg --dearmor --yes -o {keyring_path} {software.name}.gpg"
             )
+            Path(f"{software.name}.gpg").unlink(missing_ok=True)
+            repo_line = f"deb [signed-by={keyring_path}] {software.repository}"
             run(
-                f'echo "deb {software.repository}" | sudo tee /etc/apt/sources.list.d/{software.name}.list'
+                f'echo "{repo_line}" | sudo tee /etc/apt/sources.list.d/{software.name}.list > /dev/null'
             )
-            run("sudo apt update")
+            run("sudo apt-get update -yqq")
             print(f"installing {software.name}")
             install_with_apt([software.install_name or software.name])

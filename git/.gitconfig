@@ -1,5 +1,5 @@
 [core]
-  excludesfile = /home/alexogeny/.gitignore
+  excludesfile = ~/.gitignore
 
 [push]
   default = upstream
@@ -13,8 +13,8 @@
 [rebase]
   autostash = true
 
-[user]
-  name = alexogeny
+# >>> freckles global identity >>>
+# <<< freckles global identity <<<
 
 [stash]
   showPatch = true
@@ -28,17 +28,16 @@
 [url "git@gitlab.com:"]
   insteadOf = https://gitlab.com/
 
-[includeIf "gitdir:~/private/github/**/.git"]
-  path = .private.github.gitconfig
-
-[includeIf "gitdir:~/private/github/**/.git"]
-  path = .private.gitlab.gitconfig
-
-[includeIf "gitdir:~/work/gitlab"]
-  path = .work.gitlab.gitconfig
+# >>> freckles account includes >>>
+# <<< freckles account includes <<<
 
 [branch "master"]
   remote = origin
 
 [branch "main"]
   remote = origin
+
+[alias]
+  fs = "!f() { python3 ~/.shell/git_tools.py fresh-switch \"$@\"; }; f"
+  rb = "!python3 ~/.shell/git_tools.py remote-branches \"$@\""
+  db = "!python3 ~/.shell/git_tools.py default-branch \"$@\""

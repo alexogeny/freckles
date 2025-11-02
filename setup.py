@@ -1,8 +1,13 @@
+import sys
+
 from utils.avatar import manage_avatar
+
 from utils.debian import (
     DebFile,
     DebRepository,
     is_debian_12_bookworm,
+    is_debian_like,
+    is_ubuntu,
     purge_unwanted_packages,
     replace_bookworm_with_trixie,
     run_apt_update_and_upgrade,
@@ -24,6 +29,11 @@ from utils.shell import configure_shell
 from utils.ssh import configure_ssh
 from utils.vscode import configure_vscode
 from utils.web import install_software_list
+from utils.ubuntu import ensure_firefox_from_apt, purge_snapd
+
+
+if not is_debian_like():
+    sys.exit("Freckles currently supports Debian and Ubuntu systems only.")
 
 software_list = [
     DebFile(
@@ -63,11 +73,14 @@ unwanted_software = [
     "cups-*",
 ]
 
+if is_ubuntu():
+    purge_snapd()
+
 purge_unwanted_packages(unwanted_software)
 install_software_list(software_list)
 configure_vscode()
-configure_ssh()
 configure_git()
+configure_ssh()
 configure_shell()
 manage_avatar()
 if is_debian_12_bookworm() is True:
@@ -80,6 +93,8 @@ if is_firefox_esr_installed():
     setup_mozilla_repo()
     install_regular_firefox()
     purge_esr_profiles()
+elif is_ubuntu():
+    ensure_firefox_from_apt()
 
 profile = find_firefox_profile()
 extension_data = get_extension_json(profile)
