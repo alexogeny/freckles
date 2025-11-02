@@ -232,13 +232,30 @@ def _create_secure_note(vault: str, item: str) -> bool:
     return True
 
 
-def ensure_ssh_container(vault: str, item: str) -> Optional[Dict]:
+def ensure_ssh_container(
+    vault: str,
+    item: str,
+    *,
+    create_if_missing: bool = True,
+    initial_fields: Optional[Iterable[OnePasswordField]] = None,
+) -> Optional[Dict]:
     """Ensure ``vault``/``item`` exists with an ``ssh`` section and base fields."""
 
     payload = get_item(vault, item, suppress_missing=True)
     if payload is None:
+        if not create_if_missing:
+            reference = _item_reference(vault, item)
+            print(
+                "Unable to locate 1Password item "
+                f"{reference}. Please create it manually before continuing."
+            )
+            return None
         if not _create_secure_note(vault, item):
             return None
+        field_seed = list(initial_fields or [])
+        if field_seed:
+            if not update_item_fields(vault, item, field_seed):
+                return None
         payload = get_item(vault, item, suppress_missing=True)
         if payload is None:
             return None

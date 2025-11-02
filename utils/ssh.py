@@ -19,6 +19,7 @@ from .one_password import (
     ensure_op_connected,
     ensure_ssh_container,
     get_field_value,
+    get_item,
     list_items,
     update_item_fields,
 )
@@ -125,9 +126,7 @@ def _provision_ssh_material(account: GitAccount) -> Optional[SshMaterial]:
     if not account.op_vault or not account.op_item:
         return None
 
-    item = ensure_ssh_container(account.op_vault, account.op_item)
-    if item is None:
-        return None
+    item = get_item(account.op_vault, account.op_item, suppress_missing=True)
     key_path, public_path = _key_paths(account)
     local_private = _read_text(key_path)
     local_public = _read_text(public_path)
@@ -192,6 +191,25 @@ def _provision_ssh_material(account: GitAccount) -> Optional[SshMaterial]:
             )
         )
 
+    missing_item = item is None
+    prepared = ensure_ssh_container(
+        account.op_vault,
+        account.op_item,
+        create_if_missing=missing_item,
+        initial_fields=list(fields) if missing_item else None,
+    )
+    if prepared is None:
+        return None
+    item = prepared
+
+    if missing_item:
+        # ``initial_fields`` already populated the new item with fresh material,
+        # so there is no need to rewrite the same values immediately afterwards.
+        fields = []
+        remote_public = get_field_value(item, "ssh", "public") or ""
+        remote_private = get_field_value(item, "ssh", "private") or ""
+        remote_fingerprint = get_field_value(item, "ssh", "fingerprint") or ""
+
     updated = False
     if fields:
         updated = update_item_fields(account.op_vault, account.op_item, fields)
@@ -200,7 +218,7 @@ def _provision_ssh_material(account: GitAccount) -> Optional[SshMaterial]:
         key_path=key_path,
         public_key=local_public,
         fingerprint=fingerprint,
-        updated=updated or created,
+        updated=missing_item or updated or created,
         created=created,
     )
 
@@ -348,7 +366,11 @@ def _install_keys_for_account(account) -> Tuple[bool, Optional[str]]:
     if not account.op_vault or not account.op_item:
         return False, None
 
-    prepared = ensure_ssh_container(account.op_vault, account.op_item)
+    prepared = ensure_ssh_container(
+        account.op_vault,
+        account.op_item,
+        create_if_missing=False,
+    )
     if prepared is None:
         return False, (
             f"Unable to prepare 1Password item for {account.display_name} "
