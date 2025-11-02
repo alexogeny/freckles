@@ -2,7 +2,7 @@ import subprocess
 from pathlib import Path
 from shutil import rmtree
 from textwrap import dedent
-from typing import List
+from typing import List, Tuple
 
 from .debian import check_if_installed, is_ubuntu as _is_ubuntu, run
 from .firefox import install_regular_firefox, setup_mozilla_repo
@@ -33,6 +33,28 @@ def list_snap_packages() -> List[str]:
     return packages
 
 
+def _snap_priority(package: str) -> Tuple[int, str]:
+    """Return a sort key that removes dependent snaps before their bases."""
+
+    name = package.lower()
+
+    if name == "snapd":
+        return (4, name)
+    if name == "gtk-common-themes":
+        return (3, name)
+    if name.startswith(("core", "bare")):
+        return (2, name)
+    if name.startswith("gnome-") or name in {"snapd-desktop-integration"}:
+        return (1, name)
+    return (0, name)
+
+
+def _prioritize_snap_packages(packages: List[str]) -> List[str]:
+    """Sort snaps so application snaps are removed before shared dependencies."""
+
+    return sorted(packages, key=_snap_priority)
+
+
 def purge_snapd() -> bool:
     if not is_ubuntu():
         return False
@@ -41,11 +63,19 @@ def purge_snapd() -> bool:
         print("snapd is not installed; skipping removal.")
         return False
 
-    packages = list_snap_packages()
-    for package in packages:
-        removal = run(f"sudo snap remove --purge {package}")
-        if removal.returncode != 0:
-            print(f"Failed to remove snap package {package}: {removal.stderr}")
+    attempts = 0
+    packages = _prioritize_snap_packages(list_snap_packages())
+    while packages and attempts < 3:
+        attempts += 1
+        for package in packages:
+            removal = run(f"sudo snap remove --purge {package}")
+            if removal.returncode != 0:
+                print(f"Failed to remove snap package {package}: {removal.stderr}")
+        packages = _prioritize_snap_packages(list_snap_packages())
+
+    if packages:
+        remaining = ", ".join(packages)
+        print(f"Unable to remove snap packages: {remaining}")
 
     run("sudo systemctl disable --now snapd.socket snapd.service snapd.seeded.service")
     run("sudo apt-get purge -y snapd")
