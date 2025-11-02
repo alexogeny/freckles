@@ -6,7 +6,12 @@ import subprocess
 from pathlib import Path
 from typing import Iterable
 
-from .accounts import AccountConfig, GitAccount, ensure_account_config, load_account_config
+from .accounts import (
+    AccountConfig,
+    GitAccount,
+    ensure_account_config,
+    get_account_config as _get_account_config,
+)
 from .meta import GIT_ACCOUNTS_DIR, HOME, REPOSITORY_LATEST
 from .web import download_file
 
@@ -136,8 +141,7 @@ def configure_git() -> AccountConfig:
 
 
 def get_account_config() -> AccountConfig:
-    config = load_account_config()
-    if config is None:
-        config = ensure_account_config(interactive=False)
-    return config
+    """Backwards compatible shim for account configuration access."""
+
+    return _get_account_config(interactive=False)
 
