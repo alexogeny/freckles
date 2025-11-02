@@ -167,56 +167,57 @@ def _provision_ssh_material(account: GitAccount) -> Optional[SshMaterial]:
         fingerprint = remote_fingerprint.strip()
 
     fields: List[OnePasswordField] = []
-    if created:
-        fields.extend(
-            [
-                OnePasswordField(
-                    section="ssh",
-                    label="public",
-                    value=local_public + "\n",
-                ),
-                OnePasswordField(
-                    section="ssh",
-                    label="private",
-                    value=local_private + "\n",
-                    concealed=True,
-                ),
-            ]
-        )
-        if fingerprint:
-            fields.append(
-                OnePasswordField(
-                    section="ssh",
-                    label="fingerprint",
-                    value=fingerprint,
-                )
+    if not remote_has_material:
+        if created:
+            fields.extend(
+                [
+                    OnePasswordField(
+                        section="ssh",
+                        label="public",
+                        value=local_public + "\n",
+                    ),
+                    OnePasswordField(
+                        section="ssh",
+                        label="private",
+                        value=local_private + "\n",
+                        concealed=True,
+                    ),
+                ]
             )
-    else:
-        if not remote_public.strip():
-            fields.append(
-                OnePasswordField(
-                    section="ssh",
-                    label="public",
-                    value=local_public + "\n",
+            if fingerprint:
+                fields.append(
+                    OnePasswordField(
+                        section="ssh",
+                        label="fingerprint",
+                        value=fingerprint,
+                    )
                 )
-            )
-        if not remote_private.strip():
-            fields.append(
-                OnePasswordField(
-                    section="ssh",
-                    label="private",
-                    value=local_private + "\n",
-                    concealed=True,
+        else:
+            if not remote_public.strip():
+                fields.append(
+                    OnePasswordField(
+                        section="ssh",
+                        label="public",
+                        value=local_public + "\n",
+                    )
                 )
-            )
-        if fingerprint and not remote_fingerprint.strip():
-            fields.append(
-                OnePasswordField(
-                    section="ssh",
-                    label="fingerprint",
-                    value=fingerprint,
+            if not remote_private.strip():
+                fields.append(
+                    OnePasswordField(
+                        section="ssh",
+                        label="private",
+                        value=local_private + "\n",
+                        concealed=True,
+                    )
                 )
-            )
+            if fingerprint and not remote_fingerprint.strip():
+                fields.append(
+                    OnePasswordField(
+                        section="ssh",
+                        label="fingerprint",
+                        value=fingerprint,
+                    )
+                )
 
     missing_item = item is None
     prepared = ensure_ssh_container(
