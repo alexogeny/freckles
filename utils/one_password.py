@@ -203,12 +203,32 @@ def _has_section(payload: Dict, label: str) -> bool:
     return False
 
 
+def _create_secure_note(vault: str, item: str) -> bool:
+    """Create a secure note for ``vault``/``item`` when it is missing."""
+
+    parts = ["op item create", "--category secure-note", f"--title {shlex.quote(item)}"]
+    if vault:
+        parts.append(f"--vault {shlex.quote(vault)}")
+    command = " ".join(parts)
+    result = run(command)
+    if result.returncode != 0:
+        reference = _item_reference(vault, item)
+        message = result.stderr.strip() or result.stdout.strip() or "unknown error"
+        print(f"Failed to create 1Password item {reference}: {message}")
+        return False
+    return True
+
+
 def ensure_ssh_container(vault: str, item: str) -> Optional[Dict]:
     """Ensure ``vault``/``item`` exists with an ``ssh`` section and base fields."""
 
     payload = get_item(vault, item, suppress_missing=True)
     if payload is None:
-        return None
+        if not _create_secure_note(vault, item):
+            return None
+        payload = get_item(vault, item, suppress_missing=True)
+        if payload is None:
+            return None
 
     placeholders: List[OnePasswordField] = []
     for label, concealed in (
