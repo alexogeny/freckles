@@ -1,4 +1,4 @@
-"""Helpers to provision and export GPG material for git identities."""
+"""Helpers to discover, generate, and export GPG key material."""
 
 from __future__ import annotations
 
@@ -6,74 +6,9 @@ import shlex
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Optional, Tuple
 
-
-def _has_material_value(value: Optional[str]) -> bool:
-    """Return ``True`` when ``value`` appears to contain actual key material."""
-
-    if value is None:
-        return False
-
-    stripped = value.strip()
-    if not stripped:
-        return False
-
-    if stripped.startswith("@"):
-        remainder = stripped[1:]
-        if not remainder:
-            return False
-        if remainder.startswith(("/", "\\", "~")):
-            return False
-        if len(remainder) >= 2 and remainder[1] == ":" and remainder[0].isalpha():
-            return False
-
-    return True
-
-
-def _looks_like_pgp_public_key(value: Optional[str]) -> bool:
-    """Return ``True`` when ``value`` resembles an exported PGP public key."""
-
-    if value is None:
-        return False
-
-    text = value.strip()
-    if not text:
-        return False
-
-    begin = "-----BEGIN PGP PUBLIC KEY BLOCK-----"
-    end = "-----END PGP PUBLIC KEY BLOCK-----"
-    return text.startswith(begin) and end in text
-
-
-def _looks_like_pgp_private_key(value: Optional[str]) -> bool:
-    """Return ``True`` when ``value`` resembles an exported PGP private key."""
-
-    if value is None:
-        return False
-
-    text = value.strip()
-    if not text:
-        return False
-
-    private_markers = [
-        ("-----BEGIN PGP PRIVATE KEY BLOCK-----", "-----END PGP PRIVATE KEY BLOCK-----"),
-        ("-----BEGIN PGP SECRET KEY BLOCK-----", "-----END PGP SECRET KEY BLOCK-----"),
-    ]
-    for begin, end in private_markers:
-        if text.startswith(begin) and end in text:
-            return True
-    return False
-
-from .accounts import AccountConfig, GitAccount, save_account_config
 from .debian import run
-from .one_password import (
-    OnePasswordField,
-    ensure_op_connected,
-    get_field_value,
-    get_item,
-    update_item_fields,
-)
 
 
 @dataclass
@@ -107,44 +42,19 @@ def _parse_secret_key(output: str) -> Optional[Tuple[str, str]]:
     return None
 
 
-def _discover_existing_key(account: GitAccount) -> Optional[Tuple[str, str]]:
-    result = run(
-        f'gpg --list-secret-keys --with-colons --fingerprint "{account.email}"'
-    )
+def discover_secret_key(query: str) -> Optional[Tuple[str, str]]:
+    """Return the key id and fingerprint for a matching secret key."""
+
+    command = f"gpg --list-secret-keys --with-colons --fingerprint {shlex.quote(query)}"
+    result = run(command)
     if result.returncode != 0:
         return None
     return _parse_secret_key(result.stdout or "")
 
 
-def _import_remote_key(account: GitAccount, item: Optional[Dict]) -> Optional[Tuple[str, str]]:
-    if not item:
-        return None
+def generate_secret_key(name: str, email: str) -> Optional[Tuple[str, str]]:
+    """Generate a new secret key for the supplied identity."""
 
-    private_key = get_field_value(item, "gpg", "private") or ""
-    if not _looks_like_pgp_private_key(private_key):
-        return None
-
-    with tempfile.NamedTemporaryFile("w", delete=False) as handle:
-        temp_path = Path(handle.name)
-        handle.write(private_key.strip() + "\n")
-
-    try:
-        result = run(f"gpg --batch --import {shlex.quote(temp_path.as_posix())}")
-    finally:
-        temp_path.unlink(missing_ok=True)
-
-    if result.returncode != 0:
-        message = result.stderr.strip() or result.stdout.strip() or "unknown error"
-        print(
-            f"Failed to import GPG key for {account.display_name} "
-            f"({account.email}) from 1Password: {message}"
-        )
-        return None
-
-    return _discover_existing_key(account)
-
-
-def _generate_key(account: GitAccount) -> Optional[Tuple[str, str]]:
     template = """
 Key-Type: RSA
 Key-Length: 4096
@@ -155,7 +65,7 @@ Name-Email: {email}
 Expire-Date: 0
 %no-protection
 %commit
-""".strip().format(name=account.display_name, email=account.email)
+""".strip().format(name=name, email=email)
 
     with tempfile.NamedTemporaryFile("w", delete=False) as handle:
         template_path = Path(handle.name)
@@ -167,15 +77,19 @@ Expire-Date: 0
     if result.returncode != 0:
         message = result.stderr.strip() or result.stdout.strip() or "unknown error"
         print(
-            f"Failed to generate GPG key for {account.display_name} "
-            f"({account.email}): {message}"
+            f"Failed to generate GPG key for {name} ({email}): {message}"
         )
         return None
 
-    return _discover_existing_key(account)
+    lookup = discover_secret_key(email)
+    if lookup is None:
+        return None
+    return lookup
 
 
-def _export_material(key_id: str) -> Optional[GpgMaterial]:
+def export_gpg_material(key_id: str) -> Optional[GpgMaterial]:
+    """Export public and private key material for ``key_id``."""
+
     public_result = run(f"gpg --armor --export {key_id}")
     if public_result.returncode != 0:
         message = public_result.stderr.strip() or public_result.stdout.strip() or "unknown error"
@@ -204,137 +118,3 @@ def _export_material(key_id: str) -> Optional[GpgMaterial]:
         private_key=(private_result.stdout or "").strip(),
     )
 
-
-def _needs_update(
-    item: Optional[Dict],
-    field: str,
-    *,
-    expected: Optional[str] = None,
-    validator: Optional[Callable[[Optional[str]], bool]] = None,
-) -> bool:
-    if not item:
-        return True
-    value = get_field_value(item, "gpg", field)
-    if validator and validator(value):
-        return False
-    if not _has_material_value(value):
-        return True
-    if expected is None:
-        return False
-    return (value or "").strip() != expected.strip()
-
-
-def provision_gpg_material(config: AccountConfig) -> List[Tuple[GitAccount, GpgMaterial]]:
-    """Ensure each account has exported GPG material stored in 1Password."""
-
-    eligible_accounts = [
-        account
-        for account in config.accounts
-        if account.op_vault and account.op_item
-    ]
-    if not eligible_accounts:
-        return []
-
-    ensure_op_connected()
-    updated_material: List[Tuple[GitAccount, GpgMaterial]] = []
-    config_updated = False
-
-    for account in eligible_accounts:
-        item = get_item(account.op_vault, account.op_item, suppress_missing=True)
-        remote_public = (get_field_value(item, "gpg", "public") or "") if item else ""
-        remote_private = (get_field_value(item, "gpg", "private") or "") if item else ""
-        remote_public_valid = _looks_like_pgp_public_key(remote_public)
-        remote_private_valid = _looks_like_pgp_private_key(remote_private)
-        remote_has_material = remote_public_valid and remote_private_valid
-        details = _discover_existing_key(account)
-        generated_new_key = False
-        if details is None and remote_private_valid:
-            details = _import_remote_key(account, item)
-            if details is None:
-                continue
-        if details is None and remote_public_valid and not remote_private_valid:
-            print(
-                "Skipping GPG provisioning for"
-                f" {account.display_name} ({account.email}) because the"
-                " 1Password item contains a GPG public key but the private key is"
-                " missing or malformed. Manual intervention is required."
-            )
-            continue
-        if details is None:
-            details = _generate_key(account)
-            generated_new_key = details is not None
-        if details is None:
-            continue
-
-        key_id, fingerprint = details
-        material: Optional[GpgMaterial] = None
-        if not remote_has_material:
-            material = _export_material(key_id)
-            if material is None:
-                continue
-
-        signing_changed = False
-        if not account.signing_key or account.signing_key != key_id:
-            account.signing_key = key_id
-            config_updated = True
-            signing_changed = True
-
-        fields: List[OnePasswordField] = []
-        if material is not None:
-            if _needs_update(
-                item,
-                "public",
-                expected=material.public_key,
-                validator=_looks_like_pgp_public_key,
-            ):
-                fields.append(
-                    OnePasswordField(
-                        section="gpg",
-                        label="public",
-                        value=material.public_key + "\n",
-                    )
-                )
-            if _needs_update(
-                item,
-                "private",
-                expected=material.private_key,
-                validator=_looks_like_pgp_private_key,
-            ):
-                fields.append(
-                    OnePasswordField(
-                        section="gpg",
-                        label="private",
-                        value=material.private_key + "\n",
-                        concealed=True,
-                    )
-                )
-        if _needs_update(item, "key_id", expected=key_id):
-            fields.append(
-                OnePasswordField(
-                    section="gpg",
-                    label="key_id",
-                    value=key_id,
-                )
-            )
-        if fingerprint and _needs_update(item, "fingerprint", expected=fingerprint):
-            fields.append(
-                OnePasswordField(
-                    section="gpg",
-                    label="fingerprint",
-                    value=fingerprint,
-                )
-            )
-
-        fields_updated = False
-        if fields:
-            fields_updated = update_item_fields(account.op_vault, account.op_item, fields)
-            if fields_updated:
-                item = get_item(account.op_vault, account.op_item)
-
-        if material and (generated_new_key or fields_updated or signing_changed):
-            updated_material.append((account, material))
-
-    if config_updated:
-        save_account_config(config)
-
-    return updated_material

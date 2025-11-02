@@ -2,29 +2,25 @@
 
 from __future__ import annotations
 
+import re
 import shlex
 import sys
-import tempfile
 import textwrap
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from .accounts import GitAccount, get_account_config, save_account_config
 from .debian import run
-from .meta import KNOWN_HOSTS, SSH_CONFIG, SSH_DIR
+from .meta import HOME, KNOWN_HOSTS, SSH_CONFIG, SSH_DIR
 from .one_password import (
     MultipleItemsFoundError,
-    OnePasswordField,
     OnePasswordItem,
     ensure_op_connected,
     ensure_ssh_container,
-    get_field_value,
-    get_item,
     list_items,
     resolve_item_identifier,
-    update_item_fields,
 )
+from .shared_identity import ensure_shared_ssh_key, publish_public_material
 
 known_hosts_content = textwrap.dedent("""
 gitlab.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAfuCHKVTjquxvt6CM6tdG4SLp1Btn/nOeHHE5UOzRdf
@@ -38,243 +34,6 @@ github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+V
 def write_known_hosts() -> None:
     if not KNOWN_HOSTS.exists():
         KNOWN_HOSTS.write_text(known_hosts_content)
-
-
-def _key_paths(account: GitAccount) -> Tuple[Path, Path]:
-    key_path = SSH_DIR / f"{account.slug}.{account.provider}"
-    public_path = key_path.with_suffix(".pub")
-    return key_path, public_path
-
-
-def _read_text(path: Path) -> Optional[str]:
-    try:
-        return path.read_text().strip()
-    except FileNotFoundError:
-        return None
-
-
-def _ensure_permissions(key_path: Path, public_path: Path) -> None:
-    try:
-        key_path.chmod(0o600)
-    except FileNotFoundError:
-        pass
-    try:
-        public_path.chmod(0o644)
-    except FileNotFoundError:
-        pass
-
-
-def _generate_local_key(account: GitAccount, key_path: Path, public_path: Path) -> bool:
-    SSH_DIR.mkdir(parents=True, exist_ok=True)
-    if key_path.exists():
-        key_path.unlink()
-    if public_path.exists():
-        public_path.unlink()
-
-    command = " ".join(
-        [
-            "ssh-keygen",
-            "-t",
-            "ed25519",
-            "-C",
-            shlex.quote(account.email),
-            "-f",
-            shlex.quote(key_path.as_posix()),
-            "-N",
-            "''",
-        ]
-    )
-    result = run(command)
-    if result.returncode != 0:
-        message = result.stderr.strip() or result.stdout.strip() or "unknown error"
-        print(
-            f"Failed to generate SSH key for {account.display_name} "
-            f"({account.provider}): {message}"
-        )
-        return False
-
-    _ensure_permissions(key_path, public_path)
-    return True
-
-
-def _fingerprint(public_path: Path) -> str:
-    result = run(f'ssh-keygen -lf {shlex.quote(public_path.as_posix())}')
-    if result.returncode != 0:
-        return ""
-    line = (result.stdout or "").strip().splitlines()
-    if not line:
-        return ""
-    parts = line[0].split()
-    if len(parts) >= 2:
-        return parts[1]
-    return line[0]
-
-
-def _fingerprint_from_text(public_key: str) -> str:
-    if not public_key.strip():
-        return ""
-
-    with tempfile.NamedTemporaryFile("w", delete=False) as handle:
-        temp_path = Path(handle.name)
-        handle.write(public_key.strip() + "\n")
-
-    try:
-        return _fingerprint(temp_path)
-    finally:
-        temp_path.unlink(missing_ok=True)
-
-
-def _provision_ssh_material(account: GitAccount) -> Optional[SshMaterial]:
-    if not account.op_vault or not account.op_item:
-        return None
-
-    item = get_item(account.op_vault, account.op_item, suppress_missing=True)
-    key_path, public_path = _key_paths(account)
-    local_private = _read_text(key_path)
-    local_public = _read_text(public_path)
-
-    remote_public_raw = get_field_value(item, "ssh", "public") or ""
-    remote_private_raw = get_field_value(item, "ssh", "private") or ""
-    remote_fingerprint = get_field_value(item, "ssh", "fingerprint") or ""
-
-    remote_public_valid = _looks_like_public_key(remote_public_raw)
-    remote_private_valid = _looks_like_private_key(remote_private_raw)
-
-    remote_public = remote_public_raw.strip() if remote_public_valid else ""
-    remote_private = remote_private_raw.strip() if remote_private_valid else ""
-
-    if not local_public and remote_public_valid:
-        local_public = remote_public
-    if not local_private and remote_private_valid:
-        local_private = remote_private
-
-    derived_public: Optional[str] = None
-    if remote_private_valid and (not remote_public_valid or not local_public):
-        derived_public = _derive_public_from_private(remote_private)
-        if derived_public and not local_public:
-            local_public = derived_public.strip()
-
-    if remote_public_valid and not remote_private_valid and not local_private:
-        print(
-            "Skipping SSH provisioning for"
-            f" {account.display_name} ({account.provider}) because the"
-            " 1Password item contains an SSH public key but the private key is"
-            " missing or malformed. Manual intervention is required."
-        )
-        return None
-
-    created = False
-    should_generate = (
-        not remote_public_valid
-        and not remote_private_valid
-        and (not local_public or not local_private)
-    )
-
-    if should_generate:
-        generated = _generate_local_key(account, key_path, public_path)
-        if not generated:
-            return None
-        created = True
-        local_private = _read_text(key_path)
-        local_public = _read_text(public_path)
-
-    if not local_public or not local_private:
-        return None
-
-    _ensure_permissions(key_path, public_path)
-
-    fingerprint = ""
-    if public_path.exists():
-        fingerprint = _fingerprint(public_path)
-    if not fingerprint:
-        fingerprint = _fingerprint_from_text(local_public)
-    if not fingerprint and remote_fingerprint.strip():
-        fingerprint = remote_fingerprint.strip()
-
-    fields: List[OnePasswordField] = []
-    if created:
-        fields.extend(
-            [
-                OnePasswordField(
-                    section="ssh",
-                    label="public",
-                    value=local_public + "\n",
-                ),
-                OnePasswordField(
-                    section="ssh",
-                    label="private",
-                    value=local_private + "\n",
-                    concealed=True,
-                ),
-            ]
-        )
-        if fingerprint:
-            fields.append(
-                OnePasswordField(
-                    section="ssh",
-                    label="fingerprint",
-                    value=fingerprint,
-                )
-            )
-    else:
-        if local_public and not remote_public_valid:
-            public_value = (derived_public or local_public).strip()
-            if public_value:
-                fields.append(
-                    OnePasswordField(
-                        section="ssh",
-                        label="public",
-                        value=public_value + "\n",
-                    )
-                )
-        if local_private and not remote_private_valid:
-            fields.append(
-                OnePasswordField(
-                    section="ssh",
-                    label="private",
-                    value=local_private + "\n",
-                    concealed=True,
-                ),
-            )
-        if fingerprint and not remote_fingerprint.strip():
-            fields.append(
-                OnePasswordField(
-                    section="ssh",
-                    label="fingerprint",
-                    value=fingerprint,
-                )
-            )
-
-    missing_item = item is None
-    prepared = ensure_ssh_container(
-        account.op_vault,
-        account.op_item,
-        create_if_missing=missing_item,
-        initial_fields=list(fields) if missing_item else None,
-    )
-    if prepared is None:
-        return None
-    item = prepared
-
-    if missing_item:
-        # ``initial_fields`` already populated the new item with fresh material,
-        # so there is no need to rewrite the same values immediately afterwards.
-        fields = []
-        remote_public = get_field_value(item, "ssh", "public") or ""
-        remote_private = get_field_value(item, "ssh", "private") or ""
-        remote_fingerprint = get_field_value(item, "ssh", "fingerprint") or ""
-
-    updated = False
-    if fields:
-        updated = update_item_fields(account.op_vault, account.op_item, fields)
-
-    return SshMaterial(
-        key_path=key_path,
-        public_key=local_public,
-        fingerprint=fingerprint,
-        updated=missing_item or updated or created,
-        created=created,
-    )
 
 
 def _score_item(account: GitAccount, item: OnePasswordItem) -> int:
@@ -383,35 +142,55 @@ def _auto_assign_items(
     return assignments
 
 
-def _ensure_config_entry(account, existing_config: str) -> str:
-    host_alias = account.ssh_alias
-    if f"Host {host_alias}" in existing_config:
-        return existing_config
+def _format_identity_path(path: Path) -> str:
+    try:
+        return f"~/{path.relative_to(HOME).as_posix()}"
+    except ValueError:
+        return path.as_posix()
 
-    key_path = SSH_DIR / f"{account.slug}.{account.provider}"
-    config_entry = textwrap.dedent(
+
+def _render_host_block(account: GitAccount, identity_file: Path) -> str:
+    identity = _format_identity_path(identity_file)
+    block = textwrap.dedent(
         f"""
-        Host {host_alias}
+        Host {account.ssh_alias}
             HostName {account.provider}.com
             AddKeysToAgent yes
-            IdentityFile ~/.ssh/{key_path.name}
+            IdentityFile {identity}
             User git
         """
     )
-    with SSH_CONFIG.open("a") as fh:
-        fh.write(config_entry)
-    return existing_config + config_entry
+    return block
 
 
-@dataclass
-class SshMaterial:
-    """Details about generated SSH material for an account."""
+def _ensure_config_entry(
+    account: GitAccount,
+    existing_config: str,
+    *,
+    identity_file: Optional[Path] = None,
+) -> Tuple[str, bool]:
+    host_alias = account.ssh_alias
+    identity_path = identity_file or (SSH_DIR / f"{account.slug}.{account.provider}")
+    new_block = _render_host_block(account, identity_path)
+    pattern = re.compile(
+        rf"(^Host {re.escape(host_alias)}\n(?:[\t ].*\n?)*)",
+        re.MULTILINE,
+    )
+    match = pattern.search(existing_config)
+    if match:
+        current_block = match.group(1)
+        if not current_block.endswith("\n"):
+            current_block += "\n"
+        if current_block == new_block:
+            return existing_config, False
+        updated = existing_config[: match.start()] + new_block + existing_config[match.end() :]
+        return updated, True
 
-    key_path: Path
-    public_key: str
-    fingerprint: str
-    updated: bool
-    created: bool
+    updated_config = existing_config
+    if updated_config and not updated_config.endswith("\n"):
+        updated_config += "\n"
+    updated_config += new_block
+    return updated_config, True
 
 
 def _install_keys_for_account(account) -> Tuple[bool, Optional[str]]:
@@ -505,6 +284,52 @@ def configure_ssh():
     write_known_hosts()
     interactive = sys.stdin.isatty()
     config = get_account_config(interactive=interactive)
+    existing_config = SSH_CONFIG.read_text() if SSH_CONFIG.exists() else ""
+    has_one_password = any(
+        account.op_vault and account.op_item for account in config.accounts
+    )
+
+    if not has_one_password:
+        default_account = config.get_default()
+        shared_material = ensure_shared_ssh_key(default_account.email)
+        if shared_material is None:
+            print("Skipping shared SSH setup because the key could not be generated.")
+            return
+        config_changed = False
+        for account in config.accounts:
+            existing_config, changed = _ensure_config_entry(
+                account,
+                existing_config,
+                identity_file=shared_material.private_key_path,
+            )
+            config_changed = config_changed or changed
+        if config_changed:
+            if existing_config and not existing_config.endswith("\n"):
+                existing_config += "\n"
+            SSH_DIR.mkdir(parents=True, exist_ok=True)
+            SSH_CONFIG.write_text(existing_config)
+        add_result = run(
+            f"ssh-add {shlex.quote(shared_material.private_key_path.as_posix())}"
+        )
+        if add_result.returncode != 0:
+            message = add_result.stderr.strip() or add_result.stdout.strip() or "unknown error"
+            print(f"Failed to add shared SSH key to ssh-agent: {message}")
+        outputs = publish_public_material(shared_material, None)
+        public_path = outputs.get("ssh_public")
+        fingerprint_path = outputs.get("ssh_fingerprint")
+        summary = [
+            "\nShared SSH key configured locally.",
+            f"  Host aliases: {', '.join(account.ssh_alias for account in config.accounts)}",
+        ]
+        if public_path:
+            summary.append(f"  Public key: {public_path}")
+        if fingerprint_path and shared_material.fingerprint:
+            summary.append(f"  Fingerprint: {shared_material.fingerprint}")
+            summary.append(f"  Fingerprint file: {fingerprint_path}")
+        summary.append("Upload this public key to your Git hosting services.")
+        print("\n".join(summary))
+        return
+
     accounts_with_items = [
         account for account in config.accounts if account.op_vault and account.op_item
     ]
@@ -514,6 +339,7 @@ def configure_ssh():
 
     catalog: List[OnePasswordItem] = []
     updated_config = False
+    config_changed = False
 
     if accounts_with_items or needs_mapping:
         ensure_op_connected()
@@ -568,12 +394,6 @@ def configure_ssh():
         account for account in config.accounts if not account.op_vault or not account.op_item
     ]
 
-    provisioned: List[Tuple[GitAccount, SshMaterial]] = []
-    for account in accounts_with_items:
-        material = _provision_ssh_material(account)
-        if material and (material.created or material.updated):
-            provisioned.append((account, material))
-    existing_config = SSH_CONFIG.read_text() if SSH_CONFIG.exists() else ""
     SSH_DIR.mkdir(parents=True, exist_ok=True)
 
     if needs_mapping:
@@ -618,7 +438,8 @@ def configure_ssh():
             continue
         success, error = _install_keys_for_account(account)
         if success:
-            existing_config = _ensure_config_entry(account, existing_config)
+            existing_config, changed = _ensure_config_entry(account, existing_config)
+            config_changed = config_changed or changed
         elif error:
             failures[account.slug] = error
             print(error)
@@ -638,7 +459,8 @@ def configure_ssh():
             updated_config = True
             success, error = _install_keys_for_account(account)
             if success:
-                existing_config = _ensure_config_entry(account, existing_config)
+                existing_config, changed = _ensure_config_entry(account, existing_config)
+                config_changed = config_changed or changed
                 failures.pop(account.slug, None)
             elif error:
                 failures[account.slug] = error
@@ -651,83 +473,9 @@ def configure_ssh():
         print("\nSome SSH keys could not be installed:")
         for message in failures.values():
             print(f"  - {message}")
-    if provisioned:
-        print(
-            "\nSSH key material has been synchronised with 1Password. Paste the following public keys into the matching Git hosts:"
-        )
-        for account, material in provisioned:
-            action = "Generated" if material.created else "Updated"
-            print(
-                f"\n[{account.provider} | {account.display_name} ({account.scope})] "
-                f"({action}) -> {material.key_path.with_suffix('.pub')}"
-            )
-            print(material.public_key)
-            if material.fingerprint:
-                print(f"Fingerprint: {material.fingerprint}")
+    if config_changed:
+        if existing_config and not existing_config.endswith("\n"):
+            existing_config += "\n"
+        SSH_CONFIG.write_text(existing_config)
 
-
-def _looks_like_public_key(value: Optional[str]) -> bool:
-    """Return ``True`` when ``value`` resembles an SSH public key."""
-
-    if value is None:
-        return False
-
-    text = value.strip()
-    if not text:
-        return False
-
-    parts = text.split()
-    if len(parts) < 2:
-        return False
-
-    prefix = parts[0].lower()
-    valid_prefixes = (
-        "ssh-",
-        "ecdsa-",
-        "sk-",
-        "ecdsa-sk-",
-    )
-    return any(prefix.startswith(candidate) for candidate in valid_prefixes)
-
-
-def _looks_like_private_key(value: Optional[str]) -> bool:
-    """Return ``True`` when ``value`` resembles an SSH private key."""
-
-    if value is None:
-        return False
-
-    text = value.strip()
-    if not text:
-        return False
-
-    if "-----BEGIN" not in text or "PRIVATE KEY-----" not in text:
-        return False
-
-    return "-----END" in text and "PRIVATE KEY-----" in text.split("-----END")[-1]
-
-
-def _derive_public_from_private(private_key: str) -> Optional[str]:
-    """Return the public key derived from ``private_key`` when possible."""
-
-    if not private_key.strip():
-        return None
-
-    with tempfile.NamedTemporaryFile("w", delete=False) as handle:
-        temp_path = Path(handle.name)
-        handle.write(private_key.strip() + "\n")
-
-    try:
-        result = run(
-            "ssh-keygen -y -f " + shlex.quote(temp_path.as_posix())
-        )
-    finally:
-        temp_path.unlink(missing_ok=True)
-
-    if result.returncode != 0:
-        return None
-
-    output = (result.stdout or "").strip()
-    if not output:
-        return None
-    return output
 
