@@ -12,7 +12,8 @@ from .accounts import (
     ensure_account_config,
     get_account_config as _get_account_config,
 )
-from .meta import GIT_ACCOUNTS_DIR, HOME
+from .gpg import provision_gpg_material
+from .meta import HOME
 
 
 IDENTITY_BEGIN = "# >>> freckles global identity >>>"
@@ -77,7 +78,7 @@ def _identity_lines(account: GitAccount) -> list[str]:
 def _account_include_lines(config: AccountConfig) -> list[str]:
     lines: list[str] = []
     for account in config.accounts:
-        account_config = GIT_ACCOUNTS_DIR / f"{account.slug}.gitconfig"
+        account_config = HOME / f".{account.slug}.gitconfig"
         gitdir = account.directory.rstrip("/")
         lines.append(f'[includeIf "gitdir:{gitdir}/**/.git"]')
         lines.append(f"  path = {_home_relative(account_config)}")
@@ -85,9 +86,8 @@ def _account_include_lines(config: AccountConfig) -> list[str]:
 
 
 def _write_account_configs(config: AccountConfig) -> None:
-    GIT_ACCOUNTS_DIR.mkdir(parents=True, exist_ok=True)
     for account in config.accounts:
-        config_path = GIT_ACCOUNTS_DIR / f"{account.slug}.gitconfig"
+        config_path = HOME / f".{account.slug}.gitconfig"
         sections = [
             "[user]",
             f"  name = {account.display_name}",
@@ -145,10 +145,22 @@ def _summarise_accounts(config: AccountConfig) -> None:
 def configure_git() -> AccountConfig:
     download_git_files()
     config = ensure_account_config()
+    gpg_updates = provision_gpg_material(config)
     _write_account_configs(config)
     _update_gitconfig(config)
     _ensure_git_user_config(config)
     _summarise_accounts(config)
+    if gpg_updates:
+        print(
+            "\nGPG signing keys have been generated/exported. Paste the following public keys into Git hosting services:"
+        )
+        for account, material in gpg_updates:
+            print(
+                f"\n[{account.provider} | {account.display_name} ({account.scope})] Key ID: {material.key_id}"
+            )
+            print(material.public_key)
+            if material.fingerprint:
+                print(f"Fingerprint: {material.fingerprint}")
     return config
 
 

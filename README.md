@@ -21,10 +21,16 @@ Mostly hand-rolled bash scripts for intalling and configuring my system.
 - installs and configures git, including both my personal and work configs with `--git`
   - ships helper aliases like `git fs` for a clean branch reset, `git rb` for
     remote branch discovery, and `git db` for default-branch detection
-  - onboarding walks through each git identity (personal, work, etc.), saves the
-    answers, and keeps the includes in sync with future edits
-  - generates SSH configs and keys for every account when 1Password metadata is
-    provided
+- onboarding walks through each git identity (personal, work, etc.), saves the
+  answers, and keeps the includes in sync with future edits
+  - provisions SSH keys automatically when 1Password lacks them, stores the new
+    material in 1Password, and prints the public key ready to paste into
+    GitHub/GitLab
+  - generates and exports per-identity GPG signing keys only when 1Password does
+    not already contain them, updating git config and 1Password at the same time
+  - see [Git Identity Concierge Guide](docs/git-identity-concierge.md) for
+    manual onboarding steps or recovery when metadata needs to be created or
+    fixed
 - installs and configures brew with `--brew`
   - python 3 is installed with brew and set as the default python interpreter
   - node is installed with brew
