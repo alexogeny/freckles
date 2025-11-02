@@ -17,6 +17,8 @@ from utils.debian import (
 )
 from utils.firefox import (
     EXTENSIONS_TO_INSTALL,
+    apply_firefox_policies,
+    apply_firefox_user_js,
     extension_already_installed,
     find_firefox_profile,
     get_extension_json,
@@ -143,13 +145,17 @@ if is_firefox_esr_installed():
 elif is_ubuntu():
     ensure_firefox_from_apt()
 
+apply_firefox_policies()
+
 profile = find_firefox_profile()
 if profile is None:
     print(
-        "Skipping Firefox extension installation because no profile was found. "
-        "Launch Firefox once to create a profile and rerun this step if needed."
+        "Skipping Firefox profile customization and extension installation because "
+        "no profile was found. Launch Firefox once to create a profile and rerun "
+        "this step if needed."
     )
 else:
+    apply_firefox_user_js(profile)
     extension_data = get_extension_json(profile)
     for extension_id, extension_name in EXTENSIONS_TO_INSTALL.items():
         if extension_already_installed(extension_data, extension_name):

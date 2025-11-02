@@ -39,6 +39,8 @@ Mostly hand-rolled bash scripts for intalling and configuring my system.
   - a bit janky, but that's just docker for you
 - installs noisetorch with `--noisetorch` (linux only)
 - installs slack, discord, and spotify
+- applies custom Firefox enterprise policies and profile defaults for a fast,
+  privacy-friendly browser (memory-only cache, VR disabled, telemetry blocked)
 - configures ssh with `--ssh`
   - uses 1password to retrieve ssh keys
   - uses .zshrc to set up ssh-agent on login
@@ -50,6 +52,14 @@ Ubuntu specific:
 
 - removes snap
 - replaces firefox snap with direct binary install
+
+### Firefox configuration templates
+
+Firefox is now managed through templates in `firefox/policies.json` and
+`firefox/user.js`. Rerun `setup.py` at any time to reapply these files and
+restore the curated performance defaults. Edit the templates directly if you
+want to tweak caching behaviour, enable specific features, or relax any of the
+locked preferences.
 
 ## TODO
 

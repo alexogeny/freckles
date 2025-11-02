@@ -4,6 +4,58 @@ import shutil
 import subprocess
 import time
 
+
+TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "firefox")
+POLICIES_TEMPLATE = os.path.join(TEMPLATE_DIR, "policies.json")
+USER_JS_TEMPLATE = os.path.join(TEMPLATE_DIR, "user.js")
+
+
+def _read_template(path, label):
+    if not os.path.exists(path):
+        print(f"Missing Firefox {label} template at {path}. Skipping.")
+        return None
+    with open(path, "r", encoding="utf-8") as handle:
+        return handle.read()
+
+
+def apply_firefox_policies():
+    template_contents = _read_template(POLICIES_TEMPLATE, "policies.json")
+    if template_contents is None:
+        return
+
+    policies_dir = "/etc/firefox/policies"
+    policies_path = os.path.join(policies_dir, "policies.json")
+
+    try:
+        subprocess.run(["sudo", "install", "-d", "-m", "0755", policies_dir], check=True)
+        subprocess.run(
+            ["sudo", "tee", policies_path],
+            input=template_contents.encode("utf-8"),
+            stdout=subprocess.DEVNULL,
+            check=True,
+        )
+        subprocess.run(["sudo", "chmod", "0644", policies_path], check=True)
+        print("Applied Firefox enterprise policies template.")
+    except subprocess.CalledProcessError as error:
+        print(f"Failed to apply Firefox policies: {error}")
+
+
+def apply_firefox_user_js(profile_dir):
+    if profile_dir is None:
+        print("Firefox profile directory not provided. Skipping user.js provisioning.")
+        return
+
+    template_contents = _read_template(USER_JS_TEMPLATE, "user.js")
+    if template_contents is None:
+        return
+
+    os.makedirs(profile_dir, exist_ok=True)
+    destination = os.path.join(profile_dir, "user.js")
+    with open(destination, "w", encoding="utf-8") as handle:
+        handle.write(template_contents)
+    os.chmod(destination, 0o644)
+    print(f"Synchronized Firefox user.js template to {destination}.")
+
 from utils.web import download_file
 
 EXTENSIONS_TO_INSTALL = {
