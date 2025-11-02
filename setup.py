@@ -97,8 +97,14 @@ elif is_ubuntu():
     ensure_firefox_from_apt()
 
 profile = find_firefox_profile()
-extension_data = get_extension_json(profile)
-for extension_id, extension_name in EXTENSIONS_TO_INSTALL.items():
-    if extension_already_installed(extension_data, extension_name):
-        continue
-    install_firefox_extension(extension_id)
+if profile is None:
+    print(
+        "Skipping Firefox extension installation because no profile was found. "
+        "Launch Firefox once to create a profile and rerun this step if needed."
+    )
+else:
+    extension_data = get_extension_json(profile)
+    for extension_id, extension_name in EXTENSIONS_TO_INSTALL.items():
+        if extension_already_installed(extension_data, extension_name):
+            continue
+        install_firefox_extension(extension_id)
