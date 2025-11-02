@@ -167,7 +167,7 @@ def _provision_ssh_material(account: GitAccount) -> Optional[SshMaterial]:
         fingerprint = remote_fingerprint.strip()
 
     fields: List[OnePasswordField] = []
-    if not remote_public.strip() or remote_public.strip() != local_public:
+    if not remote_public.strip():
         fields.append(
             OnePasswordField(
                 section="ssh",
@@ -175,7 +175,7 @@ def _provision_ssh_material(account: GitAccount) -> Optional[SshMaterial]:
                 value=local_public + "\n",
             )
         )
-    if not remote_private.strip() or remote_private.strip() != local_private:
+    if not remote_private.strip():
         fields.append(
             OnePasswordField(
                 section="ssh",
@@ -184,7 +184,7 @@ def _provision_ssh_material(account: GitAccount) -> Optional[SshMaterial]:
                 concealed=True,
             )
         )
-    if fingerprint and (not remote_fingerprint.strip() or remote_fingerprint.strip() != fingerprint):
+    if fingerprint and not remote_fingerprint.strip():
         fields.append(
             OnePasswordField(
                 section="ssh",
