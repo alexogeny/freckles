@@ -55,8 +55,8 @@ software_list = [
     ),
     DebRepository(
         name="spotify",
-        gpg="https://download.spotify.com/debian/pubkey_6224F9941A8AA6D1.gpg",
-        repository="http://repository.spotify.com stable non-free",
+        gpg="https://download.spotify.com/debian/pubkey_7A3A762FAFD4A51F.gpg",
+        repository="https://repository.spotify.com stable non-free",
         install_name="spotify-client",
     ),
 ]

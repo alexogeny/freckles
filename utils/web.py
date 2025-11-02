@@ -53,7 +53,22 @@ def get_and_install_from_download_link(link, command):
     if dependency_names:
         install_with_apt(dependency_names)
 
-    run(f"sudo dpkg -i {file_name}")
+    install_result = run(f"sudo dpkg -i {file_name}")
+    if install_result.returncode != 0:
+        print(
+            f"Initial install of {command} failed; attempting to resolve missing dependencies."
+        )
+        heal_result = run("sudo apt-get install -f -yqq")
+        if heal_result.returncode == 0:
+            install_result = run(f"sudo dpkg -i {file_name}")
+        else:
+            print(
+                f"Unable to repair dependency issues for {command}: {heal_result.stderr.strip()}"
+            )
+
+    if install_result.returncode != 0:
+        print(install_result.stderr.strip())
+        raise RuntimeError(f"Failed to install {command}; see logs above for details.")
 
     file_name.unlink(missing_ok=True)
 
@@ -82,11 +97,21 @@ def install_software_list(software_list: List[Union[DebFile, DebRepository]]):
             run(
                 f"sudo gpg --dearmor --yes -o {keyring_path} {software.name}.gpg"
             )
+            run(f"sudo chmod 644 {keyring_path}")
             Path(f"{software.name}.gpg").unlink(missing_ok=True)
             repo_line = f"deb [signed-by={keyring_path}] {software.repository}"
             run(
                 f'echo "{repo_line}" | sudo tee /etc/apt/sources.list.d/{software.name}.list > /dev/null'
             )
-            run("sudo apt-get update -yqq")
+            update_result = run("sudo apt-get update -yqq")
+            if update_result.returncode != 0:
+                print(
+                    f"Failed to update package lists for {software.name}: {update_result.stderr.strip()}"
+                )
+                continue
             print(f"installing {software.name}")
-            install_with_apt([software.install_name or software.name])
+            install_result = install_with_apt([software.install_name or software.name])
+            if install_result.returncode != 0:
+                print(
+                    f"Failed to install {software.install_name or software.name}: {install_result.stderr.strip()}"
+                )

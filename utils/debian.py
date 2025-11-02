@@ -51,7 +51,21 @@ def install_with_apt(package_list: list[str]) -> CompletedProcess[str]:
     packages = [pkg for pkg in package_list if pkg]
     if not packages:
         return CompletedProcess(args=[], returncode=0, stdout="", stderr="")
-    return run("sudo apt-get install -yqq " + " ".join(packages))
+    command = "sudo apt-get install -yqq " + " ".join(packages)
+    result = run(command)
+
+    if result.returncode == 0:
+        return result
+
+    combined_output = f"{result.stdout}\n{result.stderr}".lower()
+    if "unmet dependencies" not in combined_output and "dependency problems" not in combined_output:
+        return result
+
+    heal_result = run("sudo apt-get install -f -yqq")
+    if heal_result.returncode != 0:
+        return result
+
+    return run(command)
 
 
 def purge_unwanted_packages(

@@ -2,7 +2,7 @@ import json
 import os
 import shutil
 import subprocess
-from time import time
+import time
 
 from utils.web import download_file
 
