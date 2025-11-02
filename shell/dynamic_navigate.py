@@ -113,15 +113,17 @@ def dynamic_navigate(path_arg: str) -> Path:
 
 
 def _main(argv: List[str]) -> int:
-    if len(argv) == 1:
-        print(str(dynamic_navigate("")))
+    if len(argv) > 1 and argv[1] in {"-h", "--help"}:
+        print("Usage: nn [path]")
         return 0
-    if len(argv) != 2:
-        print("Usage: nn <path>")
-        return 1
+
+    if len(argv) == 1:
+        target = ""
+    else:
+        target = " ".join(argv[1:])
 
     try:
-        target_dir = dynamic_navigate(argv[1])
+        target_dir = dynamic_navigate(target)
     except ValueError as error:
         print(error)
         return 1
