@@ -87,13 +87,23 @@ def _item_reference(vault: str, item: str) -> str:
     return f"{vault}/{item}"
 
 
-def get_item(vault: str, item: str) -> Optional[Dict]:
+def get_item(
+    vault: str, item: str, *, suppress_missing: bool = False
+) -> Optional[Dict]:
     """Return the raw JSON payload for a 1Password item."""
 
     reference = _item_reference(vault, item)
     result = run(f"op item get {shlex.quote(reference)} --format json")
     if result.returncode != 0:
         message = result.stderr.strip() or result.stdout.strip() or "unknown error"
+        normalized = message.lower()
+        if suppress_missing and (
+            "isn't an item" in normalized
+            or "could not find" in normalized
+            or "was not found" in normalized
+            or "cannot find" in normalized
+        ):
+            return None
         print(f"Failed to fetch 1Password item {reference}: {message}")
         return None
 
@@ -193,68 +203,12 @@ def _has_section(payload: Dict, label: str) -> bool:
     return False
 
 
-def _create_ssh_item(vault: str, item: str) -> bool:
-    """Create a minimal secure note prepared for SSH key material."""
-
-    parts = ["op", "item", "create", "--category", shlex.quote("Secure Note"), "--title", shlex.quote(item)]
-    if vault:
-        parts.extend(["--vault", shlex.quote(vault)])
-    parts.extend(["--section", shlex.quote("id=ssh;label=ssh")])
-
-    def _field_arg(label: str, *, concealed: bool = False) -> str:
-        components = ["section=ssh", f"label={label}"]
-        if concealed:
-            components.append("type=concealed")
-        else:
-            components.append("type=string")
-        components.append("value=")
-        return "--field " + shlex.quote(";".join(components))
-
-    parts.append(_field_arg("public"))
-    parts.append(_field_arg("private", concealed=True))
-    parts.append(_field_arg("fingerprint"))
-
-    command = " ".join(parts)
-    result = run(command)
-    if result.returncode != 0:
-        reference = _item_reference(vault, item)
-        message = result.stderr.strip() or result.stdout.strip() or "unknown error"
-        print(f"Failed to create 1Password item {reference}: {message}")
-        return False
-    return True
-
-
-def _ensure_section(vault: str, item: str, label: str) -> bool:
-    """Ensure ``label`` section exists on ``item``."""
-
-    reference = _item_reference(vault, item)
-    section_spec = shlex.quote(f"id={label};label={label}")
-    command = f"op item edit {shlex.quote(reference)} --section {section_spec}"
-    result = run(command)
-    if result.returncode != 0:
-        message = result.stderr.strip() or result.stdout.strip() or "unknown error"
-        print(f"Failed to ensure section {label} on 1Password item {reference}: {message}")
-        return False
-    return True
-
-
 def ensure_ssh_container(vault: str, item: str) -> Optional[Dict]:
     """Ensure ``vault``/``item`` exists with an ``ssh`` section and base fields."""
 
-    payload = get_item(vault, item)
+    payload = get_item(vault, item, suppress_missing=True)
     if payload is None:
-        if not _create_ssh_item(vault, item):
-            return None
-        payload = get_item(vault, item)
-        if payload is None:
-            return None
-
-    if not _has_section(payload, "ssh"):
-        if not _ensure_section(vault, item, "ssh"):
-            return None
-        payload = get_item(vault, item)
-        if payload is None:
-            return None
+        return None
 
     placeholders: List[OnePasswordField] = []
     for label, concealed in (
@@ -276,8 +230,16 @@ def ensure_ssh_container(vault: str, item: str) -> Optional[Dict]:
     if placeholders:
         if not update_item_fields(vault, item, placeholders):
             return None
-        payload = get_item(vault, item)
+        payload = get_item(vault, item, suppress_missing=True)
         if payload is None:
             return None
+
+    # Refresh the payload even if no placeholders were required so that
+    # callers always receive the most up-to-date structure, including any
+    # newly-created ``ssh`` section.
+    if not placeholders:
+        refreshed = get_item(vault, item, suppress_missing=True)
+        if refreshed is not None:
+            payload = refreshed
 
     return payload

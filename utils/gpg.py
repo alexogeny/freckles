@@ -171,7 +171,7 @@ def provision_gpg_material(config: AccountConfig) -> List[Tuple[GitAccount, GpgM
     config_updated = False
 
     for account in eligible_accounts:
-        item = get_item(account.op_vault, account.op_item)
+        item = get_item(account.op_vault, account.op_item, suppress_missing=True)
         remote_private = (get_field_value(item, "gpg", "private") or "") if item else ""
         details = _discover_existing_key(account)
         generated_new_key = False
