@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from json import JSONDecodeError
 import re
 import sys
 from dataclasses import asdict, dataclass
@@ -119,6 +120,35 @@ def load_account_config() -> Optional[AccountConfig]:
     accounts = [GitAccount(**account) for account in data.get("accounts", [])]
     default_account = data.get("default_account") or (accounts[0].slug if accounts else "")
     return AccountConfig(accounts=accounts, default_account=default_account)
+
+
+def get_account_config(*, interactive: bool = False) -> AccountConfig:
+    """Return a valid git account configuration.
+
+    The configuration is loaded from disk when available. If the persisted
+    configuration is missing or invalid a new configuration is generated.
+
+    Parameters
+    ----------
+    interactive:
+        Whether to allow interactive prompts when a configuration needs to be
+        generated. Defaults to ``False`` so non-interactive environments can
+        fall back to sensible defaults automatically.
+    """
+
+    try:
+        config = load_account_config()
+    except (OSError, JSONDecodeError, TypeError, ValueError) as exc:
+        print(f"Failed to load git account configuration: {exc}. Regenerating configuration.")
+        config = None
+
+    if config is None or not config.accounts:
+        return ensure_account_config(interactive=interactive)
+
+    if not any(account.slug == config.default_account for account in config.accounts):
+        config.default_account = config.accounts[0].slug
+
+    return config
 
 
 def save_account_config(config: AccountConfig) -> None:
