@@ -1,27 +1,12 @@
-# global
-.env
-
-# npm
-/node_modules
-/dist
-npm-debug.log
-.npmrc
-
-# mac
+# Global gitignore installed by freckles.
 .DS_Store
-
-# python
-__pycache__
+Thumbs.db
+*.log
 *.pyc
-/venv
-
-# php
-/vendor
-autoload.txt
-
-# mkcert
-self.crt
-self.key
-
-# docker
-.devcontainer.json
+__pycache__/
+node_modules/
+.env
+.env.*
+coverage/
+.vscode/
+.idea/
