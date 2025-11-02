@@ -170,11 +170,17 @@ def _export_material(key_id: str) -> Optional[GpgMaterial]:
     )
 
 
-def _needs_update(item: Optional[Dict], field: str) -> bool:
+def _needs_update(
+    item: Optional[Dict], field: str, *, expected: Optional[str] = None
+) -> bool:
     if not item:
         return True
     value = get_field_value(item, "gpg", field)
-    return not _has_material_value(value)
+    if not _has_material_value(value):
+        return True
+    if expected is None:
+        return False
+    return (value or "").strip() != expected.strip()
 
 
 def provision_gpg_material(config: AccountConfig) -> List[Tuple[GitAccount, GpgMaterial]]:
@@ -225,8 +231,8 @@ def provision_gpg_material(config: AccountConfig) -> List[Tuple[GitAccount, GpgM
             signing_changed = True
 
         fields: List[OnePasswordField] = []
-        if not remote_has_material and material is not None:
-            if _needs_update(item, "public"):
+        if material is not None:
+            if _needs_update(item, "public", expected=material.public_key):
                 fields.append(
                     OnePasswordField(
                         section="gpg",
@@ -234,7 +240,7 @@ def provision_gpg_material(config: AccountConfig) -> List[Tuple[GitAccount, GpgM
                         value=material.public_key + "\n",
                     )
                 )
-            if _needs_update(item, "private"):
+            if _needs_update(item, "private", expected=material.private_key):
                 fields.append(
                     OnePasswordField(
                         section="gpg",
@@ -243,22 +249,22 @@ def provision_gpg_material(config: AccountConfig) -> List[Tuple[GitAccount, GpgM
                         concealed=True,
                     )
                 )
-            if _needs_update(item, "key_id"):
-                fields.append(
-                    OnePasswordField(
-                        section="gpg",
-                        label="key_id",
-                        value=key_id,
-                    )
+        if _needs_update(item, "key_id", expected=key_id):
+            fields.append(
+                OnePasswordField(
+                    section="gpg",
+                    label="key_id",
+                    value=key_id,
                 )
-            if fingerprint and _needs_update(item, "fingerprint"):
-                fields.append(
-                    OnePasswordField(
-                        section="gpg",
-                        label="fingerprint",
-                        value=fingerprint,
-                    )
+            )
+        if fingerprint and _needs_update(item, "fingerprint", expected=fingerprint):
+            fields.append(
+                OnePasswordField(
+                    section="gpg",
+                    label="fingerprint",
+                    value=fingerprint,
                 )
+            )
 
         fields_updated = False
         if fields:
