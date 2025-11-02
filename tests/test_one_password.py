@@ -1,4 +1,6 @@
+import json
 import os
+import shlex
 import sys
 from pathlib import Path
 from subprocess import CompletedProcess
@@ -15,10 +17,10 @@ from utils import one_password
 def _mkstemp_factory(tmp_path):
     counter = {"value": 0}
 
-    def fake_mkstemp(prefix: str):
+    def fake_mkstemp(prefix: str, suffix: str = ""):
         index = counter["value"]
         counter["value"] += 1
-        path = tmp_path / f"{prefix}{index}"
+        path = tmp_path / f"{prefix}{index}{suffix}"
         fd = os.open(path, os.O_RDWR | os.O_CREAT | os.O_TRUNC, 0o600)
         return fd, path.as_posix()
 
@@ -35,9 +37,16 @@ def test_update_item_fields_uses_supported_cli_syntax(tmp_path, monkeypatch, con
     )
 
     commands: list[str] = []
+    payloads: list[str] = []
 
     def fake_run(command: str):
         commands.append(command)
+        tokens = shlex.split(command)
+        if "--input-file" in tokens:
+            index = tokens.index("--input-file")
+            if index + 1 < len(tokens):
+                payload_path = Path(tokens[index + 1])
+                payloads.append(payload_path.read_text())
         return CompletedProcess(args=command, returncode=0, stdout="", stderr="")
 
     monkeypatch.setattr(one_password, "run", fake_run)
@@ -54,17 +63,19 @@ def test_update_item_fields_uses_supported_cli_syntax(tmp_path, monkeypatch, con
     assert len(commands) == 1
 
     command = commands[0]
-    expected_path = (tmp_path / f"freckles-op-{0}").as_posix()
 
     assert command.startswith("op item edit --vault Vault item-id")
-    assert "[label]" not in command
-    assert "[value]" not in command
-    assert "[type]" not in command
+    assert "--input-file" in command
 
-    if concealed:
-        assert f"ssh.private[concealed]=@{expected_path}" in command
-    else:
-        assert f"ssh.public[text]=@{expected_path}" in command
+    assert payloads, "expected payload to be captured"
+    payload = json.loads(payloads[0])
+    assert "fields" in payload and len(payload["fields"]) == 1
+    field_payload = payload["fields"][0]
+    assert field_payload["label"] == ("private" if concealed else "public")
+    assert field_payload["value"] == "example-value"
+    assert "@" not in field_payload["value"]
+    assert field_payload["type"] == ("concealed" if concealed else "string")
+    assert field_payload.get("section", {}).get("id") == "ssh"
 
 
 def test_update_item_fields_handles_cli_panic(tmp_path, monkeypatch, capsys):
@@ -76,6 +87,12 @@ def test_update_item_fields_handles_cli_panic(tmp_path, monkeypatch, capsys):
 
     def fake_run(command: str):
         commands.append(command)
+        tokens = shlex.split(command)
+        if "--input-file" in tokens:
+            index = tokens.index("--input-file")
+            if index + 1 < len(tokens):
+                payload_path = Path(tokens[index + 1])
+                payload_path.read_text()
         return CompletedProcess(
             args=command,
             returncode=1,
