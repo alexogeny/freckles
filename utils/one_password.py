@@ -254,11 +254,7 @@ def get_field_value(item: Dict, section: Optional[str], label: str) -> Optional[
 
 
 def update_item_fields(vault: str, item: str, fields: Iterable[OnePasswordField]) -> bool:
-    """Update or create fields on a 1Password item.
-
-    Multi-line values are written to temporary files to avoid shell quoting
-    pitfalls when invoking the CLI.
-    """
+    """Update or create fields on a 1Password item."""
 
     field_list = list(fields)
     if not field_list:
@@ -284,51 +280,49 @@ def update_item_fields(vault: str, item: str, fields: Iterable[OnePasswordField]
         )
         return False
 
-    reference = _item_reference(vault, item)
+    payload_fields: List[Dict[str, object]] = []
     for field in field_list:
-        fd, temp_path = tempfile.mkstemp(prefix="freckles-op-")
-        os.close(fd)
-        path = Path(temp_path)
-        path.write_text(field.value)
-        section_prefix = f"{field.section}." if field.section else ""
-        field_identifier = f"{section_prefix}{field.label}"
-        if field.concealed:
-            type_suffix = "[concealed]"
-        elif field.kind:
-            type_suffix = f"[{field.kind}]"
-        else:
-            type_suffix = ""
-        field_entry = shlex.quote(
-            f"{field_identifier}{type_suffix}=@{path.as_posix()}"
-        )
+        entry: Dict[str, object] = {
+            "label": field.label,
+            "value": field.value,
+            "type": "concealed" if field.concealed else "string",
+        }
+        if field.section:
+            entry["section"] = {"id": field.section}
+        payload_fields.append(entry)
 
-        command_parts = [
-            "op item edit",
-            *_item_command_args(vault, resolved_item),
-            field_entry,
-        ]
-        command = " ".join(command_parts)
-        result = run(command)
+    fd, temp_path = tempfile.mkstemp(prefix="freckles-op-", suffix=".json")
+    os.close(fd)
+    path = Path(temp_path)
+    payload = {"fields": payload_fields}
+    path.write_text(json.dumps(payload))
 
-        try:
-            os.unlink(path)
-        except OSError:
-            pass
+    reference = _item_reference(vault, item)
+    command_parts = [
+        "op item edit",
+        *_item_command_args(vault, resolved_item),
+        f"--input-file {shlex.quote(path.as_posix())}",
+    ]
+    command = " ".join(command_parts)
+    result = run(command)
 
-        if result.returncode != 0:
-            message = (
-                result.stderr.strip() or result.stdout.strip() or "unknown error"
+    try:
+        os.unlink(path)
+    except OSError:
+        pass
+
+    if result.returncode != 0:
+        message = result.stderr.strip() or result.stdout.strip() or "unknown error"
+        print(f"Failed to update 1Password item {reference}: {message}")
+        normalized = message.lower()
+        if "panic" in normalized or "sigsegv" in normalized or "segmentation" in normalized:
+            print(
+                "The 1Password CLI encountered an unexpected crash while editing "
+                f"{reference}. Ensure the desktop app and CLI are up to date, "
+                "then retry the operation. If the issue persists, update the "
+                "fields manually in 1Password."
             )
-            print(f"Failed to update 1Password item {reference}: {message}")
-            normalized = message.lower()
-            if "panic" in normalized or "sigsegv" in normalized or "segmentation" in normalized:
-                print(
-                    "The 1Password CLI encountered an unexpected crash while editing "
-                    f"{reference}. Ensure the desktop app and CLI are up to date, "
-                    "then retry the operation. If the issue persists, update the "
-                    "fields manually in 1Password."
-                )
-            return False
+        return False
 
     return True
 
