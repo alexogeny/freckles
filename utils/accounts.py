@@ -46,6 +46,7 @@ class GitAccount:
     op_vault: Optional[str] = None
     op_item: Optional[str] = None
     ssh_host: Optional[str] = None
+    aws_profile: Optional[str] = None
 
     def __post_init__(self) -> None:
         self.scope = self.scope.strip()
@@ -65,6 +66,8 @@ class GitAccount:
             self.op_item = self.op_item.strip()
         if self.ssh_host:
             self.ssh_host = self.ssh_host.strip()
+        if self.aws_profile:
+            self.aws_profile = self.aws_profile.strip()
 
     @property
     def alias_slug(self) -> str:
@@ -271,6 +274,13 @@ def _prompt_account(existing: Optional[GitAccount] = None) -> GitAccount:
         allow_empty=True,
     )
 
+    aws_profile_default = existing.aws_profile if existing and existing.aws_profile else ""
+    aws_profile = _prompt(
+        "AWS profile name for this identity (leave blank if unused)",
+        default=aws_profile_default,
+        allow_empty=True,
+    )
+
     return GitAccount(
         scope=scope,
         provider=provider,
@@ -283,6 +293,7 @@ def _prompt_account(existing: Optional[GitAccount] = None) -> GitAccount:
         op_vault=op_vault,
         op_item=op_item,
         ssh_host=ssh_host or None,
+        aws_profile=aws_profile or None,
     )
 
 

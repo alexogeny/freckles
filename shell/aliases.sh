@@ -148,3 +148,48 @@ get_prompt_parts() {
 }
 
 export PS1='$(get_prompt_parts)'
+
+_freckles_sync_aws_profile() {
+  local desired status
+  desired=$(freckles_python_quiet "$HOME/.shell/aws_profile.py")
+  status=$?
+  if [ $status -ne 0 ]; then
+    return
+  fi
+
+  if [ -z "$desired" ]; then
+    if [ -n "$FRECKLES_AWS_PROFILE" ]; then
+      unset FRECKLES_AWS_PROFILE
+      unset AWS_PROFILE
+      unset AWS_DEFAULT_PROFILE
+      unset AWS_VAULT
+    fi
+    return
+  fi
+
+  if [ "$desired" != "$FRECKLES_AWS_PROFILE" ]; then
+    export FRECKLES_AWS_PROFILE="$desired"
+    export AWS_PROFILE="$desired"
+    export AWS_DEFAULT_PROFILE="$desired"
+    export AWS_VAULT="$desired"
+  fi
+}
+
+if [ -n "${ZSH_VERSION-}" ]; then
+  typeset -a precmd_functions
+  found=0
+  for fn in "${precmd_functions[@]}"; do
+    if [ "$fn" = "_freckles_sync_aws_profile" ]; then
+      found=1
+      break
+    fi
+  done
+  if [ $found -eq 0 ]; then
+    precmd_functions=("${precmd_functions[@]}" "_freckles_sync_aws_profile")
+  fi
+else
+  case ";$PROMPT_COMMAND;" in
+    *"_freckles_sync_aws_profile"*) ;;
+    *) PROMPT_COMMAND="_freckles_sync_aws_profile${PROMPT_COMMAND:+;$PROMPT_COMMAND}" ;;
+  esac
+fi
