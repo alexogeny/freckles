@@ -12,8 +12,7 @@ from .accounts import (
     ensure_account_config,
     get_account_config as _get_account_config,
 )
-from .meta import GIT_ACCOUNTS_DIR, HOME, REPOSITORY_LATEST
-from .web import download_file
+from .meta import GIT_ACCOUNTS_DIR, HOME
 
 
 IDENTITY_BEGIN = "# >>> freckles global identity >>>"
@@ -22,12 +21,25 @@ ACCOUNT_BEGIN = "# >>> freckles account includes >>>"
 ACCOUNT_END = "# <<< freckles account includes <<<"
 
 
+TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "git"
+
+
+def _template_file(filename: str) -> Path:
+    path = TEMPLATE_DIR / filename
+    if not path.exists():
+        raise FileNotFoundError(f"Missing template git file: {filename}")
+    return path
+
+
 def download_git_files() -> None:
     for filename in [".gitconfig", ".gitignore"]:
+        template = _template_file(filename)
         local_path = HOME / filename
         if local_path.exists():
-            continue
-        download_file(REPOSITORY_LATEST + f"git/{filename}", local_path)
+            content = local_path.read_text()
+            if all(marker in content for marker in (IDENTITY_BEGIN, IDENTITY_END, ACCOUNT_BEGIN, ACCOUNT_END)):
+                continue
+        local_path.write_text(template.read_text())
 
 
 def _home_relative(path: Path) -> str:

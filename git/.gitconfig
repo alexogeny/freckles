@@ -1,43 +1,59 @@
+# Base git configuration installed by freckles.
+# Managed sections are updated automatically; manual edits outside the markers are preserved.
+
 [core]
+  editor = code --wait
   excludesfile = ~/.gitignore
-
-[push]
-  default = upstream
-
+  autocrlf = input
+  pager = delta
+[init]
+  defaultBranch = main
 [pull]
-  rebase = true
-
-[fetch]
-  prune = true
-
+  rebase = false
+[push]
+  default = current
 [rebase]
-  autostash = true
+  autosquash = true
+[merge]
+  ff = false
+  tool = code
+[mergetool "code"]
+  cmd = code --wait $MERGED
+  keepBackup = false
+[difftool "code"]
+  cmd = code --wait --diff $LOCAL $REMOTE
+[diff]
+  tool = code
+[pager]
+  log = delta
+  show = delta
+  diff = delta
 
 # >>> freckles global identity >>>
 # <<< freckles global identity <<<
 
-[stash]
-  showPatch = true
-
-[log]
-  date = relative
-
-[url "git@github.com:"]
-  insteadOf = https://github.com/
-
-[url "git@gitlab.com:"]
-  insteadOf = https://gitlab.com/
-
 # >>> freckles account includes >>>
 # <<< freckles account includes <<<
 
-[branch "master"]
-  remote = origin
-
-[branch "main"]
-  remote = origin
-
 [alias]
-  fs = "!f() { python3 ~/.shell/git_tools.py fresh-switch \"$@\"; }; f"
-  rb = "!python3 ~/.shell/git_tools.py remote-branches \"$@\""
-  db = "!python3 ~/.shell/git_tools.py default-branch \"$@\""
+  st = status -sb
+  ci = commit
+  co = checkout
+  br = branch
+  df = diff
+  lg = log --graph --decorate --oneline --all
+  fs = !python3 ~/.shell/git_tools.py fresh-switch
+  rb = !python3 ~/.shell/git_tools.py remote-branches
+  db = !python3 ~/.shell/git_tools.py default-branch
+  amend = commit --amend --no-edit
+  undo = reset --soft HEAD~1
+
+[color]
+  ui = auto
+
+[interactive]
+  diffFilter = delta --color-only
+
+[delta]
+  navigate = true
+  light = false

@@ -5,11 +5,13 @@ from utils.avatar import manage_avatar
 from utils.debian import (
     DebFile,
     DebRepository,
+    install_with_apt,
     is_debian_12_bookworm,
     is_debian_like,
     is_ubuntu,
     purge_unwanted_packages,
     replace_bookworm_with_trixie,
+    run,
     run_apt_update_and_upgrade,
 )
 from utils.firefox import (
@@ -35,29 +37,56 @@ from utils.ubuntu import ensure_firefox_from_apt, purge_snapd
 if not is_debian_like():
     sys.exit("Freckles currently supports Debian and Ubuntu systems only.")
 
+apt_update_result = run("sudo apt-get update -yqq")
+if apt_update_result.returncode != 0:
+    message = apt_update_result.stderr.strip() or apt_update_result.stdout.strip()
+    sys.exit(f"Failed to refresh apt package lists: {message}")
+
+core_packages = [
+    "curl",
+    "git",
+    "ca-certificates",
+    "gnupg",
+    "lsb-release",
+]
+
+essential_install = install_with_apt(core_packages)
+if essential_install.returncode != 0:
+    message = essential_install.stderr.strip() or essential_install.stdout.strip()
+    sys.exit(f"Failed to install required base packages: {message}")
+
 software_list = [
     DebFile(
         name="slack",
         search_url="https://slack.com/downloads/instructions/linux?ddl=1&build=deb",
         pattern=r"https://downloads.slack-edge.com/desktop-releases/linux/x64/[0-9\.]+/slack-desktop-[0-9\.]+-amd64.deb",
+        check_name="slack",
+        package_name="slack-desktop",
     ),
     DebFile(
         name="code",
         direct_link="https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64",
+        check_name="code",
+        package_name="code",
     ),
     DebFile(
         name="1password",
         direct_link="https://downloads.1password.com/linux/debian/amd64/stable/1password-latest.deb",
+        check_name="1password",
+        package_name="1password",
     ),
     DebFile(
         name="op",
         direct_link="https://downloads.1password.com/linux/debian/amd64/stable/1password-cli-amd64-latest.deb",
+        check_name="op",
+        package_name="1password-cli",
     ),
     DebRepository(
         name="spotify",
         gpg="https://download.spotify.com/debian/pubkey_7A3A762FAFD4A51F.gpg",
         repository="https://repository.spotify.com stable non-free",
         install_name="spotify-client",
+        check_name="spotify",
     ),
 ]
 

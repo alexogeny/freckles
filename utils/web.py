@@ -1,10 +1,18 @@
 import json
 import re
+import subprocess
 import urllib.request
 from pathlib import Path
-from typing import List, Union
+from typing import List, Optional, Union
 
-from .debian import DebFile, DebRepository, check_if_installed, install_with_apt, run
+from .debian import (
+    DebFile,
+    DebRepository,
+    check_if_installed,
+    install_with_apt,
+    is_package_installed,
+    run,
+)
 
 
 def get_html_from_url(url):
@@ -31,6 +39,23 @@ def download_file(url, file_name, overwrite: bool = False) -> Path:
     if not destination.exists():
         urllib.request.urlretrieve(url, destination.as_posix())
     return destination
+
+
+def _ensure_success(result: subprocess.CompletedProcess[str], context: str) -> None:
+    if result.returncode == 0:
+        return
+    stderr = (result.stderr or "").strip()
+    stdout = (result.stdout or "").strip()
+    message = stderr or stdout or "unknown error"
+    raise RuntimeError(f"{context}: {message}")
+
+
+def _software_is_installed(command_name: Optional[str], package_name: Optional[str]) -> bool:
+    if command_name and check_if_installed(command_name):
+        return True
+    if package_name and is_package_installed(package_name):
+        return True
+    return False
 
 
 def get_and_install_from_download_link(link, command):
@@ -74,8 +99,16 @@ def get_and_install_from_download_link(link, command):
 
 
 def install_software_list(software_list: List[Union[DebFile, DebRepository]]):
+    update_result = run("sudo apt-get update -yqq")
+    _ensure_success(update_result, "Failed to refresh apt package lists")
+
     for software in software_list:
-        if check_if_installed(software.name) is True:
+        command_name = getattr(software, "check_name", None) or software.name
+        package_name = getattr(software, "package_name", None)
+        if isinstance(software, DebRepository):
+            package_name = package_name or software.install_name or software.name
+
+        if _software_is_installed(command_name, package_name):
             continue
         if isinstance(software, DebFile):
             if software.search_url and not software.direct_link:
@@ -92,26 +125,39 @@ def install_software_list(software_list: List[Union[DebFile, DebRepository]]):
             get_and_install_from_download_link(software.direct_link, software.name)
         elif isinstance(software, DebRepository):
             download_file(software.gpg, f"{software.name}.gpg", overwrite=True)
-            run("sudo install -m 0755 -d /etc/apt/keyrings")
-            keyring_path = Path("/etc/apt/keyrings") / f"{software.name}.gpg"
-            run(
-                f"sudo gpg --dearmor --yes -o {keyring_path} {software.name}.gpg"
+            _ensure_success(
+                run("sudo install -m 0755 -d /etc/apt/keyrings"),
+                f"Failed to create keyring directory for {software.name}",
             )
-            run(f"sudo chmod 644 {keyring_path}")
+            keyring_path = Path("/etc/apt/keyrings") / f"{software.name}.gpg"
+            _ensure_success(
+                run(
+                    f"sudo gpg --dearmor --yes -o {keyring_path} {software.name}.gpg"
+                ),
+                f"Failed to install GPG key for {software.name}",
+            )
+            _ensure_success(
+                run(f"sudo chmod 644 {keyring_path}"),
+                f"Failed to set permissions on keyring for {software.name}",
+            )
             Path(f"{software.name}.gpg").unlink(missing_ok=True)
             repo_line = f"deb [signed-by={keyring_path}] {software.repository}"
-            run(
-                f'echo "{repo_line}" | sudo tee /etc/apt/sources.list.d/{software.name}.list > /dev/null'
+            _ensure_success(
+                run(
+                    f'echo "{repo_line}" | sudo tee /etc/apt/sources.list.d/{software.name}.list > /dev/null'
+                ),
+                f"Failed to configure repository for {software.name}",
             )
             update_result = run("sudo apt-get update -yqq")
-            if update_result.returncode != 0:
-                print(
-                    f"Failed to update package lists for {software.name}: {update_result.stderr.strip()}"
-                )
-                continue
+            _ensure_success(update_result, f"Failed to update apt cache for {software.name}")
             print(f"installing {software.name}")
             install_result = install_with_apt([software.install_name or software.name])
-            if install_result.returncode != 0:
-                print(
-                    f"Failed to install {software.install_name or software.name}: {install_result.stderr.strip()}"
-                )
+            _ensure_success(
+                install_result,
+                f"Failed to install {software.install_name or software.name}",
+            )
+
+        if not _software_is_installed(command_name, package_name):
+            raise RuntimeError(
+                f"{software.name} installation completed but the software was not detected."
+            )

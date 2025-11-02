@@ -16,6 +16,8 @@ class DebFile:
     direct_link: Optional[str] = None
     search_url: Optional[str] = None
     pattern: Optional[Pattern[str]] = None
+    check_name: Optional[str] = None
+    package_name: Optional[str] = None
 
 
 @dataclass
@@ -24,6 +26,7 @@ class DebRepository:
     gpg: str
     repository: str
     install_name: Optional[str] = None
+    check_name: Optional[str] = None
 
 
 def run(command: str) -> subprocess.CompletedProcess[str]:
@@ -36,6 +39,15 @@ def check_if_installed(command: str) -> bool:
     """Return ``True`` when ``command`` is discoverable on ``$PATH``."""
 
     result = run(f"which {command}")
+    return result.returncode == 0
+
+
+def is_package_installed(package: str) -> bool:
+    """Return ``True`` when the provided Debian package is installed."""
+
+    if not package:
+        return False
+    result = run(f"dpkg -s {package}")
     return result.returncode == 0
 
 
