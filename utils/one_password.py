@@ -42,6 +42,7 @@ class OnePasswordField:
     value: str
     section: Optional[str] = None
     concealed: bool = False
+    kind: Optional[str] = "text"
 
 
 def ensure_op_connected() -> None:
@@ -291,7 +292,12 @@ def update_item_fields(vault: str, item: str, fields: Iterable[OnePasswordField]
         path.write_text(field.value)
         section_prefix = f"{field.section}." if field.section else ""
         field_identifier = f"{section_prefix}{field.label}"
-        type_suffix = "[concealed]" if field.concealed else ""
+        if field.concealed:
+            type_suffix = "[concealed]"
+        elif field.kind:
+            type_suffix = f"[{field.kind}]"
+        else:
+            type_suffix = ""
         field_entry = shlex.quote(
             f"{field_identifier}{type_suffix}=@{path.as_posix()}"
         )
