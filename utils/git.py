@@ -136,8 +136,9 @@ def _summarise_accounts(config: AccountConfig) -> None:
         f"  default: {config.get_default().display_name} <{config.get_default().email}>",
     ]
     for account in config.accounts:
+        aws_details = f" [aws:{account.aws_profile}]" if account.aws_profile else ""
         message.append(
-            f"  - {account.alias_slug}: {account.provider} ({account.scope}) -> {account.directory}"
+            f"  - {account.alias_slug}: {account.provider} ({account.scope}) -> {account.directory}{aws_details}"
         )
     print("\n".join(message))
 
