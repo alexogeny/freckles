@@ -87,13 +87,22 @@ def _item_reference(vault: str, item: str) -> str:
     return f"{vault}/{item}"
 
 
+def _item_command_args(vault: str, item: str) -> List[str]:
+    args: List[str] = []
+    if vault:
+        args.extend(["--vault", shlex.quote(vault)])
+    args.append(shlex.quote(item))
+    return args
+
+
 def get_item(
     vault: str, item: str, *, suppress_missing: bool = False
 ) -> Optional[Dict]:
     """Return the raw JSON payload for a 1Password item."""
 
     reference = _item_reference(vault, item)
-    result = run(f"op item get {shlex.quote(reference)} --format json")
+    command_parts = ["op item get", *_item_command_args(vault, item), "--format", "json"]
+    result = run(" ".join(command_parts))
     if result.returncode != 0:
         message = result.stderr.strip() or result.stdout.strip() or "unknown error"
         normalized = message.lower()
@@ -178,7 +187,8 @@ def update_item_fields(vault: str, item: str, fields: Iterable[OnePasswordField]
             shlex.quote(f"{field_identifier}[value]=@{path.as_posix()}"))
 
     reference = _item_reference(vault, item)
-    command = " ".join([f"op item edit {shlex.quote(reference)}"] + field_entries)
+    command_parts = ["op item edit", *_item_command_args(vault, item)] + field_entries
+    command = " ".join(command_parts)
     result = run(command)
 
     for path in temp_files:
