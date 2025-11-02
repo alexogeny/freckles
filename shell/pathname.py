@@ -25,14 +25,22 @@ def path_name():
 
 if __name__ == "__main__":
     assert truncate_path("~/") == "~/"
-    assert (
-        truncate_path("~/work/gitlab/evenergi/vemo/vemo-core/src")
-        == "~/work/gitlab/../vemo-core/src"
-    )
 
+    expected = "~/work/gitlab/../vemo-core/src"
+    assert truncate_path("~/work/gitlab/evenergi/vemo/vemo-core/src") == expected
     assert (
-        truncate_path("/home/alex/work/gitlab/evenergi/vemo/vemo-core/src")
-        == "~/work/gitlab/../vemo-core/src"
+        truncate_path(
+            str(
+                Path.home()
+                / "work"
+                / "gitlab"
+                / "evenergi"
+                / "vemo"
+                / "vemo-core"
+                / "src"
+            )
+        )
+        == expected
     )
 
     assert truncate_path("/etc/apt/sources") == "/etc/apt/sources"
