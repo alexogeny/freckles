@@ -42,8 +42,8 @@ def test_update_item_fields_uses_supported_cli_syntax(tmp_path, monkeypatch, con
     def fake_run(command: str):
         commands.append(command)
         tokens = shlex.split(command)
-        if "--input-file" in tokens:
-            index = tokens.index("--input-file")
+        if "--template" in tokens:
+            index = tokens.index("--template")
             if index + 1 < len(tokens):
                 payload_path = Path(tokens[index + 1])
                 payloads.append(payload_path.read_text())
@@ -65,7 +65,7 @@ def test_update_item_fields_uses_supported_cli_syntax(tmp_path, monkeypatch, con
     command = commands[0]
 
     assert command.startswith("op item edit --vault Vault item-id")
-    assert "--input-file" in command
+    assert "--template" in command
 
     assert payloads, "expected payload to be captured"
     payload = json.loads(payloads[0])
@@ -88,8 +88,8 @@ def test_update_item_fields_handles_cli_panic(tmp_path, monkeypatch, capsys):
     def fake_run(command: str):
         commands.append(command)
         tokens = shlex.split(command)
-        if "--input-file" in tokens:
-            index = tokens.index("--input-file")
+        if "--template" in tokens:
+            index = tokens.index("--template")
             if index + 1 < len(tokens):
                 payload_path = Path(tokens[index + 1])
                 payload_path.read_text()

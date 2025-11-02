@@ -301,7 +301,7 @@ def update_item_fields(vault: str, item: str, fields: Iterable[OnePasswordField]
     command_parts = [
         "op item edit",
         *_item_command_args(vault, resolved_item),
-        f"--input-file {shlex.quote(path.as_posix())}",
+        f"--template {shlex.quote(path.as_posix())}",
     ]
     command = " ".join(command_parts)
     result = run(command)
