@@ -174,7 +174,9 @@ def provision_gpg_material(config: AccountConfig) -> List[Tuple[GitAccount, GpgM
 
     for account in eligible_accounts:
         item = get_item(account.op_vault, account.op_item, suppress_missing=True)
+        remote_public = (get_field_value(item, "gpg", "public") or "") if item else ""
         remote_private = (get_field_value(item, "gpg", "private") or "") if item else ""
+        remote_has_material = bool(remote_public.strip() and remote_private.strip())
         details = _discover_existing_key(account)
         generated_new_key = False
         if details is None and remote_private.strip():
@@ -188,9 +190,11 @@ def provision_gpg_material(config: AccountConfig) -> List[Tuple[GitAccount, GpgM
             continue
 
         key_id, fingerprint = details
-        material = _export_material(key_id)
-        if material is None:
-            continue
+        material: Optional[GpgMaterial] = None
+        if not remote_has_material:
+            material = _export_material(key_id)
+            if material is None:
+                continue
 
         signing_changed = False
         if not account.signing_key or account.signing_key != key_id:
@@ -199,39 +203,40 @@ def provision_gpg_material(config: AccountConfig) -> List[Tuple[GitAccount, GpgM
             signing_changed = True
 
         fields: List[OnePasswordField] = []
-        if _needs_update(item, "public"):
-            fields.append(
-                OnePasswordField(
-                    section="gpg",
-                    label="public",
-                    value=material.public_key + "\n",
+        if not remote_has_material and material is not None:
+            if _needs_update(item, "public"):
+                fields.append(
+                    OnePasswordField(
+                        section="gpg",
+                        label="public",
+                        value=material.public_key + "\n",
+                    )
                 )
-            )
-        if _needs_update(item, "private"):
-            fields.append(
-                OnePasswordField(
-                    section="gpg",
-                    label="private",
-                    value=material.private_key + "\n",
-                    concealed=True,
+            if _needs_update(item, "private"):
+                fields.append(
+                    OnePasswordField(
+                        section="gpg",
+                        label="private",
+                        value=material.private_key + "\n",
+                        concealed=True,
+                    )
                 )
-            )
-        if _needs_update(item, "key_id"):
-            fields.append(
-                OnePasswordField(
-                    section="gpg",
-                    label="key_id",
-                    value=key_id,
+            if _needs_update(item, "key_id"):
+                fields.append(
+                    OnePasswordField(
+                        section="gpg",
+                        label="key_id",
+                        value=key_id,
+                    )
                 )
-            )
-        if fingerprint and _needs_update(item, "fingerprint"):
-            fields.append(
-                OnePasswordField(
-                    section="gpg",
-                    label="fingerprint",
-                    value=fingerprint,
+            if fingerprint and _needs_update(item, "fingerprint"):
+                fields.append(
+                    OnePasswordField(
+                        section="gpg",
+                        label="fingerprint",
+                        value=fingerprint,
+                    )
                 )
-            )
 
         fields_updated = False
         if fields:
@@ -239,7 +244,7 @@ def provision_gpg_material(config: AccountConfig) -> List[Tuple[GitAccount, GpgM
             if fields_updated:
                 item = get_item(account.op_vault, account.op_item)
 
-        if generated_new_key or fields_updated or signing_changed:
+        if material and (generated_new_key or fields_updated or signing_changed):
             updated_material.append((account, material))
 
     if config_updated:
