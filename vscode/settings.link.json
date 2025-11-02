@@ -21,6 +21,11 @@
       111
     ]
   },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.quickSuggestions": false,
+    "editor.wordWrap": "on"
+  },
   "[python]": {
     "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.tabSize": 4,
@@ -70,10 +75,13 @@
   "editor.dragAndDrop": false,
   "editor.emptySelectionClipboard": false,
   "editor.experimental.asyncTokenization": true,
+  "editor.foldingImports": true,
   "editor.fontFamily": "'Cascadia Code', 'Fira Code', 'Droid Sans Mono', 'monospace', monospace",
   "editor.fontLigatures": true,
+  "editor.formatOnPaste": true,
   "editor.formatOnSave": true,
   "editor.guides.bracketPairs": true,
+  "editor.guides.highlightActiveBracketPair": true,
   "editor.padding.bottom": 26,
   "editor.padding.top": 26,
   "editor.renderLineHighlight": "all",
@@ -87,14 +95,21 @@
   "editor.scrollbar.horizontalScrollbarSize": 18,
   "editor.scrollBeyondLastLine": false,
   "editor.smoothScrolling": true,
+  "editor.stickyScroll.enabled": true,
   "editor.tabCompletion": "on",
   "editor.tabSize": 2,
+  "editor.unicodeHighlight.ambiguousCharacters": false,
+  "editor.unicodeHighlight.invisibleCharacters": false,
+  "editor.unicodeHighlight.nonBasicASCII": false,
   "editor.unusualLineTerminators": "auto",
+  "editor.wordWrapColumn": 110,
   "emmet.includeLanguages": {
     "javascript": "javascriptreact"
   },
   "emmet.triggerExpansionOnTab": true,
   "explorer.confirmDelete": false,
+  "explorer.confirmDragAndDrop": false,
+  "explorer.autoReveal": false,
   "extensions.ignoreRecommendations": true,
   "files.autoGuessEncoding": true,
   "files.autoSave": "afterDelay",
@@ -104,6 +119,8 @@
     "**/.git": true,
     "**/.DS_Store": true,
     "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.ruff_cache": true,
     "**/node_modules": true,
     "**/vendor": true,
     "dist": true
@@ -115,17 +132,22 @@
   "files.watcherExclude": {
     "**/.git/objects/**": true,
     "**/.git/subtree-cache/**": true,
+    "**/.pytest_cache/**": true,
     "**/node_modules/*/**": true,
     "**/__pycache__/**": true,
+    "**/.ruff_cache/**": true,
     "**/vendor/**": true
   },
   "git.confirmSync": false,
   "git.fetchOnPull": true,
+  "git.autofetch": true,
+  "git.pruneOnFetch": true,
   "git.inputValidationSubjectLength": 128,
   "git.inputValidationLength": 152,
   "git.mergeEditor": true,
-  "git.pruneOnFetch": true,
   "git.pullBeforeCheckout": true,
+  "git.rebaseWhenSync": true,
+  "git.suggestSmartCommit": false,
   "gitlens.defaultGravatarsStyle": "retro",
   "gitlens.outputLevel": "off",
   "gitlens.plusFeatures.enabled": false,
@@ -157,6 +179,7 @@
   "python.analysis.autoImportCompletions": true,
   "python.analysis.inlayHints.functionReturnTypes": true,
   "python.analysis.inlayHints.variableTypes": true,
+  "python.terminal.activateEnvironment": false,
   "ruff.lint.run": "onSave",
   "ruff.path": [
     "~/.local/bin/ruff"
@@ -166,6 +189,20 @@
   "security.workspace.trust.enabled": false,
   "security.workspace.trust.untrustedFiles": "open",
   "telemetry.telemetryLevel": "off",
+  "terminal.integrated.defaultProfile.linux": "zsh",
+  "terminal.integrated.enableBell": false,
+  "terminal.integrated.profiles.linux": {
+    "zsh": {
+      "path": "/usr/bin/zsh"
+    },
+    "bash": {
+      "path": "/bin/bash"
+    }
+  },
+  "terminal.integrated.scrollback": 10000,
+  "terminal.integrated.smoothScrolling": true,
+  "terminal.integrated.tabs.location": "left",
+  "terminal.integrated.tabs.showActions": "always",
   "typescript.format.insertSpaceAfterConstructor": true,
   "typescript.locale": "en",
   "typescript.preferences.importModuleSpecifier": "non-relative",
@@ -180,6 +217,7 @@
   "window.title": "${dirty} ${activeEditorMedium}${separator}${rootName}",
   "window.titleBarStyle": "custom",
   "workbench.colorTheme": "Solarized Dark",
+  "workbench.editor.enablePreview": false,
   "workbench.editor.closeOnFileDelete": true,
   "workbench.editor.limit.enabled": true,
   "workbench.editor.limit.perEditorGroup": true,
@@ -192,6 +230,7 @@
   "workbench.startupEditor": "none",
   "workbench.tips.enabled": false,
   "workbench.editor.tabActionCloseVisibility": false,
+  "workbench.tree.indent": 14,
   "editor.guides.bracketPairsHorizontal": true,
   "editor.inlayHints.enabled": "offUnlessPressed",
   "editor.inlayHints.padding": true,
