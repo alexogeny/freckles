@@ -6,7 +6,7 @@ import shlex
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 
 def _has_material_value(value: Optional[str]) -> bool:
@@ -29,6 +29,41 @@ def _has_material_value(value: Optional[str]) -> bool:
             return False
 
     return True
+
+
+def _looks_like_pgp_public_key(value: Optional[str]) -> bool:
+    """Return ``True`` when ``value`` resembles an exported PGP public key."""
+
+    if value is None:
+        return False
+
+    text = value.strip()
+    if not text:
+        return False
+
+    begin = "-----BEGIN PGP PUBLIC KEY BLOCK-----"
+    end = "-----END PGP PUBLIC KEY BLOCK-----"
+    return text.startswith(begin) and end in text
+
+
+def _looks_like_pgp_private_key(value: Optional[str]) -> bool:
+    """Return ``True`` when ``value`` resembles an exported PGP private key."""
+
+    if value is None:
+        return False
+
+    text = value.strip()
+    if not text:
+        return False
+
+    private_markers = [
+        ("-----BEGIN PGP PRIVATE KEY BLOCK-----", "-----END PGP PRIVATE KEY BLOCK-----"),
+        ("-----BEGIN PGP SECRET KEY BLOCK-----", "-----END PGP SECRET KEY BLOCK-----"),
+    ]
+    for begin, end in private_markers:
+        if text.startswith(begin) and end in text:
+            return True
+    return False
 
 from .accounts import AccountConfig, GitAccount, save_account_config
 from .debian import run
@@ -86,7 +121,7 @@ def _import_remote_key(account: GitAccount, item: Optional[Dict]) -> Optional[Tu
         return None
 
     private_key = get_field_value(item, "gpg", "private") or ""
-    if not _has_material_value(private_key):
+    if not _looks_like_pgp_private_key(private_key):
         return None
 
     with tempfile.NamedTemporaryFile("w", delete=False) as handle:
@@ -171,11 +206,17 @@ def _export_material(key_id: str) -> Optional[GpgMaterial]:
 
 
 def _needs_update(
-    item: Optional[Dict], field: str, *, expected: Optional[str] = None
+    item: Optional[Dict],
+    field: str,
+    *,
+    expected: Optional[str] = None,
+    validator: Optional[Callable[[Optional[str]], bool]] = None,
 ) -> bool:
     if not item:
         return True
     value = get_field_value(item, "gpg", field)
+    if validator and validator(value):
+        return False
     if not _has_material_value(value):
         return True
     if expected is None:
@@ -202,15 +243,23 @@ def provision_gpg_material(config: AccountConfig) -> List[Tuple[GitAccount, GpgM
         item = get_item(account.op_vault, account.op_item, suppress_missing=True)
         remote_public = (get_field_value(item, "gpg", "public") or "") if item else ""
         remote_private = (get_field_value(item, "gpg", "private") or "") if item else ""
-        remote_has_material = _has_material_value(remote_public) and _has_material_value(
-            remote_private
-        )
+        remote_public_valid = _looks_like_pgp_public_key(remote_public)
+        remote_private_valid = _looks_like_pgp_private_key(remote_private)
+        remote_has_material = remote_public_valid and remote_private_valid
         details = _discover_existing_key(account)
         generated_new_key = False
-        if details is None and _has_material_value(remote_private):
+        if details is None and remote_private_valid:
             details = _import_remote_key(account, item)
             if details is None:
                 continue
+        if details is None and remote_public_valid and not remote_private_valid:
+            print(
+                "Skipping GPG provisioning for"
+                f" {account.display_name} ({account.email}) because the"
+                " 1Password item contains a GPG public key but the private key is"
+                " missing or malformed. Manual intervention is required."
+            )
+            continue
         if details is None:
             details = _generate_key(account)
             generated_new_key = details is not None
@@ -232,7 +281,12 @@ def provision_gpg_material(config: AccountConfig) -> List[Tuple[GitAccount, GpgM
 
         fields: List[OnePasswordField] = []
         if material is not None:
-            if _needs_update(item, "public", expected=material.public_key):
+            if _needs_update(
+                item,
+                "public",
+                expected=material.public_key,
+                validator=_looks_like_pgp_public_key,
+            ):
                 fields.append(
                     OnePasswordField(
                         section="gpg",
@@ -240,7 +294,12 @@ def provision_gpg_material(config: AccountConfig) -> List[Tuple[GitAccount, GpgM
                         value=material.public_key + "\n",
                     )
                 )
-            if _needs_update(item, "private", expected=material.private_key):
+            if _needs_update(
+                item,
+                "private",
+                expected=material.private_key,
+                validator=_looks_like_pgp_private_key,
+            ):
                 fields.append(
                     OnePasswordField(
                         section="gpg",
