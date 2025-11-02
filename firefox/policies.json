@@ -18,6 +18,9 @@
     "HardwareAcceleration": true,
     "NetworkPrediction": false,
     "PictureInPicture": false,
+    "Autoplay": {
+      "Default": "block-audio-video"
+    },
     "DontCheckDefaultBrowser": true,
     "UserMessaging": {
       "ExtensionRecommendations": false,
@@ -34,7 +37,25 @@
       "Pocket": false,
       "SponsoredTopSites": false,
       "SponsoredPocket": false,
-      "Snippets": false
+      "Snippets": false,
+      "RecentActivity": false,
+      "WebSearch": false,
+      "Weather": false,
+      "Shortcuts": false,
+      "Support": false
+    },
+    "SearchEngines": {
+      "Default": "Google",
+      "PreventInstalls": true,
+      "Remove": [
+        "Amazon.com",
+        "Bing",
+        "DuckDuckGo",
+        "eBay",
+        "Perplexity.ai",
+        "Wikipedia (en)",
+        "Yahoo"
+      ]
     },
     "Preferences": {
       "app.shield.optoutstudies.enabled": {
@@ -73,6 +94,74 @@
         "Value": false,
         "Status": "locked"
       },
+      "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.recommendations": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.feeds.recent": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.feeds.section.highlights": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.feeds.topsites": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.feeds.weather": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.improvesearch.handoffToAwesomebar": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.improvesearch.topSiteSearchShortcuts": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.showRecentHighlights": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.showRecentSaves": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.showRecentSearches": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.showRecentVisits": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.showSearch": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.showSponsored": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.showSponsoredTopSites": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.showWeather": {
+        "Value": false,
+        "Status": "locked"
+      },
       "browser.newtabpage.enabled": {
         "Value": false,
         "Status": "locked"
@@ -105,7 +194,27 @@
         "Value": true,
         "Status": "locked"
       },
+      "browser.search.suggest.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.urlbar.openViewOnFocus": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.urlbar.update1.searchShortcuts": {
+        "Value": false,
+        "Status": "locked"
+      },
       "browser.urlbar.quicksuggest.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.urlbar.richSuggestions.featureGate": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.urlbar.speculativeConnect.enabled": {
         "Value": false,
         "Status": "locked"
       },
@@ -118,6 +227,18 @@
         "Status": "locked"
       },
       "browser.urlbar.suggest.topsites": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.urlbar.suggest.searches": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.urlbar.showSearchTerms.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.urlbar.showSearchSuggestionsFirst": {
         "Value": false,
         "Status": "locked"
       },
@@ -147,6 +268,22 @@
       },
       "layers.acceleration.force-enabled": {
         "Value": true,
+        "Status": "locked"
+      },
+      "geo.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "media.autoplay.allow-extension-background-pages": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "media.autoplay.blocking_policy": {
+        "Value": 2,
+        "Status": "locked"
+      },
+      "media.autoplay.default": {
+        "Value": 5,
         "Status": "locked"
       },
       "media.ffmpeg.vaapi.enabled": {
@@ -193,6 +330,14 @@
         "Value": true,
         "Status": "locked"
       },
+      "network.dns.disablePrefetchFromHTTPS": {
+        "Value": true,
+        "Status": "locked"
+      },
+      "network.dns.echconfig.enabled": {
+        "Value": true,
+        "Status": "locked"
+      },
       "network.http.max-connections": {
         "Value": 900,
         "Status": "locked"
@@ -221,6 +366,30 @@
         "Value": false,
         "Status": "locked"
       },
+      "network.trr.bootstrapAddress": {
+        "Value": "1.1.1.1",
+        "Status": "locked"
+      },
+      "network.trr.custom_uri": {
+        "Value": "https://mozilla.cloudflare-dns.com/dns-query",
+        "Status": "locked"
+      },
+      "network.trr.mode": {
+        "Value": 3,
+        "Status": "locked"
+      },
+      "network.trr.uri": {
+        "Value": "https://mozilla.cloudflare-dns.com/dns-query",
+        "Status": "locked"
+      },
+      "network.trr.verify_after_timeout": {
+        "Value": true,
+        "Status": "locked"
+      },
+      "network.doh-rollout.disable-heuristics": {
+        "Value": true,
+        "Status": "locked"
+      },
       "nglayout.initialpaint.delay": {
         "Value": 0,
         "Status": "locked"
@@ -233,11 +402,87 @@
         "Value": true,
         "Status": "locked"
       },
+      "permissions.default.desktop-notification": {
+        "Value": 2,
+        "Status": "locked"
+      },
+      "permissions.default.autoplay": {
+        "Value": 2,
+        "Status": "locked"
+      },
+      "permissions.default.geo": {
+        "Value": 2,
+        "Status": "locked"
+      },
+      "permissions.default.xr": {
+        "Value": 2,
+        "Status": "locked"
+      },
+      "permissions.manager.defaultsUrl": {
+        "Value": "",
+        "Status": "locked"
+      },
       "services.sync.engine.prefs": {
         "Value": false,
         "Status": "locked"
       },
+      "services.sync.prefs.sync.browser.search.suggest.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
       "signon.rememberSignons": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.tabs.hoverPreview.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.tabs.hoverPreview.showThumbnails": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.tabs.verticalTabs": {
+        "Value": true,
+        "Status": "locked"
+      },
+      "browser.tabs.verticalTabs.enabled": {
+        "Value": true,
+        "Status": "locked"
+      },
+      "sidebar.verticalTabs": {
+        "Value": true,
+        "Status": "locked"
+      },
+      "dom.payments.request.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "dom.push.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "dom.security.https_only_mode": {
+        "Value": true,
+        "Status": "locked"
+      },
+      "dom.security.https_only_mode_pbm": {
+        "Value": true,
+        "Status": "locked"
+      },
+      "dom.security.https_only_mode_ever_enabled": {
+        "Value": true,
+        "Status": "locked"
+      },
+      "dom.security.https_only_mode_ever_disabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "dom.webnotifications.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "dom.webnotifications.serviceworker.enabled": {
         "Value": false,
         "Status": "locked"
       },
