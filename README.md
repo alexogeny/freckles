@@ -11,7 +11,7 @@ Mostly hand-rolled bash scripts for intalling and configuring my system.
 ## Some Notes
 
 - only really works on linux. haven't really tested on macos or wsl
-- currently only supports debian flavors of linux
+- currently supports Debian and Ubuntu Linux distributions
 - is opinionated, like me
 
 ## Features
