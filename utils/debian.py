@@ -27,6 +27,7 @@ class DebRepository:
     repository: str
     install_name: Optional[str] = None
     check_name: Optional[str] = None
+    gpg_template: Optional[str] = None
 
 
 def run(command: str) -> subprocess.CompletedProcess[str]:

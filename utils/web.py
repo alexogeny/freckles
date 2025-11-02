@@ -3,7 +3,7 @@ import re
 import subprocess
 import urllib.request
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Optional, Set, Union
 
 from .debian import (
     DebFile,
@@ -98,8 +98,16 @@ def get_and_install_from_download_link(link, command):
     file_name.unlink(missing_ok=True)
 
 
-def _configure_repository(repository: DebRepository) -> None:
-    download_file(repository.gpg, f"{repository.name}.gpg", overwrite=True)
+def _configure_repository(
+    repository: DebRepository, key_url: Optional[str] = None
+) -> None:
+    source_url = key_url or repository.gpg
+    try:
+        download_file(source_url, f"{repository.name}.gpg", overwrite=True)
+    except Exception as error:
+        raise RuntimeError(
+            f"Failed to download GPG key for {repository.name}: {error}"
+        ) from error
     _ensure_success(
         run("sudo install -m 0755 -d /etc/apt/keyrings"),
         f"Failed to create keyring directory for {repository.name}",
@@ -136,6 +144,34 @@ def ensure_repositories_configured(
             except RuntimeError as error:
                 print(error)
     return configured
+
+
+def refresh_repository_keys(
+    software_list: List[Union[DebFile, DebRepository]],
+    missing_key_ids: Set[str],
+) -> bool:
+    """Attempt to refresh repository keys using the provided key identifiers."""
+
+    refreshed = False
+    if not missing_key_ids:
+        return refreshed
+
+    for software in software_list:
+        if not isinstance(software, DebRepository):
+            continue
+        if not software.gpg_template:
+            continue
+        for key_id in missing_key_ids:
+            try:
+                _configure_repository(
+                    software,
+                    key_url=software.gpg_template.format(key_id=key_id),
+                )
+                refreshed = True
+                break
+            except (RuntimeError, KeyError) as error:
+                print(error)
+    return refreshed
 
 
 def install_software_list(software_list: List[Union[DebFile, DebRepository]]):

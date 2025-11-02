@@ -1,3 +1,4 @@
+import re
 import sys
 
 from utils.avatar import manage_avatar
@@ -30,7 +31,11 @@ from utils.git import configure_git
 from utils.shell import configure_shell
 from utils.ssh import configure_ssh
 from utils.vscode import configure_vscode
-from utils.web import ensure_repositories_configured, install_software_list
+from utils.web import (
+    ensure_repositories_configured,
+    install_software_list,
+    refresh_repository_keys,
+)
 from utils.ubuntu import ensure_firefox_from_apt, purge_snapd
 
 
@@ -65,7 +70,8 @@ software_list = [
     ),
     DebRepository(
         name="spotify",
-        gpg="https://download.spotify.com/debian/pubkey_7A3A762FAFD4A51F.gpg",
+        gpg="https://download.spotify.com/debian/pubkey_C85668DF69375001.gpg",
+        gpg_template="https://download.spotify.com/debian/pubkey_{key_id}.gpg",
         repository="https://repository.spotify.com stable non-free",
         install_name="spotify-client",
         check_name="spotify",
@@ -88,7 +94,13 @@ apt_update_result = run("sudo apt-get update -yqq")
 if apt_update_result.returncode != 0:
     combined_output = (apt_update_result.stderr or "") + (apt_update_result.stdout or "")
     if "NO_PUBKEY" in combined_output:
-        ensure_repositories_configured(software_list)
+        missing_key_ids = {
+            match.group(1).upper()
+            for match in re.finditer(r"NO_PUBKEY\\s+([0-9A-F]+)", combined_output)
+        }
+        refreshed = refresh_repository_keys(software_list, missing_key_ids)
+        if not refreshed:
+            ensure_repositories_configured(software_list)
         apt_update_result = run("sudo apt-get update -yqq")
 
 if apt_update_result.returncode != 0:
