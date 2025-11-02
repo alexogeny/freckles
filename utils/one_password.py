@@ -175,7 +175,7 @@ def update_item_fields(vault: str, item: str, fields: Iterable[OnePasswordField]
         if field.concealed:
             field_entries.append(shlex.quote(f"{field_identifier}[type]=concealed"))
         field_entries.append(
-            shlex.quote(f"{field_identifier}=value@={path.as_posix()}"))
+            shlex.quote(f"{field_identifier}[value]=@{path.as_posix()}"))
 
     reference = _item_reference(vault, item)
     command = " ".join([f"op item edit {shlex.quote(reference)}"] + field_entries)
