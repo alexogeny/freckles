@@ -23,11 +23,10 @@ Mostly hand-rolled bash scripts for intalling and configuring my system.
     remote branch discovery, and `git db` for default-branch detection
 - onboarding walks through each git identity (personal, work, etc.), saves the
   answers, and keeps the includes in sync with future edits
-  - provisions SSH keys automatically when 1Password lacks them, stores the new
-    material in 1Password, and prints the public key ready to paste into
-    GitHub/GitLab
-  - generates and exports per-identity GPG signing keys only when 1Password does
-    not already contain them, updating git config and 1Password at the same time
+  - provisions a shared SSH key for all identities and prints the public key
+    ready to paste into GitHub/GitLab
+  - generates and exports shared GPG signing material alongside the SSH key so
+    everything stays in sync
   - see [Git Identity Concierge Guide](docs/git-identity-concierge.md) for
     manual onboarding steps or recovery when metadata needs to be created or
     fixed
@@ -38,11 +37,12 @@ Mostly hand-rolled bash scripts for intalling and configuring my system.
 - installs docker with `--docker`
   - a bit janky, but that's just docker for you
 - installs noisetorch with `--noisetorch` (linux only)
-- installs slack, discord, and spotify
+- installs slack, discord, spotify, plus the 1Password desktop app and CLI
 - applies custom Firefox enterprise policies and profile defaults for a fast,
   privacy-friendly browser (memory-only cache, VR disabled, telemetry blocked)
 - configures ssh with `--ssh`
-  - uses 1password to retrieve ssh keys
+  - uses a shared SSH key for all configured identities
+  - exports public SSH/GPG material without editing existing 1Password vault items
   - uses .zshrc to set up ssh-agent on login
 - includes a fuzzy `nn` navigator that understands relative paths, "-" for the
   previous directory, and smart tilde expansion
