@@ -64,7 +64,7 @@ def test_update_item_fields_uses_supported_cli_syntax(tmp_path, monkeypatch, con
     if concealed:
         assert f"ssh.private[concealed]=@{expected_path}" in command
     else:
-        assert f"ssh.public=@{expected_path}" in command
+        assert f"ssh.public[text]=@{expected_path}" in command
 
 
 def test_update_item_fields_handles_cli_panic(tmp_path, monkeypatch, capsys):
