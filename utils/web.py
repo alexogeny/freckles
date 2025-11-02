@@ -1,6 +1,8 @@
 import json
 import re
 import subprocess
+import tempfile
+import time
 import urllib.request
 from pathlib import Path
 from typing import List, Optional, Set, Union
@@ -15,10 +17,31 @@ from .debian import (
 )
 
 
-def get_html_from_url(url):
-    response = urllib.request.urlopen(url)
-    html = response.read().decode("utf-8")
-    return html
+APT_KEYRING_DIR = Path("/etc/apt/keyrings")
+APT_SOURCES_DIR = Path("/etc/apt/sources.list.d")
+
+
+def _retry_operation(operation, attempts: int, backoff: float):
+    last_error: Optional[Exception] = None
+    total_attempts = max(1, attempts)
+    for attempt in range(1, total_attempts + 1):
+        try:
+            return operation()
+        except Exception as error:  # pragma: no cover - network failures are environment dependent
+            last_error = error
+            if attempt == total_attempts:
+                break
+            time.sleep(backoff * attempt)
+    assert last_error is not None  # for type checkers
+    raise RuntimeError(str(last_error)) from last_error
+
+
+def get_html_from_url(url, attempts: int = 3, backoff: float = 1.0):
+    def _download() -> str:
+        with urllib.request.urlopen(url) as response:
+            return response.read().decode("utf-8")
+
+    return _retry_operation(_download, attempts=attempts, backoff=backoff)
 
 
 def load_json(data):
@@ -32,13 +55,24 @@ def find_download_link_from_html(html, pattern):
     return None
 
 
-def download_file(url, file_name, overwrite: bool = False) -> Path:
+def download_file(
+    url,
+    file_name,
+    overwrite: bool = False,
+    attempts: int = 3,
+    backoff: float = 1.0,
+) -> Path:
     destination = Path(file_name)
     if overwrite and destination.exists():
         destination.unlink()
-    if not destination.exists():
+    if destination.exists():
+        return destination
+
+    def _retrieve() -> Path:
         urllib.request.urlretrieve(url, destination.as_posix())
-    return destination
+        return destination
+
+    return _retry_operation(_retrieve, attempts=attempts, backoff=backoff)
 
 
 def _ensure_success(result: subprocess.CompletedProcess[str], context: str) -> None:
@@ -56,6 +90,50 @@ def _software_is_installed(command_name: Optional[str], package_name: Optional[s
     if package_name and is_package_installed(package_name):
         return True
     return False
+
+
+def _ensure_directory(path: Path, mode: int) -> None:
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+        return
+    except PermissionError:
+        pass
+    _ensure_success(
+        run(f"sudo install -m {mode:04o} -d {path}"),
+        f"Failed to create directory {path}",
+    )
+
+
+def _read_repository_file(path: Path) -> str:
+    if not path.exists():
+        return ""
+    try:
+        return path.read_text()
+    except PermissionError:
+        result = run(f"sudo cat {path}")
+        if result.returncode == 0:
+            return result.stdout or ""
+    return ""
+
+
+def _write_repository_file(path: Path, content: str) -> None:
+    try:
+        path.write_text(content)
+        return
+    except PermissionError:
+        pass
+
+    with tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8") as handle:
+        handle.write(content)
+        temp_path = Path(handle.name)
+
+    try:
+        _ensure_success(
+            run(f"sudo install -m 0644 {temp_path} {path}"),
+            f"Failed to install repository definition at {path}",
+        )
+    finally:
+        temp_path.unlink(missing_ok=True)
 
 
 def get_and_install_from_download_link(link, command):
@@ -108,28 +186,36 @@ def _configure_repository(
         raise RuntimeError(
             f"Failed to download GPG key for {repository.name}: {error}"
         ) from error
-    _ensure_success(
-        run("sudo install -m 0755 -d /etc/apt/keyrings"),
-        f"Failed to create keyring directory for {repository.name}",
-    )
-    keyring_path = Path("/etc/apt/keyrings") / f"{repository.name}.gpg"
-    _ensure_success(
-        run(f"sudo gpg --dearmor --yes -o {keyring_path} {repository.name}.gpg"),
-        f"Failed to install GPG key for {repository.name}",
-    )
-    _ensure_success(
-        run(f"sudo chmod 644 {keyring_path}"),
-        f"Failed to set permissions on keyring for {repository.name}",
-    )
+    _ensure_directory(APT_KEYRING_DIR, 0o755)
+    keyring_path = APT_KEYRING_DIR / f"{repository.name}.gpg"
+
+    if not keyring_path.exists():
+        gpg_command = (
+            f"gpg --dearmor --yes -o {keyring_path.as_posix()} {repository.name}.gpg"
+        )
+        result = run(gpg_command)
+        if result.returncode != 0:
+            result = run(f"sudo {gpg_command}")
+        _ensure_success(
+            result,
+            f"Failed to install GPG key for {repository.name}",
+        )
+
+    try:
+        keyring_path.chmod(0o644)
+    except PermissionError:
+        _ensure_success(
+            run(f"sudo chmod 644 {keyring_path.as_posix()}"),
+            f"Failed to set permissions on keyring for {repository.name}",
+        )
     Path(f"{repository.name}.gpg").unlink(missing_ok=True)
-    repo_line = f"deb [signed-by={keyring_path}] {repository.repository}"
-    _ensure_success(
-        run(
-            f'echo "{repo_line}" | '
-            f"sudo tee /etc/apt/sources.list.d/{repository.name}.list > /dev/null"
-        ),
-        f"Failed to configure repository for {repository.name}",
-    )
+    repo_line = f"deb [signed-by={keyring_path.as_posix()}] {repository.repository}"
+    repo_path = APT_SOURCES_DIR / f"{repository.name}.list"
+    _ensure_directory(repo_path.parent, 0o755)
+    existing = _read_repository_file(repo_path)
+    if repo_line.strip() in {line.strip() for line in existing.splitlines() if line.strip()}:
+        return
+    _write_repository_file(repo_path, f"{repo_line}\n")
 
 
 def ensure_repositories_configured(
