@@ -69,15 +69,30 @@ def setup_mozilla_repo():
 
 
 def install_regular_firefox():
+    install_command = ["sudo", "apt", "install", "-y", "firefox"]
+
+    try:
+        subprocess.run(install_command, check=True, stdout=subprocess.DEVNULL)
+        print("Firefox installed.")
+        return
+    except subprocess.CalledProcessError as e:
+        print(f"Error installing Firefox: {e}")
+
+    print("Attempting to repair APT dependencies and retry Firefox installation.")
+
     try:
         subprocess.run(
-            ["sudo", "apt", "install", "-y", "firefox"],
+            ["sudo", "apt-get", "install", "-y", "--fix-broken"],
             check=True,
             stdout=subprocess.DEVNULL,
         )
-        print("Firefox installed.")
-    except subprocess.CalledProcessError as e:
-        print(f"Error installing Firefox: {e}")
+        subprocess.run(install_command, check=True, stdout=subprocess.DEVNULL)
+        print("Firefox installed after repairing dependencies.")
+    except subprocess.CalledProcessError as repair_error:
+        print(
+            "Failed to repair dependencies for Firefox installation: "
+            f"{repair_error}"
+        )
 
 
 def purge_esr_profiles():
@@ -139,6 +154,12 @@ def extension_already_installed(extension_data, extension_name):
 
 
 def get_extension_json(profile_dir):
+    if profile_dir is None:
+        print(
+            "Firefox profile directory not provided. Skipping extension data lookup."
+        )
+        return {}
+
     extensions_file = os.path.join(profile_dir, "extensions.json")
     extensions_data = {}
 
