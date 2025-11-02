@@ -65,3 +65,35 @@ def test_update_item_fields_uses_supported_cli_syntax(tmp_path, monkeypatch, con
         assert f"ssh.private[concealed]=@{expected_path}" in command
     else:
         assert f"ssh.public=@{expected_path}" in command
+
+
+def test_update_item_fields_handles_cli_panic(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(
+        one_password, "resolve_item_identifier", lambda vault, item, catalog=None: "item-id"
+    )
+
+    commands: list[str] = []
+
+    def fake_run(command: str):
+        commands.append(command)
+        return CompletedProcess(
+            args=command,
+            returncode=1,
+            stdout="",
+            stderr="panic: runtime error: invalid memory address or nil pointer dereference",
+        )
+
+    monkeypatch.setattr(one_password, "run", fake_run)
+    monkeypatch.setattr(one_password.tempfile, "mkstemp", _mkstemp_factory(tmp_path))
+
+    field = one_password.OnePasswordField(
+        section="ssh",
+        label="public",
+        value="example-value",
+    )
+
+    assert one_password.update_item_fields("Vault", "Item", [field]) is False
+    assert len(commands) == 1
+
+    output = capsys.readouterr().out
+    assert "The 1Password CLI encountered an unexpected crash" in output
