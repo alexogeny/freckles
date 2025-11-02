@@ -21,6 +21,10 @@ Mostly hand-rolled bash scripts for intalling and configuring my system.
 - installs and configures git, including both my personal and work configs with `--git`
   - ships helper aliases like `git fs` for a clean branch reset, `git rb` for
     remote branch discovery, and `git db` for default-branch detection
+  - onboarding walks through each git identity (personal, work, etc.), saves the
+    answers, and keeps the includes in sync with future edits
+  - generates SSH configs and keys for every account when 1Password metadata is
+    provided
 - installs and configures brew with `--brew`
   - python 3 is installed with brew and set as the default python interpreter
   - node is installed with brew

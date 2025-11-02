@@ -79,8 +79,8 @@ if is_ubuntu():
 purge_unwanted_packages(unwanted_software)
 install_software_list(software_list)
 configure_vscode()
-configure_ssh()
 configure_git()
+configure_ssh()
 configure_shell()
 manage_avatar()
 if is_debian_12_bookworm() is True:
