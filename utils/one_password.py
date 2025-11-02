@@ -24,6 +24,7 @@ class OnePasswordItem:
     vault: str
     identifier: str
     favorite: bool = False
+    vault_id: str = ""
 
     def label(self) -> str:
         """Return a human-friendly label describing the item."""
@@ -70,14 +71,19 @@ def list_items() -> List[OnePasswordItem]:
     for entry in payload:
         vault_info = entry.get("vault") or {}
         vault_name = ""
+        vault_id = ""
         if isinstance(vault_info, dict):
-            vault_name = vault_info.get("name") or vault_info.get("id") or ""
+            vault_name = vault_info.get("name") or ""
+            vault_id = vault_info.get("id") or ""
+            if not vault_name:
+                vault_name = vault_id
         items.append(
             OnePasswordItem(
                 title=entry.get("title", ""),
                 vault=vault_name,
                 identifier=entry.get("id", ""),
                 favorite=bool(entry.get("favorite", False)),
+                vault_id=vault_id,
             )
         )
 
@@ -117,8 +123,17 @@ def resolve_item_identifier(
     items = catalog if catalog is not None else list_items()
     matches: List[OnePasswordItem] = []
     for entry in items:
-        if normalised_vault and entry.vault.strip().lower() != normalised_vault:
-            continue
+        if normalised_vault:
+            vault_aliases = {
+                alias.strip().lower()
+                for alias in (entry.vault, entry.vault_id)
+                if alias
+            }
+            if vault_aliases:
+                if normalised_vault not in vault_aliases:
+                    continue
+            elif entry.vault.strip().lower() != normalised_vault:
+                continue
         if entry.title.strip().lower() == candidate.lower():
             matches.append(entry)
 
