@@ -152,7 +152,9 @@ def _needs_update(item: Optional[Dict], field: str) -> bool:
     if not item:
         return True
     value = get_field_value(item, "gpg", field)
-    return not value
+    if value is None:
+        return True
+    return not str(value).strip()
 
 
 def provision_gpg_material(config: AccountConfig) -> List[Tuple[GitAccount, GpgMaterial]]:
@@ -214,7 +216,7 @@ def provision_gpg_material(config: AccountConfig) -> List[Tuple[GitAccount, GpgM
                     concealed=True,
                 )
             )
-        if _needs_update(item, "key_id") or (item and get_field_value(item, "gpg", "key_id") != key_id):
+        if _needs_update(item, "key_id"):
             fields.append(
                 OnePasswordField(
                     section="gpg",
@@ -222,10 +224,7 @@ def provision_gpg_material(config: AccountConfig) -> List[Tuple[GitAccount, GpgM
                     value=key_id,
                 )
             )
-        if fingerprint and (
-            _needs_update(item, "fingerprint")
-            or (item and get_field_value(item, "gpg", "fingerprint") != fingerprint)
-        ):
+        if fingerprint and _needs_update(item, "fingerprint"):
             fields.append(
                 OnePasswordField(
                     section="gpg",
