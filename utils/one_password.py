@@ -280,7 +280,6 @@ def update_item_fields(vault: str, item: str, fields: Iterable[OnePasswordField]
         return False
 
     field_entries = []
-    ensured_sections: set[str] = set()
     temp_files: List[Path] = []
     for field in fields:
         fd, temp_path = tempfile.mkstemp(prefix="freckles-op-")
@@ -288,21 +287,11 @@ def update_item_fields(vault: str, item: str, fields: Iterable[OnePasswordField]
         path = Path(temp_path)
         temp_files.append(path)
         path.write_text(field.value)
-        section_prefix = ""
-        if field.section:
-            section_prefix = f"{field.section}."
-            if field.section not in ensured_sections:
-                ensured_sections.add(field.section)
-                field_entries.append(
-                    shlex.quote(f"{field.section}[label]={field.section}")
-                )
-
+        section_prefix = f"{field.section}." if field.section else ""
         field_identifier = f"{section_prefix}{field.label}"
-        field_entries.append(shlex.quote(f"{field_identifier}[label]={field.label}"))
-        if field.concealed:
-            field_entries.append(shlex.quote(f"{field_identifier}[type]=concealed"))
+        type_suffix = "[concealed]" if field.concealed else ""
         field_entries.append(
-            shlex.quote(f"{field_identifier}[value]=@{path.as_posix()}"))
+            shlex.quote(f"{field_identifier}{type_suffix}=@{path.as_posix()}"))
 
     reference = _item_reference(vault, item)
     command_parts = [
