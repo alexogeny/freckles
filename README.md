@@ -18,6 +18,7 @@ Mostly hand-rolled bash scripts for intalling and configuring my system.
 
 - installs and configures zsh with `--zsh`
 - installs and configures vscode (including extensions) with `--vscode`
+- applies opinionated GNOME desktop settings (dark theme, Night Light, keyboard shortcuts)
 - installs and configures git, including both my personal and work configs with `--git`
   - ships helper aliases like `git fs` for a clean branch reset, `git rb` for
     remote branch discovery, and `git db` for default-branch detection

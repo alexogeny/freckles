@@ -30,6 +30,7 @@ from utils.firefox import (
     setup_mozilla_repo,
 )
 from utils.git import configure_git
+from utils.gnome import configure_gnome
 from utils.shell import configure_shell
 from utils.ssh import configure_ssh
 from utils.vscode import configure_vscode
@@ -131,6 +132,7 @@ configure_vscode()
 configure_git()
 configure_ssh()
 configure_shell()
+configure_gnome()
 manage_avatar()
 if is_debian_12_bookworm() is True:
     replace_bookworm_with_trixie()
