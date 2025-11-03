@@ -497,7 +497,78 @@
       "toolkit.telemetry.unified": {
         "Value": false,
         "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.asrouter.userprefs.chat.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.asrouter.userprefs.chat.message": {
+        "Value": "",
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.asrouter.userprefs.chatgptApp.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.asrouter.userprefs.chatgptApp.message": {
+        "Value": "",
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.asrouter.userprefs.linkpreview.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.asrouter.userprefs.linkpreview.message": {
+        "Value": "",
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.asrouter.userprefs.merino.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.asrouter.userprefs.merino.message": {
+        "Value": "",
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.asrouter.userprefs.pocketmetro.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.newtabpage.activity-stream.asrouter.userprefs.pocketmetro.message": {
+        "Value": "",
+        "Status": "locked"
+      },
+      "browser.urlbar.quicksuggest.dataCollection.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "browser.urlbar.quicksuggest.onboardingDialogChoice": {
+        "Value": 0,
+        "Status": "locked"
+      },
+      "browser.urlbar.quicksuggest.shouldShowOnboardingDialog": {
+        "Value": false,
+        "Status": "locked"
       }
+    },
+    "General": {
+      "Chat": {
+        "Enabled": false,
+        "InProductHelp": false,
+        "LabPreviews": false
+      },
+      "FirefoxSuggest": {
+        "Enabled": false,
+        "SponsoredSuggestions": false,
+        "TrendingSuggestions": false,
+        "Locked": true
+      }
+    },
+    "FirefoxSuggest": {
+      "SponsoredSuggestions": false,
+      "TrendingSuggestions": false,
+      "ImprovedSuggestions": false,
+      "Locked": true
     }
   }
 }
