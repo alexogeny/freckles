@@ -79,6 +79,46 @@ OPTIONAL_SETTINGS: Sequence[tuple[str, str, str]] = (
     ("org.gnome.desktop.interface", "accent-color", "'blue'"),
 )
 
+TERMINAL_PROFILE_SCHEMA = "org.gnome.Terminal.Legacy.Profile"
+TERMINAL_PROFILES_ROOT = "/org/gnome/terminal/legacy/profiles:/"
+
+TERMINAL_THEME_SETTINGS: Sequence[tuple[str, str]] = (
+    ("use-theme-colors", "false"),
+    ("use-system-font", "false"),
+    ("font", "'Cascadia Code 11'"),
+    ("background-color", "'rgb(24,25,31)'"),
+    ("foreground-color", "'rgb(216,222,233)'"),
+    ("bold-color", "'rgb(129,161,193)'"),
+    ("bold-color-same-as-fg", "false"),
+    ("cursor-colors-set", "true"),
+    ("cursor-background-color", "'rgb(216,222,233)'"),
+    ("cursor-foreground-color", "'rgb(24,25,31)'"),
+    ("highlight-colors-set", "true"),
+    ("highlight-background-color", "'rgb(67,76,94)'"),
+    ("highlight-foreground-color", "'rgb(236,239,244)'"),
+    ("audible-bell", "false"),
+    ("visible-name", "'Freckles'"),
+)
+
+TERMINAL_THEME_PALETTE: Sequence[str] = (
+    "rgb(46,52,64)",
+    "rgb(191,97,106)",
+    "rgb(163,190,140)",
+    "rgb(235,203,139)",
+    "rgb(129,161,193)",
+    "rgb(180,142,173)",
+    "rgb(136,192,208)",
+    "rgb(236,239,244)",
+    "rgb(76,86,106)",
+    "rgb(208,135,112)",
+    "rgb(163,190,140)",
+    "rgb(235,203,139)",
+    "rgb(129,161,193)",
+    "rgb(180,142,173)",
+    "rgb(143,188,187)",
+    "rgb(236,239,244)",
+)
+
 CUSTOM_KEYBINDING_SCHEMA = (
     "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding"
 )
@@ -115,6 +155,7 @@ def configure_gnome() -> None:
         if _is_setting_supported(schema, key):
             _apply_setting(schema, key, value)
 
+    _configure_terminal_theme()
     _configure_custom_keybindings(CUSTOM_KEYBINDINGS)
 
 
@@ -208,6 +249,41 @@ def _configure_custom_keybindings(bindings: Iterable[dict[str, str]]) -> None:
         _apply_setting(schema, "name", f"'{binding['name']}'")
         _apply_setting(schema, "command", f"'{binding['command']}'")
         _apply_setting(schema, "binding", f"'{binding['binding']}'")
+
+
+def _configure_terminal_theme() -> None:
+    profile_id = _default_terminal_profile_id()
+    if not profile_id:
+        return
+
+    schema = f"{TERMINAL_PROFILE_SCHEMA}:{TERMINAL_PROFILES_ROOT}{profile_id}/"
+
+    for key, value in TERMINAL_THEME_SETTINGS:
+        _apply_setting(schema, key, value)
+
+    palette_literal = _serialize_palette(TERMINAL_THEME_PALETTE)
+    _apply_setting(schema, "palette", palette_literal)
+
+
+def _default_terminal_profile_id() -> str | None:
+    result = run(
+        ["gsettings", "get", "org.gnome.Terminal.ProfilesList", "default"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return None
+
+    output = (result.stdout or result.stderr or "").strip()
+    if not output:
+        return None
+
+    return output.strip("'\"") or None
+
+
+def _serialize_palette(colors: Sequence[str]) -> str:
+    return "[" + ", ".join(f"'{color}'" for color in colors) + "]"
 
 
 def _apply_setting(schema: str, key: str, value: str) -> CompletedProcess[str]:

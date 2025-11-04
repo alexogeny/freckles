@@ -25,6 +25,7 @@ def test_configure_gnome_requires_gsettings(monkeypatch):
     monkeypatch.setattr(gnome, "which", lambda _: None)
     monkeypatch.setattr(gnome, "_apply_setting", fake_apply)
     monkeypatch.setattr(gnome, "_is_setting_supported", lambda *_: False)
+    monkeypatch.setattr(gnome, "_configure_terminal_theme", lambda: called.append("terminal"))
 
     gnome.configure_gnome()
 
@@ -33,6 +34,7 @@ def test_configure_gnome_requires_gsettings(monkeypatch):
 
 def test_configure_gnome_applies_curated_settings(monkeypatch):
     commands = []
+    terminal_calls = []
 
     def fake_apply(schema: str, key: str, value: str):
         commands.append((schema, key, value))
@@ -44,6 +46,7 @@ def test_configure_gnome_applies_curated_settings(monkeypatch):
     monkeypatch.setattr(gnome, "_preferred_cursor_theme", lambda: "Adwaita")
     monkeypatch.setattr(gnome, "_preferred_gtk_theme", lambda: "Adwaita-dark")
     monkeypatch.setattr(gnome, "_preferred_icon_theme", lambda: "Papirus-Dark")
+    monkeypatch.setattr(gnome, "_configure_terminal_theme", lambda: terminal_calls.append(True))
 
     gnome.configure_gnome()
 
@@ -82,10 +85,12 @@ def test_configure_gnome_applies_curated_settings(monkeypatch):
         "'/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/launch-vscode/']",
     )
     assert custom_list_entry in commands
+    assert terminal_calls == [True]
 
 
 def test_configure_gnome_uses_curated_theme_on_ubuntu(monkeypatch):
     commands = []
+    monkeypatch.setattr(gnome, "_configure_terminal_theme", lambda: None)
 
     def fake_apply(schema: str, key: str, value: str):
         commands.append((schema, key, value))
@@ -110,6 +115,7 @@ def test_configure_gnome_uses_curated_theme_on_ubuntu(monkeypatch):
 
 def test_configure_gnome_applies_optional_settings(monkeypatch):
     commands = []
+    monkeypatch.setattr(gnome, "_configure_terminal_theme", lambda: None)
 
     def fake_apply(schema: str, key: str, value: str):
         commands.append((schema, key, value))
@@ -172,3 +178,46 @@ def test_preferred_cursor_theme_falls_back_to_default(monkeypatch):
     monkeypatch.setattr(gnome, "ICON_SEARCH_PATHS", tuple())
 
     assert gnome._preferred_cursor_theme() == "Adwaita"
+
+
+def test_default_terminal_profile_id_parses_output(monkeypatch):
+    monkeypatch.setattr(
+        gnome,
+        "run",
+        lambda *_, **__: FakeProcess(stdout="'1234-uuid'")
+    )
+
+    assert gnome._default_terminal_profile_id() == "1234-uuid"
+
+
+def test_default_terminal_profile_id_handles_failure(monkeypatch):
+    monkeypatch.setattr(
+        gnome,
+        "run",
+        lambda *_, **__: FakeProcess(returncode=1)
+    )
+
+    assert gnome._default_terminal_profile_id() is None
+
+
+def test_configure_terminal_theme_applies_settings(monkeypatch):
+    commands = []
+
+    monkeypatch.setattr(gnome, "_default_terminal_profile_id", lambda: "profile-id")
+    monkeypatch.setattr(gnome, "_apply_setting", lambda *args: (commands.append(args), FakeProcess())[1])
+
+    gnome._configure_terminal_theme()
+
+    profile_schema = f"{gnome.TERMINAL_PROFILE_SCHEMA}:{gnome.TERMINAL_PROFILES_ROOT}profile-id/"
+    assert (profile_schema, "background-color", "'rgb(24,25,31)'") in commands
+
+    palette_commands = [cmd for cmd in commands if cmd[1] == "palette"]
+    assert len(palette_commands) == 1
+    assert "rgb(46,52,64)" in palette_commands[0][2]
+
+
+def test_configure_terminal_theme_no_profile(monkeypatch):
+    monkeypatch.setattr(gnome, "_default_terminal_profile_id", lambda: None)
+    monkeypatch.setattr(gnome, "_apply_setting", lambda *_, **__: (_ for _ in ()).throw(AssertionError))
+
+    gnome._configure_terminal_theme()
