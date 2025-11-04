@@ -1,15 +1,15 @@
 import logging
 
-# Define colors using ANSI escape codes
-BLUE = "\033[38;5;39m"
-GREEN = "\033[38;5;76m"
-PURPLE = "\033[38;5;99m"
-ORANGE = "\033[38;5;208m"
-GOLD = "\033[38;5;220m"
-RED = "\033[38;5;203m"
-PINK = "\033[38;5;206m"
+# Define colours that align with the Freckles terminal theme.
+BLUE = "\033[38;2;125;178;255m"
+GREEN = "\033[38;2;104;201;129m"
+PURPLE = "\033[38;2;194;160;255m"
+ORANGE = "\033[38;2;246;202;113m"
+GOLD = "\033[38;2;255;210;111m"
+RED = "\033[38;2;230;130;130m"
+PINK = "\033[38;2;255;166;210m"
 RESET = "\033[0m"
-GRAY = "\033[38;5;244m"
+GRAY = "\033[38;2;122;132;164m"
 NEWLINE = "\n"
 
 # Set up logging with custom formatting

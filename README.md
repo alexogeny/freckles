@@ -1,11 +1,12 @@
 # Freckles
 
-Freckles are alexogeny's dotfiles.
+Freckles are alexogeny's dotfiles and workstation bootstrap scripts.
 
-Mostly hand-rolled bash scripts for intalling and configuring my system.
+Everything is orchestrated by a Python setup script. With [uv](https://github.com/astral-sh/uv)
+installed, provisioning a machine is as simple as:
 
 ```shell
-./setup.sh
+uv run setup.py
 ```
 
 ## Some Notes
@@ -16,38 +17,23 @@ Mostly hand-rolled bash scripts for intalling and configuring my system.
 
 ## Features
 
-- installs and configures zsh with `--zsh`
-- installs and configures vscode (including extensions) with `--vscode`
-- applies opinionated GNOME desktop settings (dark theme, Night Light, keyboard shortcuts)
-- installs and configures git, including both my personal and work configs with `--git`
-  - ships helper aliases like `git fs` for a clean branch reset, `git rb` for
-    remote branch discovery, and `git db` for default-branch detection
-- onboarding walks through each git identity (personal, work, etc.), saves the
-  answers, and keeps the includes in sync with future edits
-  - provisions a shared SSH key for all identities and prints the public key
-    ready to paste into GitHub/GitLab
-  - generates and exports shared GPG signing material alongside the SSH key so
-    everything stays in sync
-  - see [Git Identity Concierge Guide](docs/git-identity-concierge.md) for
-    manual onboarding steps or recovery when metadata needs to be created or
-    fixed
-- installs and configures brew with `--brew`
-  - python 3 is installed with brew and set as the default python interpreter
-  - node is installed with brew
-  - bun is installed with brew
-- installs docker with `--docker`
-  - a bit janky, but that's just docker for you
-- installs noisetorch with `--noisetorch` (linux only)
-- installs slack, discord, spotify, plus the 1Password desktop app and CLI
-- applies custom Firefox enterprise policies and profile defaults for a fast,
-  privacy-friendly browser (memory-only cache, VR disabled, telemetry blocked)
-- configures ssh with `--ssh`
-  - uses a shared SSH key for all configured identities
-  - exports public SSH/GPG material without editing existing 1Password vault items
-  - uses .zshrc to set up ssh-agent on login
-- includes a fuzzy `nn` navigator that understands relative paths, "-" for the
-  previous directory, and smart tilde expansion
-- turns off swap
+- installs required base tooling including curl, git, make, zsh, and the Cascadia
+  Code font so prompts, editors, and terminals share the same typography
+- configures zsh, syncs the custom freckles prompt, and ensures aliases and
+  helper scripts are available from both bash and zsh
+- installs Visual Studio Code, applies the bespoke **Freckles Midnight/Dawn**
+  themes, and keeps curated settings and keybindings in sync
+- applies opinionated GNOME desktop defaults (dark appearance, Adwaita theming,
+  Night Light, sensible keyboard shortcuts) and configures GNOME Terminal with
+  the Freckles palette, cursor, and sizing
+- installs and configures git, including both personal and work identities,
+  helper aliases like `git fs`/`git rb`, and the shared SSH/GPG material used by
+  [git identity concierge](docs/git-identity-concierge.md)
+- provisions Firefox with enterprise policies, curated defaults, and add-ons
+- installs 1Password, Slack, Spotify, and the 1Password CLI directly from their
+  upstream repositories
+- syncs the freckles shell helpers such as the fuzzy `nn` navigator and keeps
+  the workstation ready for daily development
 
 Ubuntu specific:
 

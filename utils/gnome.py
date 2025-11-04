@@ -10,6 +10,9 @@ GNOME_SETTINGS: Sequence[tuple[str, str, str]] = (
     ("org.gnome.desktop.interface", "clock-show-date", "true"),
     ("org.gnome.desktop.interface", "clock-show-weekday", "true"),
     ("org.gnome.desktop.interface", "clock-format", "'24h'"),
+    ("org.gnome.desktop.interface", "cursor-theme", "'Adwaita'"),
+    ("org.gnome.desktop.interface", "gtk-theme", "'Adwaita-dark'"),
+    ("org.gnome.desktop.interface", "icon-theme", "'Adwaita'"),
     ("org.gnome.desktop.interface", "color-scheme", "'prefer-dark'"),
     ("org.gnome.desktop.interface", "enable-hot-corners", "false"),
     (
