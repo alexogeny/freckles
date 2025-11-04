@@ -109,7 +109,7 @@ class StatusAnimator:
             with self._lock:
                 if pulse:
                     self._stream.write(
-                        f"\r{self._theme.accent}{frame}{pulse} {self._status}{nailpolish.RESET}"
+                        f"\r{self._theme.accent}{frame} {self._status}{pulse}{nailpolish.RESET}"
                     )
                 else:
                     self._stream.write(
