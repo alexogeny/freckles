@@ -223,7 +223,8 @@ def configure_developer_tooling_phase(reporter: StepReporter) -> None:
                 )
             else:
                 reporter.log("Configuring git identities (non-interactive mode).")
-            configure_git()
+            with reporter.interactive_section():
+                configure_git()
         with managed_step(reporter, "Configure SSH"):
             configure_ssh()
 
