@@ -113,8 +113,9 @@ class StatusAnimator:
             frame = next(frames)
             style = next(glow_styles) if glow_styles else ""
             with self._lock:
+                self._stream.write("\r\033[K")
                 self._stream.write(
-                    f"\r{self._theme.accent}{frame} {style}{self._status}{nailpolish.RESET}"
+                    f"{self._theme.accent}{frame} {style}{self._status}{nailpolish.RESET}"
                 )
                 self._stream.flush()
             time.sleep(self._INTERVAL)
