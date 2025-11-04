@@ -116,6 +116,7 @@ core_packages = [
     "curl",
     "fonts-cascadia-code",
     "git",
+    "calibre",
     "gnupg",
     "lsb-release",
     "make",
