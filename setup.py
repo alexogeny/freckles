@@ -1,6 +1,7 @@
 import re
 import sys
 from contextlib import contextmanager
+from typing import Dict, List, Optional
 
 from utils.avatar import manage_avatar
 from utils.calibre import configure_calibre
@@ -116,6 +117,43 @@ def managed_step(reporter: StepReporter, name: str):
         raise
     else:
         reporter.finish_step(name)
+
+
+def emit_summary(summary: Dict[str, List[Dict[str, Optional[str]]]]) -> None:
+    children_by_parent: Dict[Optional[str], List[Dict[str, Optional[str]]]] = {}
+    for bucket in ("succeeded", "failed"):
+        for entry in summary[bucket]:
+            parent = entry.get("parent")
+            children_by_parent.setdefault(parent, []).append(entry)
+
+    def failed_descendants(parent_name: str) -> List[Dict[str, Optional[str]]]:
+        collected: List[Dict[str, Optional[str]]] = []
+        for child in children_by_parent.get(parent_name, []):
+            if child.get("status") == "failed":
+                collected.append(child)
+            collected.extend(failed_descendants(child["name"]))
+        return collected
+
+    top_level_success = [entry for entry in summary["succeeded"] if entry.get("depth") == 0]
+    top_level_failures = [entry for entry in summary["failed"] if entry.get("depth") == 0]
+
+    print("\n=== Setup Summary ===")
+    if top_level_success:
+        print("Successful phases:")
+        for entry in top_level_success:
+            print(f"  - {entry['name']}")
+    if top_level_failures:
+        print("Failed phases:")
+        for entry in top_level_failures:
+            error = entry.get("error", "Unknown error")
+            print(f"  - {entry['name']}: {error}")
+            nested_failures = failed_descendants(entry["name"])
+            for nested in nested_failures:
+                nested_error = nested.get("error", "Unknown error")
+                print(f"    * {nested['name']}: {nested_error}")
+            print("    Fix the issue and rerun `python setup.py` to retry this phase.")
+    else:
+        print("All phases completed successfully. You're good to go!")
 
 
 def refresh_apt_phase(reporter: StepReporter) -> None:
@@ -281,46 +319,17 @@ def main() -> None:
         ("Firefox configuration", configure_firefox_phase),
     ]
 
-    with StepReporter() as reporter:
-        for label, phase in phases:
-            with managed_step(reporter, label):
-                phase(reporter)
-        summary = reporter.summary()
-
-    children_by_parent = {}
-    for bucket in ("succeeded", "failed"):
-        for entry in summary[bucket]:
-            parent = entry.get("parent")
-            children_by_parent.setdefault(parent, []).append(entry)
-
-    def failed_descendants(parent_name: str):
-        collected = []
-        for child in children_by_parent.get(parent_name, []):
-            if child.get("status") == "failed":
-                collected.append(child)
-            collected.extend(failed_descendants(child["name"]))
-        return collected
-
-    top_level_success = [entry for entry in summary["succeeded"] if entry.get("depth") == 0]
-    top_level_failures = [entry for entry in summary["failed"] if entry.get("depth") == 0]
-
-    print("\n=== Setup Summary ===")
-    if top_level_success:
-        print("Successful phases:")
-        for entry in top_level_success:
-            print(f"  - {entry['name']}")
-    if top_level_failures:
-        print("Failed phases:")
-        for entry in top_level_failures:
-            error = entry.get("error", "Unknown error")
-            print(f"  - {entry['name']}: {error}")
-            nested_failures = failed_descendants(entry["name"])
-            for nested in nested_failures:
-                nested_error = nested.get("error", "Unknown error")
-                print(f"    * {nested['name']}: {nested_error}")
-            print("    Fix the issue and rerun `python setup.py` to retry this phase.")
+    reporter = StepReporter()
+    try:
+        with reporter:
+            for label, phase in phases:
+                with managed_step(reporter, label):
+                    phase(reporter)
+    except Exception:
+        emit_summary(reporter.summary())
+        raise
     else:
-        print("All phases completed successfully. You're good to go!")
+        emit_summary(reporter.summary())
 
 
 if __name__ == "__main__":
