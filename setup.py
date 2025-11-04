@@ -325,6 +325,8 @@ def main() -> None:
         ("Firefox configuration", configure_firefox_phase),
     ]
 
+    # Swap the ``theme`` argument to experiment with alternative colour palettes
+    # while reusing the same reporting infrastructure.
     reporter = StepReporter(total_top_level=len(phases))
     try:
         with reporter:
