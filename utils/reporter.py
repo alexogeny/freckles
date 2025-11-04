@@ -41,7 +41,12 @@ class StatusAnimator:
     _FRAMES = tuple("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏")
     _INTERVAL = 0.1
 
-    _PULSE_FRAMES = ("   ", ".  ", ".. ", "...")
+    _GLOW_STYLES = (
+        nailpolish.DIM,
+        nailpolish.NORMAL,
+        nailpolish.BRIGHT,
+        nailpolish.NORMAL,
+    )
 
     def __init__(self, theme: Theme, stream=None, *, pulse_enabled: bool = True) -> None:
         self._theme = theme
@@ -99,22 +104,17 @@ class StatusAnimator:
 
     def _run(self) -> None:
         frames = cycle(self._FRAMES)
-        pulses = cycle(self._PULSE_FRAMES) if self._pulse_enabled else None
+        glow_styles = cycle(self._GLOW_STYLES) if self._pulse_enabled else None
         while not self._stop.is_set():
             if self._paused.is_set():
                 time.sleep(self._INTERVAL)
                 continue
             frame = next(frames)
-            pulse = next(pulses) if pulses else ""
+            style = next(glow_styles) if glow_styles else ""
             with self._lock:
-                if pulse:
-                    self._stream.write(
-                        f"\r{self._theme.accent}{frame} {self._status}{pulse}{nailpolish.RESET}"
-                    )
-                else:
-                    self._stream.write(
-                        f"\r{self._theme.accent}{frame} {self._status}{nailpolish.RESET}"
-                    )
+                self._stream.write(
+                    f"\r{self._theme.accent}{frame} {style}{self._status}{nailpolish.RESET}"
+                )
                 self._stream.flush()
             time.sleep(self._INTERVAL)
         with self._lock:

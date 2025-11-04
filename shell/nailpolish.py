@@ -10,6 +10,11 @@ RED = "\033[38;2;230;130;130m"
 PINK = "\033[38;2;255;166;210m"
 RESET = "\033[0m"
 GRAY = "\033[38;2;122;132;164m"
+
+# Text intensity modifiers for gentle glow effects.
+DIM = "\033[2m"
+NORMAL = "\033[22m"
+BRIGHT = "\033[1m"
 NEWLINE = "\n"
 
 # Set up logging with custom formatting
