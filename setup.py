@@ -2,6 +2,7 @@ import re
 import sys
 
 from utils.avatar import manage_avatar
+from utils.calibre import configure_calibre
 
 from utils.debian import (
     DebFile,
@@ -140,6 +141,7 @@ configure_shell()
 configure_terminal()
 configure_gnome()
 manage_avatar()
+configure_calibre()
 if is_debian_12_bookworm() is True:
     replace_bookworm_with_trixie()
     run_apt_update_and_upgrade()
