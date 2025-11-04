@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import builtins
 import sys
 import threading
 import time
@@ -179,6 +180,8 @@ class StepReporter:
         self._total_top_level = total_top_level or 0
         self._completed_top_level = 0
         self._animator_finalized = False
+        self._input_patch_depth = 0
+        self._original_input: Optional[Callable[[str], str]] = None
 
     def __enter__(self) -> "StepReporter":
         return self
@@ -248,24 +251,25 @@ class StepReporter:
     def interactive_section(self):
         """Temporarily pause the status animation for interactive prompts."""
 
-        if not self._animator or self._animator_finalized:
-            yield
-            return
+        with self._patched_input():
+            if not self._animator or self._animator_finalized:
+                yield
+                return
 
-        self._animator.pause()
-        try:
-            yield
-        except Exception:
-            if self._animator and not self._animator_finalized:
-                self._animator.pause()
-            raise
-        else:
-            if self._animator and not self._animator_finalized:
-                status = self._current_status()
-                if status:
-                    self._animator.resume(status)
-                else:
+            self._animator.pause()
+            try:
+                yield
+            except Exception:
+                if self._animator and not self._animator_finalized:
                     self._animator.pause()
+                raise
+            else:
+                if self._animator and not self._animator_finalized:
+                    status = self._current_status()
+                    if status:
+                        self._animator.resume(status)
+                    else:
+                        self._animator.pause()
 
     def summary(self) -> Dict[str, List[Dict[str, Optional[str]]]]:
         succeeded: List[Dict[str, Optional[str]]] = []
@@ -356,3 +360,32 @@ class StepReporter:
         if self._completed_top_level:
             return self._colorize(self._theme.success, "✔ All phases complete")
         return None
+
+    @contextmanager
+    def _patched_input(self):
+        if self._input_patch_depth == 0:
+            self._original_input = builtins.input
+
+            def prompt_input(message: object = "") -> str:
+                return self._handle_prompt_input(message)
+
+            builtins.input = prompt_input  # type: ignore[assignment]
+        self._input_patch_depth += 1
+        try:
+            yield
+        finally:
+            self._input_patch_depth -= 1
+            if self._input_patch_depth == 0 and self._original_input is not None:
+                builtins.input = self._original_input  # type: ignore[assignment]
+                self._original_input = None
+
+    def _handle_prompt_input(self, message: object) -> str:
+        text = str(message).rstrip()
+        if text:
+            indent_level = max(len(self._stack) - 2, 0)
+            indent = "  " * indent_level
+            self._before_output()
+            self._print(self._colorize(self._theme.accent, f"{indent}? {text}"))
+        if self._original_input is None:
+            raise RuntimeError("Interactive prompt invoked outside managed context.")
+        return self._original_input("> ")

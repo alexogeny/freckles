@@ -249,7 +249,8 @@ def manage_avatar_phase(reporter: StepReporter) -> None:
 
 def configure_calibre_phase(reporter: StepReporter) -> None:
     with managed_step(reporter, "Configure Calibre"):
-        configure_calibre()
+        with reporter.interactive_section():
+            configure_calibre()
 
 
 def upgrade_bookworm_phase(reporter: StepReporter) -> None:
