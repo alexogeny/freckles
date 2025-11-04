@@ -319,7 +319,7 @@ def main() -> None:
         ("Firefox configuration", configure_firefox_phase),
     ]
 
-    reporter = StepReporter()
+    reporter = StepReporter(total_top_level=len(phases))
     try:
         with reporter:
             for label, phase in phases:
