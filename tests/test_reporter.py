@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import builtins
 import sys
 from pathlib import Path
 from typing import List, Optional, Tuple
@@ -8,7 +9,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from utils.reporter import StepReporter
+from utils.reporter import StepReporter, Theme
 
 
 class _DummyAnimator:
@@ -42,6 +43,41 @@ def test_interactive_section_pauses_and_resumes() -> None:
         assert reporter._animator.calls[1][1]
 
         reporter.finish_step("phase")
+
+
+def test_interactive_prompts_render_within_story() -> None:
+    outputs: List[str] = []
+    reporter = StepReporter(
+        printer=outputs.append,
+        theme=Theme(accent="", success="", failure="", log=""),
+        enable_animation=False,
+    )
+
+    with reporter:
+        reporter.start_step("phase")
+
+        original_input = builtins.input
+        responses = iter(["keep"])
+        prompts: List[str] = []
+
+        def stub_input(prompt: str = "") -> str:
+            prompts.append(prompt)
+            return next(responses)
+
+        builtins.input = stub_input
+        try:
+            with reporter.interactive_section():
+                answer = input("Choose option [keep]: ")
+        finally:
+            builtins.input = original_input
+
+        assert answer == "keep"
+
+        reporter.finish_step("phase")
+
+    prompt_lines = [line for line in outputs if line.startswith("? ")]
+    assert prompt_lines == ["? Choose option [keep]:"]
+    assert prompts == ["> "]
 
 
 def test_final_message_emitted_once_without_total() -> None:
