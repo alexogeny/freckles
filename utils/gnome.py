@@ -7,6 +7,8 @@ from shutil import which
 from subprocess import CompletedProcess, run
 from typing import Iterable, Sequence
 
+from .theme import FRECKLES_INTERFACE_THEME, FRECKLES_TERMINAL_THEME
+
 BASE_GNOME_SETTINGS: Sequence[tuple[str, str, str]] = (
     ("org.gnome.desktop.interface", "clock-show-date", "true"),
     ("org.gnome.desktop.interface", "clock-show-weekday", "true"),
@@ -16,7 +18,17 @@ BASE_GNOME_SETTINGS: Sequence[tuple[str, str, str]] = (
     (
         "org.gnome.desktop.interface",
         "monospace-font-name",
-        "'Cascadia Code 11'",
+        f"'{FRECKLES_INTERFACE_THEME.monospace_font}'",
+    ),
+    (
+        "org.gnome.desktop.interface",
+        "font-name",
+        f"'{FRECKLES_INTERFACE_THEME.interface_font}'",
+    ),
+    (
+        "org.gnome.desktop.interface",
+        "document-font-name",
+        f"'{FRECKLES_INTERFACE_THEME.document_font}'",
     ),
     ("org.gnome.desktop.interface", "text-scaling-factor", "1.05"),
     ("org.gnome.desktop.media-handling", "automount", "false"),
@@ -33,6 +45,11 @@ BASE_GNOME_SETTINGS: Sequence[tuple[str, str, str]] = (
     ("org.gnome.desktop.sound", "event-sounds", "false"),
     ("org.gnome.desktop.sound", "allow-volume-above-100-percent", "true"),
     ("org.gnome.desktop.wm.preferences", "button-layout", "'appmenu:minimize,maximize,close'"),
+    (
+        "org.gnome.desktop.wm.preferences",
+        "titlebar-font",
+        f"'{FRECKLES_INTERFACE_THEME.titlebar_font}'",
+    ),
     ("org.gnome.desktop.wm.preferences", "focus-new-windows", "'smart'"),
     ("org.gnome.desktop.wm.preferences", "resize-with-right-button", "true"),
     ("org.gnome.mutter", "center-new-windows", "true"),
@@ -76,7 +93,11 @@ CURSOR_THEME_CANDIDATES: Sequence[str] = (
 )
 
 OPTIONAL_SETTINGS: Sequence[tuple[str, str, str]] = (
-    ("org.gnome.desktop.interface", "accent-color", "'blue'"),
+    (
+        "org.gnome.desktop.interface",
+        "accent-color",
+        f"'{FRECKLES_INTERFACE_THEME.accent}'",
+    ),
 )
 
 TERMINAL_PROFILE_SCHEMA = "org.gnome.Terminal.Legacy.Profile"
@@ -85,39 +106,34 @@ TERMINAL_PROFILES_ROOT = "/org/gnome/terminal/legacy/profiles:/"
 TERMINAL_THEME_SETTINGS: Sequence[tuple[str, str]] = (
     ("use-theme-colors", "false"),
     ("use-system-font", "false"),
-    ("font", "'Cascadia Code 11'"),
-    ("background-color", "'rgb(24,25,31)'"),
-    ("foreground-color", "'rgb(216,222,233)'"),
-    ("bold-color", "'rgb(129,161,193)'"),
+    ("font", f"'{FRECKLES_TERMINAL_THEME.font}'"),
+    ("background-color", f"'{FRECKLES_TERMINAL_THEME.background}'"),
+    ("foreground-color", f"'{FRECKLES_TERMINAL_THEME.foreground}'"),
+    ("bold-color", f"'{FRECKLES_TERMINAL_THEME.bold}'"),
     ("bold-color-same-as-fg", "false"),
     ("cursor-colors-set", "true"),
-    ("cursor-background-color", "'rgb(216,222,233)'"),
-    ("cursor-foreground-color", "'rgb(24,25,31)'"),
+    (
+        "cursor-background-color",
+        f"'{FRECKLES_TERMINAL_THEME.cursor_background}'",
+    ),
+    (
+        "cursor-foreground-color",
+        f"'{FRECKLES_TERMINAL_THEME.cursor_foreground}'",
+    ),
     ("highlight-colors-set", "true"),
-    ("highlight-background-color", "'rgb(67,76,94)'"),
-    ("highlight-foreground-color", "'rgb(236,239,244)'"),
+    (
+        "highlight-background-color",
+        f"'{FRECKLES_TERMINAL_THEME.highlight_background}'",
+    ),
+    (
+        "highlight-foreground-color",
+        f"'{FRECKLES_TERMINAL_THEME.highlight_foreground}'",
+    ),
     ("audible-bell", "false"),
-    ("visible-name", "'Freckles'"),
+    ("visible-name", f"'{FRECKLES_TERMINAL_THEME.name}'"),
 )
 
-TERMINAL_THEME_PALETTE: Sequence[str] = (
-    "rgb(46,52,64)",
-    "rgb(191,97,106)",
-    "rgb(163,190,140)",
-    "rgb(235,203,139)",
-    "rgb(129,161,193)",
-    "rgb(180,142,173)",
-    "rgb(136,192,208)",
-    "rgb(236,239,244)",
-    "rgb(76,86,106)",
-    "rgb(208,135,112)",
-    "rgb(163,190,140)",
-    "rgb(235,203,139)",
-    "rgb(129,161,193)",
-    "rgb(180,142,173)",
-    "rgb(143,188,187)",
-    "rgb(236,239,244)",
-)
+TERMINAL_THEME_PALETTE: Sequence[str] = FRECKLES_TERMINAL_THEME.palette
 
 CUSTOM_KEYBINDING_SCHEMA = (
     "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding"

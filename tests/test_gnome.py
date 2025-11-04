@@ -6,6 +6,10 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from utils import gnome  # noqa: E402
+from utils.theme import (  # noqa: E402
+    FRECKLES_INTERFACE_THEME,
+    FRECKLES_TERMINAL_THEME,
+)
 
 
 class FakeProcess:
@@ -60,6 +64,27 @@ def test_configure_gnome_applies_curated_settings(monkeypatch):
         "org.gnome.desktop.interface",
         "icon-theme",
         "'Papirus-Dark'",
+    ) in commands
+
+    assert (
+        "org.gnome.desktop.interface",
+        "font-name",
+        f"'{FRECKLES_INTERFACE_THEME.interface_font}'",
+    ) in commands
+    assert (
+        "org.gnome.desktop.interface",
+        "document-font-name",
+        f"'{FRECKLES_INTERFACE_THEME.document_font}'",
+    ) in commands
+    assert (
+        "org.gnome.desktop.interface",
+        "monospace-font-name",
+        f"'{FRECKLES_INTERFACE_THEME.monospace_font}'",
+    ) in commands
+    assert (
+        "org.gnome.desktop.wm.preferences",
+        "titlebar-font",
+        f"'{FRECKLES_INTERFACE_THEME.titlebar_font}'",
     ) in commands
 
     favorite_apps = (
@@ -133,7 +158,7 @@ def test_configure_gnome_applies_optional_settings(monkeypatch):
     accent = (
         "org.gnome.desktop.interface",
         "accent-color",
-        "'blue'",
+        f"'{FRECKLES_INTERFACE_THEME.accent}'",
     )
     assert accent in commands
 
@@ -209,11 +234,17 @@ def test_configure_terminal_theme_applies_settings(monkeypatch):
     gnome._configure_terminal_theme()
 
     profile_schema = f"{gnome.TERMINAL_PROFILE_SCHEMA}:{gnome.TERMINAL_PROFILES_ROOT}profile-id/"
-    assert (profile_schema, "background-color", "'rgb(24,25,31)'") in commands
+    assert (
+        profile_schema,
+        "background-color",
+        f"'{FRECKLES_TERMINAL_THEME.background}'",
+    ) in commands
 
     palette_commands = [cmd for cmd in commands if cmd[1] == "palette"]
     assert len(palette_commands) == 1
-    assert "rgb(46,52,64)" in palette_commands[0][2]
+    assert palette_commands[0][2] == gnome._serialize_palette(
+        FRECKLES_TERMINAL_THEME.palette
+    )
 
 
 def test_configure_terminal_theme_no_profile(monkeypatch):
