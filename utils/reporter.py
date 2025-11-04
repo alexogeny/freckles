@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 import threading
 import time
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
 from itertools import cycle
@@ -241,6 +242,29 @@ class StepReporter:
         line = f"{'  ' * indent_level}- {message}"
         self._print(self._colorize(self._theme.log, line))
         self._after_step_change()
+
+    @contextmanager
+    def interactive_section(self):
+        """Temporarily pause the status animation for interactive prompts."""
+
+        if not self._animator or self._animator_finalized:
+            yield
+            return
+
+        self._animator.pause()
+        try:
+            yield
+        except Exception:
+            if self._animator and not self._animator_finalized:
+                self._animator.pause()
+            raise
+        else:
+            if self._animator and not self._animator_finalized:
+                status = self._current_status()
+                if status:
+                    self._animator.resume(status)
+                else:
+                    self._animator.pause()
 
     def summary(self) -> Dict[str, List[Dict[str, Optional[str]]]]:
         succeeded: List[Dict[str, Optional[str]]] = []
