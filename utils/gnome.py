@@ -6,13 +6,12 @@ from shutil import which
 from subprocess import CompletedProcess, run
 from typing import Iterable, Sequence
 
-GNOME_SETTINGS: Sequence[tuple[str, str, str]] = (
+from .debian import is_ubuntu
+
+BASE_GNOME_SETTINGS: Sequence[tuple[str, str, str]] = (
     ("org.gnome.desktop.interface", "clock-show-date", "true"),
     ("org.gnome.desktop.interface", "clock-show-weekday", "true"),
     ("org.gnome.desktop.interface", "clock-format", "'24h'"),
-    ("org.gnome.desktop.interface", "cursor-theme", "'Adwaita'"),
-    ("org.gnome.desktop.interface", "gtk-theme", "'Adwaita-dark'"),
-    ("org.gnome.desktop.interface", "icon-theme", "'Adwaita'"),
     ("org.gnome.desktop.interface", "color-scheme", "'prefer-dark'"),
     ("org.gnome.desktop.interface", "enable-hot-corners", "false"),
     (
@@ -48,6 +47,22 @@ GNOME_SETTINGS: Sequence[tuple[str, str, str]] = (
     ("org.gnome.settings-daemon.plugins.power", "sleep-inactive-battery-type", "'suspend'"),
 )
 
+DEFAULT_THEME_SETTINGS: Sequence[tuple[str, str, str]] = (
+    ("org.gnome.desktop.interface", "cursor-theme", "'Adwaita'"),
+    ("org.gnome.desktop.interface", "gtk-theme", "'Adwaita-dark'"),
+    ("org.gnome.desktop.interface", "icon-theme", "'Adwaita'"),
+)
+
+UBUNTU_THEME_SETTINGS: Sequence[tuple[str, str, str]] = (
+    ("org.gnome.desktop.interface", "cursor-theme", "'Yaru'"),
+    ("org.gnome.desktop.interface", "gtk-theme", "'Yaru-purple-dark'"),
+    ("org.gnome.desktop.interface", "icon-theme", "'Yaru-purple'"),
+)
+
+OPTIONAL_SETTINGS: Sequence[tuple[str, str, str]] = (
+    ("org.gnome.desktop.interface", "accent-color", "'purple'"),
+)
+
 CUSTOM_KEYBINDING_SCHEMA = (
     "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding"
 )
@@ -77,10 +92,36 @@ def configure_gnome() -> None:
         # GNOME is not installed or ``gsettings`` is unavailable.
         return
 
-    for schema, key, value in GNOME_SETTINGS:
+    for schema, key, value in _build_settings():
         _apply_setting(schema, key, value)
 
+    for schema, key, value in OPTIONAL_SETTINGS:
+        if _is_setting_supported(schema, key):
+            _apply_setting(schema, key, value)
+
     _configure_custom_keybindings(CUSTOM_KEYBINDINGS)
+
+
+def _build_settings() -> Sequence[tuple[str, str, str]]:
+    """Return the GNOME settings tailored to the detected distribution."""
+
+    theme_settings = UBUNTU_THEME_SETTINGS if is_ubuntu() else DEFAULT_THEME_SETTINGS
+    return (*BASE_GNOME_SETTINGS, *theme_settings)
+
+
+def _is_setting_supported(schema: str, key: str) -> bool:
+    """Return ``True`` when ``schema`` exposes ``key``."""
+
+    result = run(
+        ["gsettings", "describe", schema, key],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return False
+    output = (result.stderr or "") + (result.stdout or "")
+    return "No such key" not in output
 
 
 def _configure_custom_keybindings(bindings: Iterable[dict[str, str]]) -> None:
