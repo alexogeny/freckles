@@ -24,6 +24,8 @@ def test_configure_gnome_requires_gsettings(monkeypatch):
 
     monkeypatch.setattr(gnome, "which", lambda _: None)
     monkeypatch.setattr(gnome, "_apply_setting", fake_apply)
+    monkeypatch.setattr(gnome, "_is_setting_supported", lambda *_: False)
+    monkeypatch.setattr(gnome, "is_ubuntu", lambda: False)
 
     gnome.configure_gnome()
 
@@ -39,10 +41,17 @@ def test_configure_gnome_applies_curated_settings(monkeypatch):
 
     monkeypatch.setattr(gnome, "which", lambda _: "/usr/bin/gsettings")
     monkeypatch.setattr(gnome, "_apply_setting", fake_apply)
+    monkeypatch.setattr(gnome, "_is_setting_supported", lambda *_: False)
+    monkeypatch.setattr(gnome, "is_ubuntu", lambda: False)
 
     gnome.configure_gnome()
 
     assert ("org.gnome.desktop.interface", "clock-show-date", "true") in commands
+    assert (
+        "org.gnome.desktop.interface",
+        "gtk-theme",
+        "'Adwaita-dark'",
+    ) in commands
 
     favorite_apps = (
         "org.gnome.shell",
@@ -67,3 +76,47 @@ def test_configure_gnome_applies_curated_settings(monkeypatch):
         "'/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/launch-vscode/']",
     )
     assert custom_list_entry in commands
+
+
+def test_configure_gnome_uses_ubuntu_theme(monkeypatch):
+    commands = []
+
+    def fake_apply(schema: str, key: str, value: str):
+        commands.append((schema, key, value))
+        return FakeProcess()
+
+    monkeypatch.setattr(gnome, "which", lambda _: "/usr/bin/gsettings")
+    monkeypatch.setattr(gnome, "_apply_setting", fake_apply)
+    monkeypatch.setattr(gnome, "_is_setting_supported", lambda *_: False)
+    monkeypatch.setattr(gnome, "is_ubuntu", lambda: True)
+
+    gnome.configure_gnome()
+
+    ubuntu_theme = (
+        "org.gnome.desktop.interface",
+        "gtk-theme",
+        "'Yaru-purple-dark'",
+    )
+    assert ubuntu_theme in commands
+
+
+def test_configure_gnome_applies_optional_settings(monkeypatch):
+    commands = []
+
+    def fake_apply(schema: str, key: str, value: str):
+        commands.append((schema, key, value))
+        return FakeProcess()
+
+    monkeypatch.setattr(gnome, "which", lambda _: "/usr/bin/gsettings")
+    monkeypatch.setattr(gnome, "_apply_setting", fake_apply)
+    monkeypatch.setattr(gnome, "_is_setting_supported", lambda *_: True)
+    monkeypatch.setattr(gnome, "is_ubuntu", lambda: False)
+
+    gnome.configure_gnome()
+
+    accent = (
+        "org.gnome.desktop.interface",
+        "accent-color",
+        "'purple'",
+    )
+    assert accent in commands
