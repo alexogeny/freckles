@@ -5,50 +5,34 @@ from __future__ import annotations
 from shutil import which
 from subprocess import CompletedProcess, run
 
-
-TERMINAL_PALETTE: tuple[str, ...] = (
-    "rgb(23, 23, 27)",
-    "rgb(230, 130, 130)",
-    "rgb(104, 201, 129)",
-    "rgb(246, 202, 113)",
-    "rgb(125, 178, 255)",
-    "rgb(172, 129, 255)",
-    "rgb(97, 212, 214)",
-    "rgb(234, 232, 252)",
-    "rgb(70, 74, 85)",
-    "rgb(255, 151, 151)",
-    "rgb(125, 222, 149)",
-    "rgb(255, 213, 128)",
-    "rgb(146, 189, 255)",
-    "rgb(194, 160, 255)",
-    "rgb(128, 226, 228)",
-    "rgb(247, 247, 252)",
-)
+from .theme import FRECKLES_TERMINAL_THEME
 
 PROFILE_SETTINGS: dict[str, str] = {
     "audible-bell": "false",
-    "background-color": "'rgb(13, 16, 24)'",
+    "background-color": f"'{FRECKLES_TERMINAL_THEME.background}'",
     "background-transparency-percent": "0",
-    "bold-color": "'rgb(157, 179, 255)'",
+    "bold-color": f"'{FRECKLES_TERMINAL_THEME.bold}'",
     "bold-color-same-as-fg": "false",
-    "cursor-background-color": "'rgb(255, 210, 111)'",
+    "cursor-background-color": f"'{FRECKLES_TERMINAL_THEME.cursor_background}'",
     "cursor-colors-set": "true",
-    "cursor-foreground-color": "'rgb(13, 16, 24)'",
+    "cursor-foreground-color": f"'{FRECKLES_TERMINAL_THEME.cursor_foreground}'",
     "cursor-shape": "'block'",
     "default-size-columns": "120",
     "default-size-rows": "34",
-    "font": "'Cascadia Code 12'",
-    "foreground-color": "'rgb(234, 232, 252)'",
-    "highlight-background-color": "'rgb(62, 70, 90)'",
+    "font": f"'{FRECKLES_TERMINAL_THEME.font}'",
+    "foreground-color": f"'{FRECKLES_TERMINAL_THEME.foreground}'",
+    "highlight-background-color": f"'{FRECKLES_TERMINAL_THEME.highlight_background}'",
     "highlight-colors-set": "true",
-    "highlight-foreground-color": "'rgb(245, 245, 250)'",
+    "highlight-foreground-color": f"'{FRECKLES_TERMINAL_THEME.highlight_foreground}'",
     "login-shell": "true",
-    "palette": "[" + ", ".join(f"'{colour}'" for colour in TERMINAL_PALETTE) + "]",
+    "palette": "["
+    + ", ".join(f"'{colour}'" for colour in FRECKLES_TERMINAL_THEME.palette)
+    + "]",
     "scrollbar-policy": "'never'",
     "use-custom-default-size": "true",
     "use-system-font": "false",
     "use-theme-colors": "false",
-    "visible-name": "'Freckles Midnight'",
+    "visible-name": f"'{FRECKLES_TERMINAL_THEME.name}'",
 }
 
 
