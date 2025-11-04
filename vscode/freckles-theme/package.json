@@ -1,0 +1,27 @@
+{
+  "name": "freckles-theme",
+  "displayName": "Freckles Theme",
+  "description": "Freckles bespoke light and dark colour themes.",
+  "version": "0.1.0",
+  "publisher": "freckles",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Themes"
+  ],
+  "contributes": {
+    "themes": [
+      {
+        "label": "Freckles Midnight",
+        "uiTheme": "vs-dark",
+        "path": "./themes/freckles-midnight-color-theme.json"
+      },
+      {
+        "label": "Freckles Dawn",
+        "uiTheme": "vs",
+        "path": "./themes/freckles-dawn-color-theme.json"
+      }
+    ]
+  }
+}

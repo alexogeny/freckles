@@ -32,6 +32,7 @@ from utils.firefox import (
 from utils.git import configure_git
 from utils.gnome import configure_gnome
 from utils.shell import configure_shell
+from utils.terminal import configure_terminal
 from utils.ssh import configure_ssh
 from utils.vscode import configure_vscode
 from utils.web import (
@@ -111,11 +112,14 @@ if apt_update_result.returncode != 0:
     sys.exit(f"Failed to refresh apt package lists: {message}")
 
 core_packages = [
-    "curl",
-    "git",
     "ca-certificates",
+    "curl",
+    "fonts-cascadia-code",
+    "git",
     "gnupg",
     "lsb-release",
+    "make",
+    "zsh",
 ]
 
 essential_install = install_with_apt(core_packages)
@@ -132,6 +136,7 @@ configure_vscode()
 configure_git()
 configure_ssh()
 configure_shell()
+configure_terminal()
 configure_gnome()
 manage_avatar()
 if is_debian_12_bookworm() is True:

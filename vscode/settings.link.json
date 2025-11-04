@@ -190,7 +190,10 @@
   "security.workspace.trust.untrustedFiles": "open",
   "telemetry.telemetryLevel": "off",
   "terminal.integrated.defaultProfile.linux": "zsh",
+  "terminal.integrated.drawBoldTextInBrightColors": false,
   "terminal.integrated.enableBell": false,
+  "terminal.integrated.fontFamily": "'Cascadia Code', 'Fira Code', 'Droid Sans Mono', 'monospace', monospace",
+  "terminal.integrated.minimumContrastRatio": 1,
   "terminal.integrated.profiles.linux": {
     "zsh": {
       "path": "/usr/bin/zsh"
@@ -201,6 +204,7 @@
   },
   "terminal.integrated.scrollback": 10000,
   "terminal.integrated.smoothScrolling": true,
+  "terminal.integrated.cursorStyle": "block",
   "terminal.integrated.tabs.location": "left",
   "terminal.integrated.tabs.showActions": "always",
   "typescript.format.insertSpaceAfterConstructor": true,
@@ -216,7 +220,7 @@
   "window.restoreWindows": "none",
   "window.title": "${dirty} ${activeEditorMedium}${separator}${rootName}",
   "window.titleBarStyle": "custom",
-  "workbench.colorTheme": "Solarized Dark",
+  "workbench.colorTheme": "Freckles Midnight",
   "workbench.editor.enablePreview": false,
   "workbench.editor.closeOnFileDelete": true,
   "workbench.editor.limit.enabled": true,
@@ -224,8 +228,8 @@
   "workbench.editor.limit.value": 6,
   "workbench.editor.wrapTabs": true,
   "workbench.enableExperiments": false,
-  "workbench.preferredDarkColorTheme": "Solarized Dark",
-  "workbench.preferredLightColorTheme": "Solarized Light",
+  "workbench.preferredDarkColorTheme": "Freckles Midnight",
+  "workbench.preferredLightColorTheme": "Freckles Dawn",
   "workbench.sideBar.location": "right",
   "workbench.startupEditor": "none",
   "workbench.tips.enabled": false,
