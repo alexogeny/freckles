@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
 from itertools import cycle
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Tuple
 
 from shell import nailpolish
 
@@ -37,29 +37,51 @@ class FrecklesTheme(Theme):
         )
 
 
+@dataclass(frozen=True)
+class StatusMessage:
+    prefix: str
+    segments: Tuple[str, ...]
+    raw: str
+
+
 class StatusAnimator:
     """Render a lightweight spinner showing the current progress path."""
 
     _FRAMES = tuple("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏")
     _INTERVAL = 0.1
 
-    _GLOW_STYLES = (
+    _SINGLE_SEGMENT_PULSE = (
+        nailpolish.DIM,
         nailpolish.DIM,
         nailpolish.NORMAL,
+        nailpolish.NORMAL,
+        nailpolish.BRIGHT,
         nailpolish.BRIGHT,
         nailpolish.NORMAL,
+        nailpolish.NORMAL,
     )
+
+    _NEIGHBOUR_STYLES = (
+        nailpolish.BRIGHT,
+        nailpolish.NORMAL,
+        nailpolish.DIM,
+    )
+
+    _GLOW_HOLD_TICKS = 3
 
     def __init__(self, theme: Theme, stream=None, *, pulse_enabled: bool = True) -> None:
         self._theme = theme
         self._stream = stream or sys.stdout
         self.enabled = bool(getattr(self._stream, "isatty", lambda: False)())
         self._lock = threading.Lock()
-        self._status = ""
+        self._status: Optional[StatusMessage] = None
         self._stop = threading.Event()
         self._paused = threading.Event()
         self._thread: Optional[threading.Thread] = None
         self._pulse_enabled = pulse_enabled
+        self._glow_index = 0
+        self._glow_tick = 0
+        self._single_pulse_index = 0
 
     def pause(self) -> None:
         if not self.enabled or self._thread is None:
@@ -70,22 +92,28 @@ class StatusAnimator:
             self._stream.write(nailpolish.RESET)
             self._stream.flush()
 
-    def resume(self, status: str) -> None:
+    def resume(self, status: StatusMessage) -> None:
         if not self.enabled:
             return
         with self._lock:
             self._status = status
+            self._glow_index = 0
+            self._glow_tick = 0
+            self._single_pulse_index = 0
         self._paused.clear()
         if self._thread is None:
             self._stop.clear()
             self._thread = threading.Thread(target=self._run, daemon=True)
             self._thread.start()
 
-    def update(self, status: str) -> None:
+    def update(self, status: StatusMessage) -> None:
         if not self.enabled or self._thread is None:
             return
         with self._lock:
             self._status = status
+            self._glow_index = 0
+            self._glow_tick = 0
+            self._single_pulse_index = 0
 
     def stop(self, final_status: Optional[str] = None) -> None:
         if not self.enabled:
@@ -106,24 +134,62 @@ class StatusAnimator:
 
     def _run(self) -> None:
         frames = cycle(self._FRAMES)
-        glow_styles = cycle(self._GLOW_STYLES) if self._pulse_enabled else None
         while not self._stop.is_set():
             if self._paused.is_set():
                 time.sleep(self._INTERVAL)
                 continue
             frame = next(frames)
-            style = next(glow_styles) if glow_styles else ""
             with self._lock:
                 self._stream.write("\r\033[K")
                 self._stream.write(
-                    f"{self._theme.accent}{frame} {style}{self._status}{nailpolish.RESET}"
+                    f"{self._theme.accent}{frame}{nailpolish.RESET} {self._render_status()}"
                 )
                 self._stream.flush()
+            self._advance_glow()
             time.sleep(self._INTERVAL)
         with self._lock:
             self._stream.write("\r\033[K")
             self._stream.write(nailpolish.RESET)
             self._stream.flush()
+
+    def _render_status(self) -> str:
+        status = self._status
+        if status is None:
+            return ""
+        if not self._pulse_enabled or not status.segments:
+            return status.raw
+        segment_count = len(status.segments)
+        if segment_count == 1:
+            style = StatusAnimator._SINGLE_SEGMENT_PULSE[self._single_pulse_index]
+            segment = f"{style}{status.segments[0]}{nailpolish.RESET}"
+            return f"{status.prefix}{segment}"
+        parts: List[str] = []
+        for index, segment in enumerate(status.segments):
+            distance = (index - self._glow_index) % segment_count
+            if distance == 0:
+                style = StatusAnimator._NEIGHBOUR_STYLES[0]
+            elif distance == 1 or distance == segment_count - 1:
+                style = StatusAnimator._NEIGHBOUR_STYLES[1]
+            else:
+                style = StatusAnimator._NEIGHBOUR_STYLES[2]
+            parts.append(f"{style}{segment}{nailpolish.RESET}")
+        return f"{status.prefix}{' › '.join(parts)}"
+
+    def _advance_glow(self) -> None:
+        if not self._pulse_enabled or self._status is None:
+            return
+        segment_count = len(self._status.segments)
+        if segment_count == 0:
+            return
+        if segment_count == 1:
+            self._single_pulse_index = (
+                self._single_pulse_index + 1
+            ) % len(StatusAnimator._SINGLE_SEGMENT_PULSE)
+            return
+        self._glow_tick += 1
+        if self._glow_tick >= StatusAnimator._GLOW_HOLD_TICKS:
+            self._glow_tick = 0
+            self._glow_index = (self._glow_index + 1) % segment_count
 
 
 class StepStatus(str, Enum):
@@ -209,9 +275,11 @@ class StepReporter:
         )
         parent.children.append(step)
         self._stack.append(step)
-        self._before_output()
-        line = f"{'  ' * step.depth}▶ {name}"
-        self._print(self._colorize(self._theme.accent, line))
+        animator_enabled = bool(getattr(self._animator, "enabled", False)) if self._animator else False
+        if not animator_enabled:
+            self._before_output()
+            line = f"{'  ' * step.depth}▶ {name}"
+            self._print(self._colorize(self._theme.accent, line))
         self._after_step_change()
 
     def finish_step(self, name: str) -> None:
@@ -266,7 +334,7 @@ class StepReporter:
             else:
                 if self._animator and not self._animator_finalized:
                     status = self._current_status()
-                    if status:
+                    if status is not None:
                         self._animator.resume(status)
                     else:
                         self._animator.pause()
@@ -301,7 +369,7 @@ class StepReporter:
         if not self._animator:
             return
         status = self._current_status()
-        if status:
+        if status is not None:
             self._animator.resume(status)
         elif len(self._stack) <= 1:
             if self._total_top_level and self._completed_top_level >= self._total_top_level:
@@ -311,15 +379,16 @@ class StepReporter:
         else:
             self._animator.pause()
 
-    def _current_status(self) -> str:
+    def _current_status(self) -> Optional[StatusMessage]:
         if len(self._stack) <= 1:
-            return ""
+            return None
         path = [step.name for step in self._stack[1:]]
         prefix = ""
         if self._total_top_level:
             current_index = min(self._completed_top_level + 1, self._total_top_level)
             prefix = f"[{current_index}/{self._total_top_level}] "
-        return prefix + self._format_path(path)
+        formatted_path = self._format_path(path)
+        return StatusMessage(prefix=prefix, segments=tuple(path), raw=f"{prefix}{formatted_path}")
 
     @staticmethod
     def _format_path(path: List[str]) -> str:
