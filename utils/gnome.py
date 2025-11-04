@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from shutil import which
 from subprocess import CompletedProcess, run
 from typing import Iterable, Sequence
-
-from .debian import is_ubuntu
 
 BASE_GNOME_SETTINGS: Sequence[tuple[str, str, str]] = (
     ("org.gnome.desktop.interface", "clock-show-date", "true"),
@@ -47,20 +46,37 @@ BASE_GNOME_SETTINGS: Sequence[tuple[str, str, str]] = (
     ("org.gnome.settings-daemon.plugins.power", "sleep-inactive-battery-type", "'suspend'"),
 )
 
-DEFAULT_THEME_SETTINGS: Sequence[tuple[str, str, str]] = (
-    ("org.gnome.desktop.interface", "cursor-theme", "'Adwaita'"),
-    ("org.gnome.desktop.interface", "gtk-theme", "'Adwaita-dark'"),
-    ("org.gnome.desktop.interface", "icon-theme", "'Adwaita'"),
+THEME_SEARCH_PATHS: Sequence[Path] = (
+    Path.home() / ".themes",
+    Path("/usr/local/share/themes"),
+    Path("/usr/share/themes"),
 )
 
-UBUNTU_THEME_SETTINGS: Sequence[tuple[str, str, str]] = (
-    ("org.gnome.desktop.interface", "cursor-theme", "'Yaru'"),
-    ("org.gnome.desktop.interface", "gtk-theme", "'Yaru-purple-dark'"),
-    ("org.gnome.desktop.interface", "icon-theme", "'Yaru-purple'"),
+ICON_SEARCH_PATHS: Sequence[Path] = (
+    Path.home() / ".icons",
+    Path("/usr/local/share/icons"),
+    Path("/usr/share/icons"),
+)
+
+GTK_THEME_CANDIDATES: Sequence[str] = (
+    "adw-gtk3-dark",
+    "Adwaita-dark",
+)
+
+ICON_THEME_CANDIDATES: Sequence[str] = (
+    "Papirus-Dark",
+    "Papirus",
+    "Adwaita",
+)
+
+CURSOR_THEME_CANDIDATES: Sequence[str] = (
+    "Bibata-Modern-Classic",
+    "Bibata-Original-Classic",
+    "Adwaita",
 )
 
 OPTIONAL_SETTINGS: Sequence[tuple[str, str, str]] = (
-    ("org.gnome.desktop.interface", "accent-color", "'purple'"),
+    ("org.gnome.desktop.interface", "accent-color", "'blue'"),
 )
 
 CUSTOM_KEYBINDING_SCHEMA = (
@@ -105,8 +121,55 @@ def configure_gnome() -> None:
 def _build_settings() -> Sequence[tuple[str, str, str]]:
     """Return the GNOME settings tailored to the detected distribution."""
 
-    theme_settings = UBUNTU_THEME_SETTINGS if is_ubuntu() else DEFAULT_THEME_SETTINGS
+    theme_settings = (
+        (
+            "org.gnome.desktop.interface",
+            "cursor-theme",
+            _quote(_preferred_cursor_theme()),
+        ),
+        (
+            "org.gnome.desktop.interface",
+            "gtk-theme",
+            _quote(_preferred_gtk_theme()),
+        ),
+        (
+            "org.gnome.desktop.interface",
+            "icon-theme",
+            _quote(_preferred_icon_theme()),
+        ),
+    )
     return (*BASE_GNOME_SETTINGS, *theme_settings)
+
+
+def _preferred_cursor_theme() -> str:
+    return _select_theme(CURSOR_THEME_CANDIDATES, ICON_SEARCH_PATHS)
+
+
+def _preferred_gtk_theme() -> str:
+    return _select_theme(GTK_THEME_CANDIDATES, THEME_SEARCH_PATHS)
+
+
+def _preferred_icon_theme() -> str:
+    return _select_theme(ICON_THEME_CANDIDATES, ICON_SEARCH_PATHS)
+
+
+def _select_theme(candidates: Sequence[str], search_paths: Sequence[Path]) -> str:
+    if not candidates:
+        return ""
+
+    for theme in candidates[:-1]:
+        if _theme_exists(theme, search_paths):
+            return theme
+
+    return candidates[-1]
+
+
+def _theme_exists(name: str, search_paths: Sequence[Path]) -> bool:
+    return any((path / name).exists() for path in search_paths)
+
+
+def _quote(value: str) -> str:
+    return f"'{value}'"
 
 
 def _is_setting_supported(schema: str, key: str) -> bool:

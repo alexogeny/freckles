@@ -25,7 +25,6 @@ def test_configure_gnome_requires_gsettings(monkeypatch):
     monkeypatch.setattr(gnome, "which", lambda _: None)
     monkeypatch.setattr(gnome, "_apply_setting", fake_apply)
     monkeypatch.setattr(gnome, "_is_setting_supported", lambda *_: False)
-    monkeypatch.setattr(gnome, "is_ubuntu", lambda: False)
 
     gnome.configure_gnome()
 
@@ -42,7 +41,9 @@ def test_configure_gnome_applies_curated_settings(monkeypatch):
     monkeypatch.setattr(gnome, "which", lambda _: "/usr/bin/gsettings")
     monkeypatch.setattr(gnome, "_apply_setting", fake_apply)
     monkeypatch.setattr(gnome, "_is_setting_supported", lambda *_: False)
-    monkeypatch.setattr(gnome, "is_ubuntu", lambda: False)
+    monkeypatch.setattr(gnome, "_preferred_cursor_theme", lambda: "Adwaita")
+    monkeypatch.setattr(gnome, "_preferred_gtk_theme", lambda: "Adwaita-dark")
+    monkeypatch.setattr(gnome, "_preferred_icon_theme", lambda: "Papirus-Dark")
 
     gnome.configure_gnome()
 
@@ -51,6 +52,11 @@ def test_configure_gnome_applies_curated_settings(monkeypatch):
         "org.gnome.desktop.interface",
         "gtk-theme",
         "'Adwaita-dark'",
+    ) in commands
+    assert (
+        "org.gnome.desktop.interface",
+        "icon-theme",
+        "'Papirus-Dark'",
     ) in commands
 
     favorite_apps = (
@@ -78,7 +84,7 @@ def test_configure_gnome_applies_curated_settings(monkeypatch):
     assert custom_list_entry in commands
 
 
-def test_configure_gnome_uses_ubuntu_theme(monkeypatch):
+def test_configure_gnome_uses_curated_theme_on_ubuntu(monkeypatch):
     commands = []
 
     def fake_apply(schema: str, key: str, value: str):
@@ -88,14 +94,16 @@ def test_configure_gnome_uses_ubuntu_theme(monkeypatch):
     monkeypatch.setattr(gnome, "which", lambda _: "/usr/bin/gsettings")
     monkeypatch.setattr(gnome, "_apply_setting", fake_apply)
     monkeypatch.setattr(gnome, "_is_setting_supported", lambda *_: False)
-    monkeypatch.setattr(gnome, "is_ubuntu", lambda: True)
+    monkeypatch.setattr(gnome, "_preferred_cursor_theme", lambda: "Adwaita")
+    monkeypatch.setattr(gnome, "_preferred_gtk_theme", lambda: "Adwaita-dark")
+    monkeypatch.setattr(gnome, "_preferred_icon_theme", lambda: "Papirus-Dark")
 
     gnome.configure_gnome()
 
     ubuntu_theme = (
         "org.gnome.desktop.interface",
         "gtk-theme",
-        "'Yaru-purple-dark'",
+        "'Adwaita-dark'",
     )
     assert ubuntu_theme in commands
 
@@ -110,13 +118,57 @@ def test_configure_gnome_applies_optional_settings(monkeypatch):
     monkeypatch.setattr(gnome, "which", lambda _: "/usr/bin/gsettings")
     monkeypatch.setattr(gnome, "_apply_setting", fake_apply)
     monkeypatch.setattr(gnome, "_is_setting_supported", lambda *_: True)
-    monkeypatch.setattr(gnome, "is_ubuntu", lambda: False)
+    monkeypatch.setattr(gnome, "_preferred_cursor_theme", lambda: "Adwaita")
+    monkeypatch.setattr(gnome, "_preferred_gtk_theme", lambda: "Adwaita-dark")
+    monkeypatch.setattr(gnome, "_preferred_icon_theme", lambda: "Papirus-Dark")
 
     gnome.configure_gnome()
 
     accent = (
         "org.gnome.desktop.interface",
         "accent-color",
-        "'purple'",
+        "'blue'",
     )
     assert accent in commands
+
+
+def test_preferred_gtk_theme_prefers_installed_candidate(tmp_path, monkeypatch):
+    theme_dir = tmp_path / "adw-gtk3-dark"
+    theme_dir.mkdir()
+    monkeypatch.setattr(gnome, "THEME_SEARCH_PATHS", (tmp_path,))
+
+    assert gnome._preferred_gtk_theme() == "adw-gtk3-dark"
+
+
+def test_preferred_gtk_theme_falls_back_to_default(monkeypatch):
+    monkeypatch.setattr(gnome, "THEME_SEARCH_PATHS", tuple())
+
+    assert gnome._preferred_gtk_theme() == "Adwaita-dark"
+
+
+def test_preferred_icon_theme_prefers_installed_candidate(tmp_path, monkeypatch):
+    icon_dir = tmp_path / "Papirus-Dark"
+    icon_dir.mkdir()
+    monkeypatch.setattr(gnome, "ICON_SEARCH_PATHS", (tmp_path,))
+
+    assert gnome._preferred_icon_theme() == "Papirus-Dark"
+
+
+def test_preferred_icon_theme_falls_back_to_default(monkeypatch):
+    monkeypatch.setattr(gnome, "ICON_SEARCH_PATHS", tuple())
+
+    assert gnome._preferred_icon_theme() == "Adwaita"
+
+
+def test_preferred_cursor_theme_prefers_installed_candidate(tmp_path, monkeypatch):
+    cursor_dir = tmp_path / "Bibata-Modern-Classic"
+    cursor_dir.mkdir()
+    monkeypatch.setattr(gnome, "ICON_SEARCH_PATHS", (tmp_path,))
+
+    assert gnome._preferred_cursor_theme() == "Bibata-Modern-Classic"
+
+
+def test_preferred_cursor_theme_falls_back_to_default(monkeypatch):
+    monkeypatch.setattr(gnome, "ICON_SEARCH_PATHS", tuple())
+
+    assert gnome._preferred_cursor_theme() == "Adwaita"
