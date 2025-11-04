@@ -217,6 +217,12 @@ def configure_developer_tooling_phase(reporter: StepReporter) -> None:
         with managed_step(reporter, "Configure VS Code"):
             configure_vscode()
         with managed_step(reporter, "Configure Git"):
+            if sys.stdin.isatty():
+                reporter.log(
+                    "Configuring git identities interactively. Answer the prompts that appear to continue."
+                )
+            else:
+                reporter.log("Configuring git identities (non-interactive mode).")
             configure_git()
         with managed_step(reporter, "Configure SSH"):
             configure_ssh()
