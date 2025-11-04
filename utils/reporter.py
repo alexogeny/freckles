@@ -191,7 +191,7 @@ class StepReporter:
                     step.status = StepStatus.FAILED
                     step.error = message
         if self._animator and not self._animator_finalized:
-            self._animator.stop()
+            self._finalize_animation()
         return False
 
     # Public API ---------------------------------------------------------
@@ -300,14 +300,7 @@ class StepReporter:
             self._animator.resume(status)
         elif len(self._stack) <= 1:
             if self._total_top_level and self._completed_top_level >= self._total_top_level:
-                final = f"✔ [{self._total_top_level}/{self._total_top_level}] All phases complete"
-                self._animator.stop(self._colorize(self._theme.success, final))
-                self._animator_finalized = True
-            elif self._completed_top_level:
-                self._animator.stop(
-                    self._colorize(self._theme.success, "✔ All phases complete")
-                )
-                self._animator_finalized = True
+                self._finalize_animation()
             else:
                 self._animator.pause()
         else:
@@ -343,3 +336,22 @@ class StepReporter:
         remaining = self._min_step_duration - elapsed
         if remaining > 0:
             time.sleep(remaining)
+
+    def _finalize_animation(self) -> None:
+        if not self._animator or self._animator_finalized:
+            return
+        final_status = self._final_status_message()
+        self._animator.stop(final_status)
+        self._animator_finalized = True
+
+    def _final_status_message(self) -> Optional[str]:
+        if not self._animator:
+            return None
+        if self._total_top_level:
+            if self._completed_top_level >= self._total_top_level:
+                final = f"✔ [{self._total_top_level}/{self._total_top_level}] All phases complete"
+                return self._colorize(self._theme.success, final)
+            return None
+        if self._completed_top_level:
+            return self._colorize(self._theme.success, "✔ All phases complete")
+        return None
