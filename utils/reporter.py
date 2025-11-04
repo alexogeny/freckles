@@ -8,6 +8,32 @@ from enum import Enum
 from itertools import cycle
 from typing import Callable, Dict, List, Optional
 
+from shell import nailpolish
+
+
+@dataclass(frozen=True)
+class Theme:
+    """ANSI colour palette used by :class:`StepReporter`."""
+
+    accent: str
+    success: str
+    failure: str
+    log: str
+
+
+@dataclass(frozen=True)
+class FrecklesTheme(Theme):
+    """Default Freckles palette derived from :mod:`shell.nailpolish`."""
+
+    @classmethod
+    def build(cls) -> "FrecklesTheme":
+        return cls(
+            accent=nailpolish.PURPLE,
+            success=nailpolish.GREEN,
+            failure=nailpolish.RED,
+            log=nailpolish.GRAY,
+        )
+
 
 class StatusAnimator:
     """Render a lightweight spinner showing the current progress path."""
@@ -15,7 +41,8 @@ class StatusAnimator:
     _FRAMES = tuple("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏")
     _INTERVAL = 0.1
 
-    def __init__(self, stream=None) -> None:
+    def __init__(self, theme: Theme, stream=None) -> None:
+        self._theme = theme
         self._stream = stream or sys.stdout
         self.enabled = bool(getattr(self._stream, "isatty", lambda: False)())
         self._lock = threading.Lock()
@@ -30,6 +57,7 @@ class StatusAnimator:
         self._paused.set()
         with self._lock:
             self._stream.write("\r\033[K")
+            self._stream.write(nailpolish.RESET)
             self._stream.flush()
 
     def resume(self, status: str) -> None:
@@ -59,6 +87,7 @@ class StatusAnimator:
             self._thread = None
         with self._lock:
             self._stream.write("\r\033[K")
+            self._stream.write(nailpolish.RESET)
             if final_status:
                 self._stream.write(final_status)
                 if not final_status.endswith("\n"):
@@ -73,11 +102,14 @@ class StatusAnimator:
                 continue
             frame = next(frames)
             with self._lock:
-                self._stream.write(f"\r{frame} {self._status}")
+                self._stream.write(
+                    f"\r{self._theme.accent}{frame} {self._status}{nailpolish.RESET}"
+                )
                 self._stream.flush()
             time.sleep(self._INTERVAL)
         with self._lock:
             self._stream.write("\r\033[K")
+            self._stream.write(nailpolish.RESET)
             self._stream.flush()
 
 
@@ -114,13 +146,15 @@ class StepReporter:
     def __init__(
         self,
         printer: Callable[[str], None] | None = None,
+        theme: Theme | None = None,
         *,
         total_top_level: Optional[int] = None,
     ) -> None:
         self._print = printer or print
+        self._theme = theme or FrecklesTheme.build()
         self._root = Step(name="__root__", depth=-1)
         self._stack: List[Step] = [self._root]
-        self._animator = None if printer else StatusAnimator()
+        self._animator = None if printer else StatusAnimator(self._theme)
         self._total_top_level = total_top_level or 0
         self._completed_top_level = 0
         self._animator_finalized = False
@@ -147,7 +181,8 @@ class StepReporter:
         parent.children.append(step)
         self._stack.append(step)
         self._before_output()
-        self._print(f"{'  ' * step.depth}▶ {name}")
+        line = f"{'  ' * step.depth}▶ {name}"
+        self._print(self._colorize(self._theme.accent, line))
         self._after_step_change()
 
     def finish_step(self, name: str) -> None:
@@ -156,7 +191,8 @@ class StepReporter:
             return
         step.status = StepStatus.SUCCESS
         self._before_output()
-        self._print(f"{'  ' * step.depth}✔ {name}")
+        line = f"{'  ' * step.depth}✔ {name}"
+        self._print(self._colorize(self._theme.success, line))
         if step.depth == 0:
             self._completed_top_level += 1
         self._after_step_change()
@@ -166,16 +202,18 @@ class StepReporter:
         step.status = StepStatus.FAILED
         step.error = str(error)
         self._before_output()
-        self._print(f"{'  ' * step.depth}✖ {name}: {step.error}")
+        line = f"{'  ' * step.depth}✖ {name}: {step.error}"
+        self._print(self._colorize(self._theme.failure, line))
         if self._animator:
             failure_status = f"✖ {self._format_path([s.name for s in self._stack[1:]] + [name])}"
-            self._animator.stop(failure_status)
+            self._animator.stop(self._colorize(self._theme.failure, failure_status))
             self._animator_finalized = True
 
     def log(self, message: str) -> None:
         indent_level = max(len(self._stack) - 2, 0)
         self._before_output()
-        self._print(f"{'  ' * indent_level}- {message}")
+        line = f"{'  ' * indent_level}- {message}"
+        self._print(self._colorize(self._theme.log, line))
         self._after_step_change()
 
     def summary(self) -> Dict[str, List[Dict[str, Optional[str]]]]:
@@ -198,6 +236,12 @@ class StepReporter:
         if self._animator:
             self._animator.pause()
 
+    @staticmethod
+    def _colorize(colour: str, message: str) -> str:
+        if not colour:
+            return message
+        return f"{colour}{message}{nailpolish.RESET}"
+
     def _after_step_change(self) -> None:
         if not self._animator:
             return
@@ -207,10 +251,12 @@ class StepReporter:
         elif len(self._stack) <= 1:
             if self._total_top_level and self._completed_top_level >= self._total_top_level:
                 final = f"✔ [{self._total_top_level}/{self._total_top_level}] All phases complete"
-                self._animator.stop(final)
+                self._animator.stop(self._colorize(self._theme.success, final))
                 self._animator_finalized = True
             elif self._completed_top_level:
-                self._animator.stop("✔ All phases complete")
+                self._animator.stop(
+                    self._colorize(self._theme.success, "✔ All phases complete")
+                )
                 self._animator_finalized = True
             else:
                 self._animator.pause()
