@@ -36,8 +36,9 @@ def _fake_run(commands):
             if path.exists():
                 path.chmod(0o644)
             return FakeProcess()
-        if "sudo cat" in command:
-            target = Path(command.split()[2])
+        parts = command.split()
+        if len(parts) >= 4 and parts[0] == "sudo" and parts[2] == "cat":
+            target = Path(parts[3])
             return FakeProcess(stdout=target.read_text() if target.exists() else "")
         return FakeProcess()
 
@@ -82,7 +83,7 @@ def test_configure_repository_is_idempotent(monkeypatch):
     assert commands, "Expected the repository key to be refreshed on subsequent runs"
     assert commands[0] == expected_gpg_command
     if len(commands) == 2:
-        assert commands[1] == f"sudo {expected_gpg_command}"
+        assert commands[1] == f"sudo -n {expected_gpg_command}"
     else:
         assert len(commands) == 1
 

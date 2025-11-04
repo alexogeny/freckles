@@ -30,9 +30,25 @@ class DebRepository:
     gpg_template: Optional[str] = None
 
 
+def _ensure_non_interactive_sudo(command: str) -> str:
+    """Insert ``-n`` into ``sudo`` invocations to avoid interactive prompts."""
+
+    stripped = command.lstrip()
+    if not stripped.startswith("sudo"):
+        return command
+
+    if "sudo -n" in command or "sudo --non-interactive" in command:
+        return command
+
+    prefix_len = len(command) - len(stripped)
+    suffix = stripped[len("sudo") :]
+    return command[:prefix_len] + "sudo -n" + suffix
+
+
 def run(command: str) -> subprocess.CompletedProcess[str]:
     """Execute ``command`` via ``subprocess.run`` with output capture enabled."""
 
+    command = _ensure_non_interactive_sudo(command)
     return subprocess.run(command, capture_output=True, text=True, shell=True)
 
 
