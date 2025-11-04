@@ -63,7 +63,7 @@ def configure_terminal() -> None:
         return
 
     profile_schema = (
-        "org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/"
+        "org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:"
         f"{default_profile}/"
     )
 
