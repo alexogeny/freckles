@@ -41,7 +41,9 @@ class StatusAnimator:
     _FRAMES = tuple("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏")
     _INTERVAL = 0.1
 
-    def __init__(self, theme: Theme, stream=None) -> None:
+    _PULSE_FRAMES = ("   ", ".  ", ".. ", "...")
+
+    def __init__(self, theme: Theme, stream=None, *, pulse_enabled: bool = True) -> None:
         self._theme = theme
         self._stream = stream or sys.stdout
         self.enabled = bool(getattr(self._stream, "isatty", lambda: False)())
@@ -50,6 +52,7 @@ class StatusAnimator:
         self._stop = threading.Event()
         self._paused = threading.Event()
         self._thread: Optional[threading.Thread] = None
+        self._pulse_enabled = pulse_enabled
 
     def pause(self) -> None:
         if not self.enabled or self._thread is None:
@@ -96,15 +99,22 @@ class StatusAnimator:
 
     def _run(self) -> None:
         frames = cycle(self._FRAMES)
+        pulses = cycle(self._PULSE_FRAMES) if self._pulse_enabled else None
         while not self._stop.is_set():
             if self._paused.is_set():
                 time.sleep(self._INTERVAL)
                 continue
             frame = next(frames)
+            pulse = next(pulses) if pulses else ""
             with self._lock:
-                self._stream.write(
-                    f"\r{self._theme.accent}{frame} {self._status}{nailpolish.RESET}"
-                )
+                if pulse:
+                    self._stream.write(
+                        f"\r{self._theme.accent}{frame}{pulse} {self._status}{nailpolish.RESET}"
+                    )
+                else:
+                    self._stream.write(
+                        f"\r{self._theme.accent}{frame} {self._status}{nailpolish.RESET}"
+                    )
                 self._stream.flush()
             time.sleep(self._INTERVAL)
         with self._lock:
@@ -127,6 +137,7 @@ class Step:
     error: Optional[str] = None
     children: List["Step"] = field(default_factory=list)
     depth: int = 0
+    started_at: Optional[float] = None
 
     def as_dict(self) -> Dict[str, Optional[str]]:
         payload: Dict[str, Optional[str]] = {
@@ -149,12 +160,20 @@ class StepReporter:
         theme: Theme | None = None,
         *,
         total_top_level: Optional[int] = None,
+        min_step_duration: float = 0.0,
+        enable_animation: bool = True,
+        enable_pulse: bool = True,
     ) -> None:
         self._print = printer or print
         self._theme = theme or FrecklesTheme.build()
         self._root = Step(name="__root__", depth=-1)
         self._stack: List[Step] = [self._root]
-        self._animator = None if printer else StatusAnimator(self._theme)
+        self._min_step_duration = max(min_step_duration, 0.0)
+        self._animator = (
+            None
+            if printer or not enable_animation
+            else StatusAnimator(self._theme, pulse_enabled=enable_pulse)
+        )
         self._total_top_level = total_top_level or 0
         self._completed_top_level = 0
         self._animator_finalized = False
@@ -177,7 +196,12 @@ class StepReporter:
     # Public API ---------------------------------------------------------
     def start_step(self, name: str) -> None:
         parent = self._stack[-1]
-        step = Step(name=name, parent=parent, depth=len(self._stack) - 1)
+        step = Step(
+            name=name,
+            parent=parent,
+            depth=len(self._stack) - 1,
+            started_at=time.perf_counter(),
+        )
         parent.children.append(step)
         self._stack.append(step)
         self._before_output()
@@ -190,6 +214,7 @@ class StepReporter:
         if step.status is StepStatus.FAILED:
             return
         step.status = StepStatus.SUCCESS
+        self._ensure_min_duration(step)
         self._before_output()
         line = f"{'  ' * step.depth}✔ {name}"
         self._print(self._colorize(self._theme.success, line))
@@ -201,6 +226,7 @@ class StepReporter:
         step = self._end_step(name)
         step.status = StepStatus.FAILED
         step.error = str(error)
+        self._ensure_min_duration(step)
         self._before_output()
         line = f"{'  ' * step.depth}✖ {name}: {step.error}"
         self._print(self._colorize(self._theme.failure, line))
@@ -285,3 +311,11 @@ class StepReporter:
             self._stack.append(step)
             raise ValueError(f"Attempted to finish step '{name}' but current step is '{step.name}'.")
         return step
+
+    def _ensure_min_duration(self, step: Step) -> None:
+        if self._min_step_duration <= 0 or step.started_at is None:
+            return
+        elapsed = time.perf_counter() - step.started_at
+        remaining = self._min_step_duration - elapsed
+        if remaining > 0:
+            time.sleep(remaining)

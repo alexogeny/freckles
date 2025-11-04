@@ -327,7 +327,12 @@ def main() -> None:
 
     # Swap the ``theme`` argument to experiment with alternative colour palettes
     # while reusing the same reporting infrastructure.
-    reporter = StepReporter(total_top_level=len(phases))
+    reporter = StepReporter(
+        total_top_level=len(phases),
+        min_step_duration=0.35,
+        enable_animation=True,
+        enable_pulse=True,
+    )
     try:
         with reporter:
             for label, phase in phases:
