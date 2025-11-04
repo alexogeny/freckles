@@ -222,10 +222,53 @@ def get_extension_json(profile_dir):
 
 
 def install_firefox_extension(extension_id):
+    url = (
+        "https://addons.mozilla.org/firefox/downloads/latest/"
+        f"{extension_id}/addon-{extension_id}-latest.xpi"
+    )
+    xpi_path = None
+
     try:
-        url = f"https://addons.mozilla.org/firefox/downloads/latest/{extension_id}/addon-{extension_id}-latest.xpi"
-        download_file(url, extension_id + ".xpi", overwrite=True)
-        subprocess.run(["firefox", extension_id + ".xpi"], check=True)
+        xpi_path = download_file(url, extension_id + ".xpi", overwrite=True)
+    except Exception as error:  # pragma: no cover - network failures depend on environment
+        print(f"Failed to download extension {extension_id}: {error}")
+        return False
+
+    try:
+        profile_dir = find_firefox_profile()
+        if profile_dir is None:
+            print(
+                "Unable to install Firefox extension "
+                f"{extension_id}: Firefox profile not found."
+            )
+            return False
+
+        install_command = [
+            "firefox",
+            "--headless",
+            "--no-remote",
+            "--profile",
+            profile_dir,
+            "--install-addon",
+            xpi_path.as_posix(),
+        ]
+
+        subprocess.run(
+            install_command,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
         print(f"Extension {extension_id} installed.")
-    except subprocess.CalledProcessError as e:
-        print(f"Error installing extension {extension_id}: {e}")
+        return True
+    except subprocess.CalledProcessError as error:
+        error_output = (error.stderr or error.stdout or str(error)).strip()
+        print(f"Error installing extension {extension_id}: {error_output}")
+        return False
+    except Exception as error:
+        print(f"Unexpected error installing extension {extension_id}: {error}")
+        return False
+    finally:
+        if xpi_path is not None:
+            xpi_path.unlink(missing_ok=True)
