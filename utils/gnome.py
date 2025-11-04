@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from shutil import which
 from subprocess import CompletedProcess, run
 from typing import Iterable, Sequence
-
-from .debian import is_ubuntu
 
 BASE_GNOME_SETTINGS: Sequence[tuple[str, str, str]] = (
     ("org.gnome.desktop.interface", "clock-show-date", "true"),
@@ -47,20 +46,77 @@ BASE_GNOME_SETTINGS: Sequence[tuple[str, str, str]] = (
     ("org.gnome.settings-daemon.plugins.power", "sleep-inactive-battery-type", "'suspend'"),
 )
 
-DEFAULT_THEME_SETTINGS: Sequence[tuple[str, str, str]] = (
-    ("org.gnome.desktop.interface", "cursor-theme", "'Adwaita'"),
-    ("org.gnome.desktop.interface", "gtk-theme", "'Adwaita-dark'"),
-    ("org.gnome.desktop.interface", "icon-theme", "'Adwaita'"),
+THEME_SEARCH_PATHS: Sequence[Path] = (
+    Path.home() / ".themes",
+    Path("/usr/local/share/themes"),
+    Path("/usr/share/themes"),
 )
 
-UBUNTU_THEME_SETTINGS: Sequence[tuple[str, str, str]] = (
-    ("org.gnome.desktop.interface", "cursor-theme", "'Yaru'"),
-    ("org.gnome.desktop.interface", "gtk-theme", "'Yaru-purple-dark'"),
-    ("org.gnome.desktop.interface", "icon-theme", "'Yaru-purple'"),
+ICON_SEARCH_PATHS: Sequence[Path] = (
+    Path.home() / ".icons",
+    Path("/usr/local/share/icons"),
+    Path("/usr/share/icons"),
+)
+
+GTK_THEME_CANDIDATES: Sequence[str] = (
+    "adw-gtk3-dark",
+    "Adwaita-dark",
+)
+
+ICON_THEME_CANDIDATES: Sequence[str] = (
+    "Papirus-Dark",
+    "Papirus",
+    "Adwaita",
+)
+
+CURSOR_THEME_CANDIDATES: Sequence[str] = (
+    "Bibata-Modern-Classic",
+    "Bibata-Original-Classic",
+    "Adwaita",
 )
 
 OPTIONAL_SETTINGS: Sequence[tuple[str, str, str]] = (
-    ("org.gnome.desktop.interface", "accent-color", "'purple'"),
+    ("org.gnome.desktop.interface", "accent-color", "'blue'"),
+)
+
+TERMINAL_PROFILE_SCHEMA = "org.gnome.Terminal.Legacy.Profile"
+TERMINAL_PROFILES_ROOT = "/org/gnome/terminal/legacy/profiles:/"
+
+TERMINAL_THEME_SETTINGS: Sequence[tuple[str, str]] = (
+    ("use-theme-colors", "false"),
+    ("use-system-font", "false"),
+    ("font", "'Cascadia Code 11'"),
+    ("background-color", "'rgb(24,25,31)'"),
+    ("foreground-color", "'rgb(216,222,233)'"),
+    ("bold-color", "'rgb(129,161,193)'"),
+    ("bold-color-same-as-fg", "false"),
+    ("cursor-colors-set", "true"),
+    ("cursor-background-color", "'rgb(216,222,233)'"),
+    ("cursor-foreground-color", "'rgb(24,25,31)'"),
+    ("highlight-colors-set", "true"),
+    ("highlight-background-color", "'rgb(67,76,94)'"),
+    ("highlight-foreground-color", "'rgb(236,239,244)'"),
+    ("audible-bell", "false"),
+    ("visible-name", "'Freckles'"),
+)
+
+TERMINAL_THEME_PALETTE: Sequence[str] = (
+    "rgb(46,52,64)",
+    "rgb(191,97,106)",
+    "rgb(163,190,140)",
+    "rgb(235,203,139)",
+    "rgb(129,161,193)",
+    "rgb(180,142,173)",
+    "rgb(136,192,208)",
+    "rgb(236,239,244)",
+    "rgb(76,86,106)",
+    "rgb(208,135,112)",
+    "rgb(163,190,140)",
+    "rgb(235,203,139)",
+    "rgb(129,161,193)",
+    "rgb(180,142,173)",
+    "rgb(143,188,187)",
+    "rgb(236,239,244)",
 )
 
 CUSTOM_KEYBINDING_SCHEMA = (
@@ -99,14 +155,62 @@ def configure_gnome() -> None:
         if _is_setting_supported(schema, key):
             _apply_setting(schema, key, value)
 
+    _configure_terminal_theme()
     _configure_custom_keybindings(CUSTOM_KEYBINDINGS)
 
 
 def _build_settings() -> Sequence[tuple[str, str, str]]:
     """Return the GNOME settings tailored to the detected distribution."""
 
-    theme_settings = UBUNTU_THEME_SETTINGS if is_ubuntu() else DEFAULT_THEME_SETTINGS
+    theme_settings = (
+        (
+            "org.gnome.desktop.interface",
+            "cursor-theme",
+            _quote(_preferred_cursor_theme()),
+        ),
+        (
+            "org.gnome.desktop.interface",
+            "gtk-theme",
+            _quote(_preferred_gtk_theme()),
+        ),
+        (
+            "org.gnome.desktop.interface",
+            "icon-theme",
+            _quote(_preferred_icon_theme()),
+        ),
+    )
     return (*BASE_GNOME_SETTINGS, *theme_settings)
+
+
+def _preferred_cursor_theme() -> str:
+    return _select_theme(CURSOR_THEME_CANDIDATES, ICON_SEARCH_PATHS)
+
+
+def _preferred_gtk_theme() -> str:
+    return _select_theme(GTK_THEME_CANDIDATES, THEME_SEARCH_PATHS)
+
+
+def _preferred_icon_theme() -> str:
+    return _select_theme(ICON_THEME_CANDIDATES, ICON_SEARCH_PATHS)
+
+
+def _select_theme(candidates: Sequence[str], search_paths: Sequence[Path]) -> str:
+    if not candidates:
+        return ""
+
+    for theme in candidates[:-1]:
+        if _theme_exists(theme, search_paths):
+            return theme
+
+    return candidates[-1]
+
+
+def _theme_exists(name: str, search_paths: Sequence[Path]) -> bool:
+    return any((path / name).exists() for path in search_paths)
+
+
+def _quote(value: str) -> str:
+    return f"'{value}'"
 
 
 def _is_setting_supported(schema: str, key: str) -> bool:
@@ -145,6 +249,41 @@ def _configure_custom_keybindings(bindings: Iterable[dict[str, str]]) -> None:
         _apply_setting(schema, "name", f"'{binding['name']}'")
         _apply_setting(schema, "command", f"'{binding['command']}'")
         _apply_setting(schema, "binding", f"'{binding['binding']}'")
+
+
+def _configure_terminal_theme() -> None:
+    profile_id = _default_terminal_profile_id()
+    if not profile_id:
+        return
+
+    schema = f"{TERMINAL_PROFILE_SCHEMA}:{TERMINAL_PROFILES_ROOT}{profile_id}/"
+
+    for key, value in TERMINAL_THEME_SETTINGS:
+        _apply_setting(schema, key, value)
+
+    palette_literal = _serialize_palette(TERMINAL_THEME_PALETTE)
+    _apply_setting(schema, "palette", palette_literal)
+
+
+def _default_terminal_profile_id() -> str | None:
+    result = run(
+        ["gsettings", "get", "org.gnome.Terminal.ProfilesList", "default"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return None
+
+    output = (result.stdout or result.stderr or "").strip()
+    if not output:
+        return None
+
+    return output.strip("'\"") or None
+
+
+def _serialize_palette(colors: Sequence[str]) -> str:
+    return "[" + ", ".join(f"'{color}'" for color in colors) + "]"
 
 
 def _apply_setting(schema: str, key: str, value: str) -> CompletedProcess[str]:
