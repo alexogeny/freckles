@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 import argparse
+import json
+import re
 import subprocess
 import sys
+from json import JSONDecodeError
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Sequence, Tuple
 
-HOST_CHOICES = ("github", "gitlab")
-CONTEXT_CHOICES = ("private", "work")
+DEFAULT_HOST_CHOICES: Tuple[str, ...] = ("github", "gitlab")
+DEFAULT_CONTEXT_CHOICES: Tuple[str, ...] = ("private", "work")
+CONFIG_RELATIVE_PATH = Path(".config") / "freckles" / "accounts.json"
 
 
 def _normalise_choice(value: str, choices: Iterable[str], *, label: str) -> str:
@@ -17,17 +21,85 @@ def _normalise_choice(value: str, choices: Iterable[str], *, label: str) -> str:
     raise SystemExit(f"Unknown {label} '{value}'. Choose one of: {', '.join(sorted(choices))}.")
 
 
-def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+def _slugify(value: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+    return slug
+
+
+def _account_config_path(home: Path | None = None) -> Path:
+    base = home if home is not None else Path.home()
+    return base / CONFIG_RELATIVE_PATH
+
+
+def _load_dynamic_choices(*, home: Path | None = None) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    hosts = set(DEFAULT_HOST_CHOICES)
+    contexts = set(DEFAULT_CONTEXT_CHOICES)
+
+    config_path = _account_config_path(home)
+    try:
+        data = json.loads(config_path.read_text())
+    except FileNotFoundError:
+        return tuple(sorted(hosts)), tuple(sorted(contexts))
+    except (OSError, JSONDecodeError, TypeError):
+        return tuple(sorted(hosts)), tuple(sorted(contexts))
+
+    accounts = data.get("accounts", [])
+    if isinstance(accounts, list):
+        for account in accounts:
+            if not isinstance(account, dict):
+                continue
+            provider = account.get("provider")
+            if isinstance(provider, str) and provider.strip():
+                hosts.add(provider.strip().lower())
+
+            alias = account.get("alias")
+            scope = account.get("scope")
+            slug = ""
+            if isinstance(alias, str) and alias.strip():
+                slug = _slugify(alias)
+            else:
+                slug_parts = []
+                if isinstance(scope, str) and scope.strip():
+                    slug_parts.append(scope)
+                if isinstance(provider, str) and provider.strip():
+                    slug_parts.append(provider)
+                if slug_parts:
+                    slug = _slugify("-".join(slug_parts))
+            if slug:
+                contexts.add(slug)
+
+    return tuple(sorted(hosts)), tuple(sorted(contexts))
+
+
+def _default_choice(preferred: str, choices: Sequence[str]) -> str:
+    if preferred in choices:
+        return preferred
+    return choices[0] if choices else preferred
+
+
+def _parse_args(
+    argv: list[str] | None,
+    *,
+    host_choices: tuple[str, ...],
+    context_choices: tuple[str, ...],
+) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Clone a repository into the freckles directory layout.")
     parser.add_argument("repository", help="Repository in the form owner/name or a full git URL.")
     parser.add_argument("legacy_host", nargs="?", help=argparse.SUPPRESS)
     parser.add_argument("legacy_context", nargs="?", help=argparse.SUPPRESS)
-    parser.add_argument("--host", choices=HOST_CHOICES, default="github", help="Host alias to use (default: github).")
+    host_default = _default_choice("github", host_choices)
+    context_default = _default_choice("private", context_choices)
+    parser.add_argument(
+        "--host",
+        choices=host_choices,
+        default=host_default,
+        help=f"Host alias to use (default: {host_default}).",
+    )
     parser.add_argument(
         "--context",
-        choices=CONTEXT_CHOICES,
-        default="private",
-        help="Context directory to target (default: private).",
+        choices=context_choices,
+        default=context_default,
+        help=f"Context directory to target (default: {context_default}).",
     )
     parser.add_argument(
         "--full",
@@ -45,7 +117,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--into",
         help="Override the destination directory. Defaults to ~/context/host/repository.",
     )
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    args._host_default = host_default
+    args._context_default = context_default
+    args._host_choices = host_choices
+    args._context_choices = context_choices
+    return args
 
 
 def _repository_name(repository: str) -> str:
@@ -77,12 +154,13 @@ def _run_git(args: list[str], *, cwd: Path | None = None) -> None:
 
 
 def clone_repository(argv: list[str] | None = None) -> int:
-    args = _parse_args(argv)
+    host_choices, context_choices = _load_dynamic_choices()
+    args = _parse_args(argv, host_choices=host_choices, context_choices=context_choices)
 
-    if args.legacy_host and args.host == "github":
-        args.host = _normalise_choice(args.legacy_host, HOST_CHOICES, label="host")
-    if args.legacy_context and args.context == "private":
-        args.context = _normalise_choice(args.legacy_context, CONTEXT_CHOICES, label="context")
+    if args.legacy_host and args.host == args._host_default:
+        args.host = _normalise_choice(args.legacy_host, args._host_choices, label="host")
+    if args.legacy_context and args.context == args._context_default:
+        args.context = _normalise_choice(args.legacy_context, args._context_choices, label="context")
 
     destination = _destination_path(args.repository, host=args.host, context=args.context, override=args.into)
     if destination.exists():
