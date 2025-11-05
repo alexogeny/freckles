@@ -260,7 +260,7 @@ def refresh_repository_keys(
 
 
 def install_software_list(software_list: List[Union[DebFile, DebRepository]]):
-    update_result = run("sudo apt-get update -yqq")
+    update_result = run("sudo apt-get update -qq")
     _ensure_success(update_result, "Failed to refresh apt package lists")
 
     for software in software_list:
@@ -286,7 +286,7 @@ def install_software_list(software_list: List[Union[DebFile, DebRepository]]):
             get_and_install_from_download_link(software.direct_link, software.name)
         elif isinstance(software, DebRepository):
             _configure_repository(software)
-            update_result = run("sudo apt-get update -yqq")
+            update_result = run("sudo apt-get update -qq")
             _ensure_success(update_result, f"Failed to update apt cache for {software.name}")
             print(f"installing {software.name}")
             install_result = install_with_apt([software.install_name or software.name])

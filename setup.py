@@ -158,7 +158,7 @@ def emit_summary(summary: Dict[str, List[Dict[str, Optional[str]]]]) -> None:
 
 def refresh_apt_phase(reporter: StepReporter) -> None:
     with managed_step(reporter, "Run apt-get update"):
-        apt_update_result = run("sudo apt-get update -yqq")
+        apt_update_result = run("sudo apt-get update -qq")
         if apt_update_result.returncode != 0:
             combined_output = (apt_update_result.stderr or "") + (apt_update_result.stdout or "")
             if "NO_PUBKEY" in combined_output:
@@ -178,7 +178,7 @@ def refresh_apt_phase(reporter: StepReporter) -> None:
                 with managed_step(reporter, "Refresh repository keys"):
                     refresh_keys()
 
-                apt_update_result = run("sudo apt-get update -yqq")
+                apt_update_result = run("sudo apt-get update -qq")
 
             if apt_update_result.returncode != 0:
                 message = (apt_update_result.stderr or "").strip() or (apt_update_result.stdout or "").strip()
