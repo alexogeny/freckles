@@ -1,3 +1,5 @@
+import os
+import pwd
 import re
 import sys
 from contextlib import contextmanager
@@ -76,6 +78,22 @@ def _docker_repository_definition() -> DebRepository | None:
     )
 
 
+def _ensure_user_in_docker_group(reporter: StepReporter) -> None:
+    docker_group = "docker"
+    user = os.environ.get("SUDO_USER") or os.environ.get("USER")
+    if not user:
+        user = pwd.getpwuid(os.getuid()).pw_name
+
+    group_check = run(f"id -Gn {user}")
+    if group_check.returncode == 0 and docker_group in (group_check.stdout or "").split():
+        reporter.log(f"{user} already belongs to the '{docker_group}' group.")
+        return
+
+    reporter.log(f"Adding {user} to the '{docker_group}' group (log out/in to apply).")
+    add_result = run(f"sudo usermod -aG {docker_group} {user}")
+    if add_result.returncode != 0:
+        message = add_result.stderr.strip() or add_result.stdout.strip() or "unknown error"
+        reporter.log(f"Unable to add {user} to '{docker_group}': {message}")
 software_list = [
     DebFile(
         name="slack",
@@ -244,6 +262,7 @@ def remove_unwanted_packages_phase(reporter: StepReporter) -> None:
 def install_curated_software_phase(reporter: StepReporter) -> None:
     with managed_step(reporter, "Install curated software"):
         install_software_list(software_list)
+        _ensure_user_in_docker_group(reporter)
 
 
 def configure_developer_tooling_phase(reporter: StepReporter) -> None:

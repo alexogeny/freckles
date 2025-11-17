@@ -31,7 +31,7 @@ uv run setup.py
   [git identity concierge](docs/git-identity-concierge.md)
 - provisions Firefox with enterprise policies, curated defaults, and add-ons
 - installs 1Password, Slack, Spotify, Docker Engine (with Compose), and the 1Password CLI directly from their
-  upstream repositories
+  upstream repositories (adds your user to the `docker` group automatically—log out/in after setup)
 - syncs the freckles shell helpers such as the fuzzy `nn` navigator and keeps
   the workstation ready for daily development
 
