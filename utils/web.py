@@ -208,13 +208,25 @@ def _configure_repository(
             f"Failed to set permissions on keyring for {repository.name}",
         )
     Path(f"{repository.name}.gpg").unlink(missing_ok=True)
-    repo_line = f"deb [signed-by={keyring_path.as_posix()}] {repository.repository}"
-    repo_path = APT_SOURCES_DIR / f"{repository.name}.list"
+    repo_path: Path
+    desired_contents: str
+    if repository.sources_entry:
+        repo_path = APT_SOURCES_DIR / f"{repository.name}.sources"
+        desired_contents = repository.sources_entry.format(
+            signed_by=keyring_path.as_posix()
+        ).strip()
+        if not desired_contents.endswith("\n"):
+            desired_contents += "\n"
+    else:
+        repo_path = APT_SOURCES_DIR / f"{repository.name}.list"
+        repo_line = f"deb [signed-by={keyring_path.as_posix()}] {repository.repository}"
+        desired_contents = f"{repo_line}\n"
+
     _ensure_directory(repo_path.parent, 0o755)
     existing = _read_repository_file(repo_path)
-    if repo_line.strip() in {line.strip() for line in existing.splitlines() if line.strip()}:
+    if desired_contents.strip() == existing.strip():
         return
-    _write_repository_file(repo_path, f"{repo_line}\n")
+    _write_repository_file(repo_path, desired_contents)
 
 
 def ensure_repositories_configured(

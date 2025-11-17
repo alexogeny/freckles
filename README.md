@@ -30,7 +30,7 @@ uv run setup.py
   helper aliases like `git fs`/`git rb`, and the shared SSH/GPG material used by
   [git identity concierge](docs/git-identity-concierge.md)
 - provisions Firefox with enterprise policies, curated defaults, and add-ons
-- installs 1Password, Slack, Spotify, and the 1Password CLI directly from their
+- installs 1Password, Slack, Spotify, Docker Engine (with Compose), and the 1Password CLI directly from their
   upstream repositories
 - syncs the freckles shell helpers such as the fuzzy `nn` navigator and keeps
   the workstation ready for daily development

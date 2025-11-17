@@ -8,6 +8,7 @@ from utils.calibre import configure_calibre
 from utils.debian import (
     DebFile,
     DebRepository,
+    get_version_codename,
     install_with_apt,
     is_debian_12_bookworm,
     is_debian_like,
@@ -46,6 +47,35 @@ from utils.web import (
 from utils.ubuntu import ensure_firefox_from_apt, purge_snapd
 
 
+def _docker_repository_definition() -> DebRepository | None:
+    if not is_debian_like():
+        return None
+
+    distribution = "ubuntu" if is_ubuntu() else "debian"
+    codename_default = "jammy" if distribution == "ubuntu" else "bookworm"
+    codename = get_version_codename(codename_default) or codename_default
+    repository_url = f"https://download.docker.com/linux/{distribution}"
+    sources_entry = "\n".join(
+        [
+            "Types: deb",
+            f"URIs: {repository_url}",
+            f"Suites: {codename}",
+            "Components: stable",
+            "Signed-By: {signed_by}",
+            "",
+        ]
+    )
+
+    return DebRepository(
+        name="docker",
+        gpg=f"{repository_url}/gpg",
+        repository=f"{repository_url} {codename} stable",
+        install_name="docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin",
+        check_name="docker",
+        sources_entry=sources_entry,
+    )
+
+
 software_list = [
     DebFile(
         name="slack",
@@ -81,6 +111,10 @@ software_list = [
         check_name="spotify",
     ),
 ]
+
+_docker_repo = _docker_repository_definition()
+if _docker_repo:
+    software_list.append(_docker_repo)
 
 unwanted_software = [
     "gnome-games",

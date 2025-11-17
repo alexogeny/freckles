@@ -28,6 +28,7 @@ class DebRepository:
     install_name: Optional[str] = None
     check_name: Optional[str] = None
     gpg_template: Optional[str] = None
+    sources_entry: Optional[str] = None
 
 
 def _ensure_non_interactive_sudo(command: str) -> str:

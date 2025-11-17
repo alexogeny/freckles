@@ -89,3 +89,42 @@ def test_configure_repository_is_idempotent(monkeypatch):
 
     # Ensure the first run actually executed the expected operations.
     assert any("gpg --dearmor" in cmd for cmd in first_commands)
+
+
+def test_configure_repository_sources_format(monkeypatch):
+    repo = web.DebRepository(
+        name="docker",
+        gpg="https://download.docker.com/linux/debian/gpg",
+        repository="https://download.docker.com/linux/debian bookworm stable",
+        install_name="docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin",
+        sources_entry="\n".join(
+            [
+                "Types: deb",
+                "URIs: https://download.docker.com/linux/debian",
+                "Suites: bookworm",
+                "Components: stable",
+                "Signed-By: {signed_by}",
+                "",
+            ]
+        ),
+    )
+
+    commands: list[str] = []
+    monkeypatch.setattr(web, "run", _fake_run(commands))
+
+    def fake_download(url, file_name, **_):
+        Path(file_name).write_text("fake")
+        return Path(file_name)
+
+    monkeypatch.setattr(web, "download_file", fake_download)
+
+    web._configure_repository(repo)
+
+    repo_path = web.APT_SOURCES_DIR / "docker.sources"
+    assert repo_path.read_text() == (
+        "Types: deb\n"
+        "URIs: https://download.docker.com/linux/debian\n"
+        "Suites: bookworm\n"
+        "Components: stable\n"
+        f"Signed-By: {(web.APT_KEYRING_DIR / 'docker.gpg').as_posix()}\n"
+    )
