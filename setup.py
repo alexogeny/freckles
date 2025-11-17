@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from typing import Dict, List, Optional
 
 from utils.avatar import manage_avatar
+from utils.bun import install_bun
 from utils.calibre import configure_calibre
 from utils.debian import (
     DebFile,
@@ -262,6 +263,8 @@ def remove_unwanted_packages_phase(reporter: StepReporter) -> None:
 def install_curated_software_phase(reporter: StepReporter) -> None:
     with managed_step(reporter, "Install curated software"):
         install_software_list(software_list)
+        with managed_step(reporter, "Install Bun runtime"):
+            install_bun()
         _ensure_user_in_docker_group(reporter)
 
 
