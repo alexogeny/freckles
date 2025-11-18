@@ -88,6 +88,39 @@ alias gfs="git fs"
 alias grb="git rb"
 alias gdb="git db"
 
+kill_port_on_prompt() {
+  if ! command -v lsof >/dev/null 2>&1; then
+    echo "'lsof' is required for killport" >&2
+    return 127
+  fi
+
+  if [ -z "$1" ]; then
+    echo "Usage: killport <port>" >&2
+    return 1
+  fi
+
+  local port="$1" pids
+  pids=$(lsof -ti :"$port" 2>/dev/null | tr '\n' ' ')
+  if [ -z "$pids" ]; then
+    echo "No processes found on port $port"
+    return 0
+  fi
+
+  echo "Processes listening on port $port:"
+  lsof -i :"$port"
+  printf "Kill process(es) %s? [y/N] " "$pids"
+  read -r response
+  case "$response" in
+    y|Y|yes|YES)
+      echo "$pids" | xargs -r kill -9
+      ;;
+    *)
+      echo "Aborted"
+      ;;
+  esac
+}
+alias killport=kill_port_on_prompt
+
 if [ -f "$HOME/.cargo/env" ]; then
   # shellcheck disable=SC1091
   . "$HOME/.cargo/env"
