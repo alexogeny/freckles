@@ -1,5 +1,8 @@
 {
   "policies": {
+    "AppAutoUpdate": false,
+    "BackgroundAppUpdate": false,
+    "DisableAppUpdate": true,
     "DisableTelemetry": true,
     "DisableFirefoxStudies": true,
     "DisablePocket": true,
@@ -12,6 +15,7 @@
     "DisableProfileImport": true,
     "DisableProfileRefresh": true,
     "DisableSystemAddonUpdate": true,
+    "ExtensionUpdate": false,
     "OfferToSaveLogins": false,
     "PasswordManagerEnabled": false,
     "CaptivePortal": false,
@@ -22,6 +26,9 @@
       "Default": "block-audio-video"
     },
     "DontCheckDefaultBrowser": true,
+    "PromptForDownloadLocation": true,
+    "DisableBuiltinPDFViewer": true,
+    "EnableContainers": true,
     "UserMessaging": {
       "ExtensionRecommendations": false,
       "FeatureRecommendations": false,
@@ -547,6 +554,58 @@
         "Status": "locked"
       },
       "browser.urlbar.quicksuggest.shouldShowOnboardingDialog": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "privacy.resistFingerprinting": {
+        "Value": true,
+        "Status": "locked"
+      },
+      "privacy.resistFingerprinting.letterboxing": {
+        "Value": true,
+        "Status": "locked"
+      },
+      "privacy.resistFingerprinting.pbmode": {
+        "Value": true,
+        "Status": "locked"
+      },
+      "privacy.query_stripping.enabled": {
+        "Value": true,
+        "Status": "locked"
+      },
+      "privacy.query_stripping.strip_list": {
+        "Value": "utm_campaign,utm_medium,utm_source,utm_term,utm_content,gclid,fbclid,mc_eid,mc_cid",
+        "Status": "locked"
+      },
+      "cookiebanners.service.mode": {
+        "Value": 2,
+        "Status": "locked"
+      },
+      "cookiebanners.service.mode.privateBrowsing": {
+        "Value": 2,
+        "Status": "locked"
+      },
+      "network.http.referer.XOriginPolicy": {
+        "Value": 2,
+        "Status": "locked"
+      },
+      "network.http.referer.XOriginTrimmingPolicy": {
+        "Value": 2,
+        "Status": "locked"
+      },
+      "security.OCSP.require": {
+        "Value": true,
+        "Status": "locked"
+      },
+      "security.pki.sha1_enforcement_level": {
+        "Value": 1,
+        "Status": "locked"
+      },
+      "dom.gamepad.enabled": {
+        "Value": false,
+        "Status": "locked"
+      },
+      "dom.battery.enabled": {
         "Value": false,
         "Status": "locked"
       }
