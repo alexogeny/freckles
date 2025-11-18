@@ -1,0 +1,45 @@
+{
+  "defaultHandlersVersion": {},
+  "mimeTypes": {
+    "image/webp": {
+      "action": 3,
+      "extensions": [
+        "webp"
+      ]
+    },
+    "image/avif": {
+      "action": 3,
+      "extensions": [
+        "avif"
+      ]
+    },
+    "application/pdf": {
+      "action": 4,
+      "extensions": [
+        "pdf"
+      ]
+    }
+  },
+  "schemes": {
+    "mailto": {
+      "stubEntry": true,
+      "handlers": [
+        null,
+        {
+          "name": "Gmail",
+          "uriTemplate": "https://mail.google.com/mail/?extsrc=mailto&url=%s"
+        }
+      ]
+    },
+    "slack": {
+      "action": 4
+    },
+    "vscode": {
+      "action": 4
+    },
+    "mozilla-vpn": {
+      "action": 4
+    }
+  },
+  "isDownloadsImprovementsAlreadyMigrated": false
+}

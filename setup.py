@@ -25,6 +25,7 @@ from utils.firefox import (
     EXTENSIONS_TO_INSTALL,
     apply_firefox_policies,
     apply_firefox_user_js,
+    apply_firefox_handlers,
     extension_already_installed,
     find_firefox_profile,
     get_extension_json,
@@ -369,6 +370,8 @@ def configure_firefox_phase(reporter: StepReporter) -> None:
                         continue
                     with managed_step(reporter, f"Install extension: {extension_name}"):
                         install_firefox_extension(extension_id)
+            with managed_step(reporter, "Apply handlers.json"):
+                apply_firefox_handlers(profile)
 
 
 def main() -> None:

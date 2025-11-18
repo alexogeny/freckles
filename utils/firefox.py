@@ -8,6 +8,7 @@ import time
 TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "firefox")
 POLICIES_TEMPLATE = os.path.join(TEMPLATE_DIR, "policies.json")
 USER_JS_TEMPLATE = os.path.join(TEMPLATE_DIR, "user.js")
+HANDLERS_TEMPLATE = os.path.join(TEMPLATE_DIR, "handlers.json")
 
 
 def _read_template(path, label):
@@ -55,6 +56,23 @@ def apply_firefox_user_js(profile_dir):
         handle.write(template_contents)
     os.chmod(destination, 0o644)
     print(f"Synchronized Firefox user.js template to {destination}.")
+
+
+def apply_firefox_handlers(profile_dir):
+    if profile_dir is None:
+        print("Firefox profile directory not provided. Skipping handlers.json provisioning.")
+        return
+
+    template_contents = _read_template(HANDLERS_TEMPLATE, "handlers.json")
+    if template_contents is None:
+        return
+
+    os.makedirs(profile_dir, exist_ok=True)
+    destination = os.path.join(profile_dir, "handlers.json")
+    with open(destination, "w", encoding="utf-8") as handle:
+        handle.write(template_contents)
+    os.chmod(destination, 0o644)
+    print(f"Synchronized Firefox handlers template to {destination}.")
 
 from utils.web import download_file
 
