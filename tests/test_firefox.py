@@ -25,6 +25,20 @@ def _prepare_download(tmp_path: Path, file_name: str) -> Path:
     return destination
 
 
+def test_apply_user_chrome_writes_template(tmp_path):
+    profile_dir = tmp_path / "profile.default"
+    template = tmp_path / "userChrome.css"
+    template.write_text("/* css */")
+
+    firefox.USER_CHROME_TEMPLATE = template.as_posix()
+
+    firefox.apply_firefox_user_chrome(profile_dir.as_posix())
+
+    written = profile_dir / "chrome" / "userChrome.css"
+    assert written.exists()
+    assert written.read_text() == "/* css */"
+
+
 def test_install_firefox_extension_uses_headless_mode(monkeypatch, tmp_path):
     calls = []
 

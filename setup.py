@@ -25,6 +25,7 @@ from utils.firefox import (
     EXTENSIONS_TO_INSTALL,
     apply_firefox_policies,
     apply_firefox_user_js,
+    apply_firefox_user_chrome,
     apply_firefox_handlers,
     apply_firefox_containers,
     extension_already_installed,
@@ -363,6 +364,8 @@ def configure_firefox_phase(reporter: StepReporter) -> None:
                 return
             with managed_step(reporter, "Apply user.js preferences"):
                 apply_firefox_user_js(profile)
+            with managed_step(reporter, "Apply userChrome.css"):
+                apply_firefox_user_chrome(profile)
             with managed_step(reporter, "Apply containers.json"):
                 apply_firefox_containers(profile)
             extension_data = get_extension_json(profile)

@@ -1,0 +1,131 @@
+/* Freckles Midnight Firefox chrome tweaks to mirror VS Code Midnight. */
+
+@-moz-document url(chrome://browser/content/browser.xhtml) {
+  :root {
+    --freckles-bg: #0d1018;
+    --freckles-bg-2: #10131a;
+    --freckles-bg-3: #141926;
+    --freckles-toolbar: #0f121b;
+    --freckles-border: #202736;
+    --freckles-accent: #7db2ff;
+    --freckles-accent-strong: #8bc3ff;
+    --freckles-text: #eae8fc;
+    --freckles-text-muted: #9aa4c0;
+    --freckles-text-weak: #5a647c;
+    --freckles-warning: #ffd26f;
+  }
+
+  #navigator-toolbox,
+  #nav-bar,
+  #TabsToolbar,
+  #toolbar-menubar:not([inactive="true"]) {
+    background-color: var(--freckles-toolbar) !important;
+    color: var(--freckles-text) !important;
+    border: 0 !important;
+  }
+
+  #nav-bar {
+    box-shadow: inset 0 -1px 0 var(--freckles-border) !important;
+  }
+
+  #urlbar,
+  #searchbar {
+    background-color: var(--freckles-bg-2) !important;
+    color: var(--freckles-text) !important;
+    border: 1px solid var(--freckles-border) !important;
+    border-radius: 6px !important;
+  }
+
+  #urlbar[focused="true"],
+  #searchbar[focused="true"] {
+    border-color: var(--freckles-accent) !important;
+    box-shadow: 0 0 0 1px var(--freckles-accent) !important;
+  }
+
+  #urlbar-input,
+  #searchbar .textbox-input-box {
+    color: var(--freckles-text) !important;
+  }
+
+  .tabbrowser-tab[selected="true"] {
+    background-color: var(--freckles-bg) !important;
+    color: #ffffff !important;
+    border-radius: 8px 8px 0 0 !important;
+  }
+
+  .tabbrowser-tab:not([selected="true"]) {
+    background-color: var(--freckles-bg-3) !important;
+    color: var(--freckles-text-muted) !important;
+  }
+
+  .tabbrowser-tab:not([selected="true"]):hover {
+    background-color: var(--freckles-bg-2) !important;
+    color: var(--freckles-text) !important;
+  }
+
+  .tab-background {
+    margin-inline: 2px !important;
+  }
+
+  .tab-line {
+    background-image: none !important;
+    background-color: var(--freckles-accent) !important;
+  }
+
+  #titlebar .titlebar-spacer[type="pre-tabs"],
+  #titlebar .titlebar-spacer[type="post-tabs"] {
+    display: none !important;
+  }
+
+  .toolbarbutton-icon,
+  .toolbarbutton-text {
+    color: var(--freckles-text) !important;
+  }
+
+  .toolbarbutton-1[open="true"],
+  .toolbarbutton-1:hover {
+    background-color: color-mix(in srgb, var(--freckles-accent) 25%, transparent) !important;
+    border-radius: 6px !important;
+  }
+
+  #PersonalToolbar {
+    background-color: var(--freckles-bg-2) !important;
+    border-top: 1px solid var(--freckles-border) !important;
+  }
+
+  #sidebar-box {
+    background-color: var(--freckles-bg-2) !important;
+    color: var(--freckles-text) !important;
+  }
+
+  #sidebar-header {
+    background-color: var(--freckles-bg-3) !important;
+    color: var(--freckles-text) !important;
+    border-bottom: 1px solid var(--freckles-border) !important;
+  }
+
+  treechildren::-moz-tree-row(selected) {
+    background: var(--freckles-accent);
+  }
+
+  treechildren::-moz-tree-cell-text(selected) {
+    color: #10131a !important;
+  }
+
+  .notification-anchor-icon {
+    stroke: var(--freckles-warning) !important;
+  }
+
+  #downloadsPanel,
+  panelview,
+  menupopup,
+  panelmultiview {
+    background-color: var(--freckles-bg-2) !important;
+    color: var(--freckles-text) !important;
+    border: 1px solid var(--freckles-border) !important;
+  }
+
+  toolbarseparator {
+    border-color: var(--freckles-border) !important;
+  }
+}

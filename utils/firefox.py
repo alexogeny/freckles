@@ -10,6 +10,7 @@ POLICIES_TEMPLATE = os.path.join(TEMPLATE_DIR, "policies.json")
 USER_JS_TEMPLATE = os.path.join(TEMPLATE_DIR, "user.js")
 HANDLERS_TEMPLATE = os.path.join(TEMPLATE_DIR, "handlers.json")
 CONTAINERS_TEMPLATE = os.path.join(TEMPLATE_DIR, "containers.json")
+USER_CHROME_TEMPLATE = os.path.join(TEMPLATE_DIR, "chrome", "userChrome.css")
 
 
 def _read_template(path, label):
@@ -91,6 +92,24 @@ def apply_firefox_containers(profile_dir):
         handle.write(template_contents)
     os.chmod(destination, 0o644)
     print(f"Synchronized Firefox containers template to {destination}.")
+
+
+def apply_firefox_user_chrome(profile_dir):
+    if profile_dir is None:
+        print("Firefox profile directory not provided. Skipping userChrome.css provisioning.")
+        return
+
+    template_contents = _read_template(USER_CHROME_TEMPLATE, "userChrome.css")
+    if template_contents is None:
+        return
+
+    chrome_dir = os.path.join(profile_dir, "chrome")
+    os.makedirs(chrome_dir, exist_ok=True)
+    destination = os.path.join(chrome_dir, "userChrome.css")
+    with open(destination, "w", encoding="utf-8") as handle:
+        handle.write(template_contents)
+    os.chmod(destination, 0o644)
+    print(f"Synchronized Firefox userChrome.css template to {destination}.")
 
 from utils.web import download_file
 

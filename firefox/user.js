@@ -14,6 +14,7 @@ user_pref("browser.cache.disk.enable", false);
 user_pref("browser.cache.offline.enable", false);
 user_pref("browser.cache.memory.enable", true);
 user_pref("browser.cache.memory.capacity", 262144);
+user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);
 user_pref("browser.contentblocking.category", "strict");
 user_pref("browser.ml.enable", false);
 user_pref("browser.newtab.preload", false);
