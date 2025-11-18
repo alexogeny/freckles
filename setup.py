@@ -129,6 +129,13 @@ software_list = [
         install_name="spotify-client",
         check_name="spotify",
     ),
+    DebRepository(
+        name="mozilla-vpn",
+        gpg="https://packages.mozilla.org/apt/repo-signing-key.gpg",
+        repository="https://packages.mozilla.org/apt mozilla main",
+        install_name="mozillavpn",
+        check_name="mozillavpn",
+    ),
 ]
 
 _docker_repo = _docker_repository_definition()
