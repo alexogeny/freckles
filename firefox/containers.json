@@ -1,0 +1,57 @@
+{
+  "version": 5,
+  "lastUserContextId": 6,
+  "identities": [
+    {
+      "icon": "fingerprint",
+      "color": "blue",
+      "public": true,
+      "userContextId": 1,
+      "name": "🌙 Velvet Parlour (Personal)"
+    },
+    {
+      "icon": "fingerprint",
+      "color": "orange",
+      "public": true,
+      "userContextId": 2,
+      "name": "🗂️ Amber Annex (Work 1)"
+    },
+    {
+      "icon": "fingerprint",
+      "color": "turquoise",
+      "public": true,
+      "userContextId": 3,
+      "name": "📝 Violet Records (Work 2)"
+    },
+    {
+      "icon": "fingerprint",
+      "color": "pink",
+      "public": true,
+      "userContextId": 4,
+      "name": "💶 Satin Ledger (Bank + Shop)"
+    },
+    {
+      "public": false,
+      "icon": "",
+      "color": "",
+      "name": "userContextIdInternal.thumbnail",
+      "accessKey": "",
+      "userContextId": 5
+    },
+    {
+      "userContextId": 4294967295,
+      "public": false,
+      "icon": "",
+      "color": "",
+      "name": "userContextIdInternal.webextStorageLocal",
+      "accessKey": ""
+    },
+    {
+      "userContextId": 6,
+      "public": true,
+      "icon": "fingerprint",
+      "color": "purple",
+      "name": "🦢 Elsewhere Conservatory"
+    }
+  ]
+}

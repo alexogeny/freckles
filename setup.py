@@ -26,6 +26,7 @@ from utils.firefox import (
     apply_firefox_policies,
     apply_firefox_user_js,
     apply_firefox_handlers,
+    apply_firefox_containers,
     extension_already_installed,
     find_firefox_profile,
     get_extension_json,
@@ -362,6 +363,8 @@ def configure_firefox_phase(reporter: StepReporter) -> None:
                 return
             with managed_step(reporter, "Apply user.js preferences"):
                 apply_firefox_user_js(profile)
+            with managed_step(reporter, "Apply containers.json"):
+                apply_firefox_containers(profile)
             extension_data = get_extension_json(profile)
             with managed_step(reporter, "Install Firefox extensions"):
                 for extension_id, extension_name in EXTENSIONS_TO_INSTALL.items():
