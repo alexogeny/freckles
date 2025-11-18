@@ -128,4 +128,110 @@
   toolbarseparator {
     border-color: var(--freckles-border) !important;
   }
+
+  /* Vertical tabs styling */
+  #vertical-tabs,
+  #tabbrowser-arrowscrollbox[orient="vertical"],
+  #pinned-tabs-container[orient="vertical"] {
+    background-color: var(--freckles-bg-2) !important;
+    color: var(--freckles-text) !important;
+    border: 0 !important;
+  }
+
+  #vertical-tabs {
+    padding: 4px;
+  }
+
+  #tabbrowser-tabs[orient="vertical"] {
+    --tab-min-height: 40px;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+  }
+
+  #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab {
+    font-size: 0.96rem;
+    margin: 0;
+    width: 100%;
+  }
+
+  #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab .tab-stack {
+    width: 100%;
+  }
+
+  #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab .tab-content {
+    padding-inline: 12px;
+    width: 100%;
+  }
+
+  #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab .tab-stack,
+  #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab .tab-background {
+    border-radius: 10px !important;
+  }
+
+  #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab .tab-background {
+    background-color: transparent !important;
+    width: 100%;
+  }
+
+  #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab[selected="true"] .tab-background {
+    background-color: var(--freckles-bg) !important;
+    box-shadow: 0 0 0 1px var(--freckles-border) inset !important;
+  }
+
+  #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab:not([selected="true"]) .tab-background {
+    background-color: var(--freckles-bg-3) !important;
+  }
+
+  #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab:not([selected="true"]):hover .tab-background {
+    background-color: var(--freckles-bg-2) !important;
+  }
+
+  #tabbrowser-tabs[orient="vertical"] .tab-label {
+    color: var(--freckles-text-muted) !important;
+  }
+
+  #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab[selected="true"] .tab-label {
+    color: #ffffff !important;
+  }
+
+  #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab:not([selected="true"]):hover .tab-label {
+    color: var(--freckles-text) !important;
+  }
+
+  #tabbrowser-tabs[orient="vertical"] .tab-close-button {
+    fill: var(--freckles-text-muted) !important;
+  }
+
+  #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab[selected="true"] .tab-close-button {
+    fill: var(--freckles-text) !important;
+  }
+
+  #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab:hover .tab-close-button {
+    fill: var(--freckles-text) !important;
+  }
+
+  #vertical-tabs-newtab-button,
+  #tabbrowser-arrowscrollbox[orient="vertical"] > #tabbrowser-arrowscrollbox-periphery > #tabs-newtab-button {
+    background-color: var(--freckles-bg-3) !important;
+    color: var(--freckles-text) !important;
+    border: 1px solid transparent !important;
+    width: Calc(100% - 8px);
+    margin: 8px 4px 0;
+  }
+
+  #vertical-tabs-newtab-button:hover,
+  #tabbrowser-arrowscrollbox[orient="vertical"] > #tabbrowser-arrowscrollbox-periphery > #tabs-newtab-button:hover {
+    background-color: var(--freckles-bg-2) !important;
+    color: #ffffff !important;
+    border-color: var(--freckles-border) !important;
+  }
+
+  #pinned-tabs-container[orient="vertical"] .tabbrowser-tab .tab-background[selected="true"] {
+    background-color: var(--freckles-bg) !important;
+  }
+
+  #pinned-tabs-container[orient="vertical"] .tabbrowser-tab:not([selected="true"]) .tab-background {
+    background-color: var(--freckles-bg-3) !important;
+  }
 }
