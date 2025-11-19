@@ -8,7 +8,7 @@ import re
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import Callable, Iterable, List, Optional
 
 from .meta import (
     CONFIG_DIR,
@@ -188,15 +188,35 @@ def _prompt(prompt: str, default: Optional[str] = None, allow_empty: bool = Fals
         print("Value is required. Please try again.")
 
 
+def _prompt_with_validation(
+    prompt: str,
+    *,
+    default: Optional[str] = None,
+    allow_empty: bool = False,
+    validator: Optional[Callable[[str], Optional[str]]] = None,
+) -> str:
+    while True:
+        answer = _prompt(prompt, default=default, allow_empty=allow_empty)
+        if validator is None:
+            return answer
+        error = validator(answer)
+        if error:
+            print(error)
+            continue
+        return answer
+
+
 def _prompt_choice(prompt: str, choices: Iterable[str], default: Optional[str] = None) -> str:
     normalised_choices = [choice.lower() for choice in choices]
     default_value = default.lower() if default else None
-    options = ", ".join(normalised_choices)
-    while True:
-        answer = _prompt(f"{prompt} ({options})", default=default_value)
-        if answer.lower() in normalised_choices:
-            return answer.lower()
-        print(f"Please choose one of: {options}.")
+
+    def validator(answer: str) -> Optional[str]:
+        lowered = answer.lower()
+        if lowered in normalised_choices:
+            return None
+        return f"Please choose one of: {', '.join(normalised_choices)}."
+
+    return _prompt_with_validation(f"{prompt} ({', '.join(normalised_choices)})", default=default_value, validator=validator)
 
 
 def _prompt_yes_no(prompt: str, default: bool = False) -> bool:
@@ -367,4 +387,3 @@ def ensure_account_config(interactive: bool = True) -> AccountConfig:
     config = prompt_for_account_config()
     save_account_config(config)
     return config
-

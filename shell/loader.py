@@ -1,113 +1,150 @@
+"""Animated spinner wrapper used when provisioning long-running commands."""
+
+from __future__ import annotations
+
 import argparse
 import shutil
 import subprocess
 import sys
 import time
-from queue import Queue
+from dataclasses import dataclass
+from queue import Empty, Queue
 from threading import Thread
+from typing import Callable, List, Sequence, Tuple
 
 from nailpolish import BLUE, GRAY, GREEN, RED, RESET
 
-BRAILLE_SPINNER = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+BRAILLE_SPINNER: Tuple[str, ...] = tuple("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏")
+ERASE_LINE = "\033[K"
+CURSOR_UP = "\033[1A"
 
 
-def get_terminal_size():
-    return shutil.get_terminal_size((80, 20))
+class TerminalWriter:
+    """Minimal abstraction for writing terminal output.
+
+    A dedicated writer makes :class:`SpinnerDisplay` easier to test without
+    touching the actual stdout stream.
+    """
+
+    def __init__(self, write: Callable[[str], None] | None = None, flush: Callable[[], None] | None = None):
+        self._write = write or sys.stdout.write
+        self._flush = flush or sys.stdout.flush
+
+    def write(self, text: str) -> None:
+        self._write(text)
+
+    def writeln(self, text: str = "") -> None:
+        self._write(f"{text}\n")
+
+    def flush(self) -> None:
+        self._flush()
 
 
-def clear_lines(n):
-    for _ in range(n):
-        sys.stdout.write("\033[1A")  # Move cursor up one line
-        sys.stdout.write("\033[K")  # Clear the line
+def terminal_dimensions() -> Tuple[int, int]:
+    """Return (width, height) using sensible fallbacks."""
+    size = shutil.get_terminal_size((80, 24))
+    return size.columns, size.lines
 
 
-def enqueue_output(out, queue):
-    for line in iter(out.readline, b""):
-        queue.put(line.decode().strip())
-    out.close()
+def clear_previous_lines(line_count: int) -> None:
+    """Move the cursor up ``line_count`` rows and clear each line."""
+    for _ in range(max(line_count, 0)):
+        sys.stdout.write(f"{CURSOR_UP}{ERASE_LINE}")
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="A loading spinner with command output"
-    )
-    parser.add_argument("message", help="The message to display")
-    parser.add_argument("command", help="The command to run", nargs=argparse.REMAINDER)
-    args = parser.parse_args()
+def enqueue_output(stream, queue: Queue[str]) -> None:
+    """Feed each stdout/stderr line into a queue for async consumption."""
+    for line in iter(stream.readline, ""):
+        queue.put(line.rstrip("\n"))
+    stream.close()
 
-    message = args.message
-    command = args.command
 
-    if not command:
-        print("Error: No command provided.")
-        sys.exit(1)
+@dataclass
+class SpinnerDisplay:
+    message: str
+    command: Sequence[str]
+    refresh_interval: float = 0.1
+    writer: TerminalWriter = TerminalWriter()
 
-    spinner_index = 0
-    output_queue = Queue()
-    output_lines = []
+    def run(self) -> int:
+        width, height = terminal_dimensions()
+        max_lines = max(height - 3, 1)
+        buffer: List[str] = []
+        queue: Queue[str] = Queue()
+        spinner_index = 0
 
-    terminal_width, terminal_height = get_terminal_size()
-    max_output_lines = terminal_height - 3  # Reserve 3 lines for spinner and message
-
-    try:
-        process = subprocess.Popen(
-            command,
+        process = subprocess.Popen(  # noqa: PLW1510 - intentional background process
+            self.command,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            bufsize=1,
             universal_newlines=True,
+            bufsize=1,
         )
+        assert process.stdout is not None  # appease type-checkers
 
-        # Start thread to read output
-        t = Thread(target=enqueue_output, args=(process.stdout, output_queue))
-        t.daemon = True
-        t.start()
+        reader = Thread(target=enqueue_output, args=(process.stdout, queue), daemon=True)
+        reader.start()
 
-        while process.poll() is None:
-            # Get all lines currently in the queue
-            while not output_queue.empty():
-                line = output_queue.get_nowait()
-                output_lines.append(line)
-                if len(output_lines) > max_output_lines:
-                    output_lines.pop(0)
+        try:
+            while process.poll() is None:
+                self._drain_queue(queue, buffer, max_lines)
+                self._render_frame(buffer, width, spinner_index)
+                spinner_index = (spinner_index + 1) % len(BRAILLE_SPINNER)
+                time.sleep(self.refresh_interval)
+            # Flush any trailing lines after process completion.
+            self._drain_queue(queue, buffer, max_lines)
+            self._render_completion(process.returncode or 0)
+            return process.returncode or 0
+        except KeyboardInterrupt:
+            process.terminate()
+            self.writer.writeln("\nProcess interrupted by user.")
+            return 1
 
-            # Clear previous output
-            clear_lines(len(output_lines) + 2)
+    def _drain_queue(self, queue: Queue[str], buffer: List[str], max_lines: int) -> None:
+        while True:
+            try:
+                line = queue.get_nowait()
+            except Empty:
+                break
+            buffer.append(line)
+            if len(buffer) > max_lines:
+                del buffer[0]
 
-            # Print the message and spinner
-            print(f"{BLUE}{message}{RESET}")
-            print(f"{BRAILLE_SPINNER[spinner_index]}", end="", flush=True)
+    def _render_frame(self, buffer: Sequence[str], width: int, spinner_index: int) -> None:
+        clear_previous_lines(len(buffer) + 2)
+        self.writer.writeln(f"{BLUE}{self.message}{RESET}")
+        self.writer.write(f"{BRAILLE_SPINNER[spinner_index]}")
+        self.writer.flush()
+        for line in buffer:
+            trimmed = line[: max(width - 1, 1)]
+            self.writer.write(f"\n{GRAY}{trimmed}{RESET}")
 
-            # Print scrolling output
-            for line in output_lines:
-                print(f"\n{GRAY}{line[:terminal_width-1]}{RESET}", end="")
-
-            spinner_index = (spinner_index + 1) % len(BRAILLE_SPINNER)
-            time.sleep(0.1)
-
-        # Get any remaining output
-        while not output_queue.empty():
-            line = output_queue.get_nowait()
-            output_lines.append(line)
-            if len(output_lines) > max_output_lines:
-                output_lines.pop(0)
-
-        # Clear the spinner line
-        print("\r", end="", flush=True)
-
-        # Print final status
-        exit_code = process.returncode
+    def _render_completion(self, exit_code: int) -> None:
+        self.writer.write("\r")
+        self.writer.flush()
         status = "OK" if exit_code == 0 else f"NOT OK ({exit_code})"
-        if status == "OK":
-            print(f"{GREEN}{message} ... {status}{RESET}")
-        else:
-            print(f"{RED}{message} ... {status}{RESET}")
+        colour = GREEN if exit_code == 0 else RED
+        self.writer.writeln(f"{colour}{self.message} ... {status}{RESET}")
 
-        sys.exit(exit_code)
 
-    except KeyboardInterrupt:
-        print("\nProcess interrupted by user.")
-        sys.exit(1)
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Show a spinner for a command.")
+    parser.add_argument("message", help="Status text to display above the spinner.")
+    parser.add_argument(
+        "command",
+        nargs=argparse.REMAINDER,
+        help="Command to execute (specify after -- if invoking via python).",
+    )
+    args = parser.parse_args()
+    if not args.command:
+        parser.error("No command provided.")
+    return args
+
+
+def main() -> None:
+    args = parse_args()
+    spinner = SpinnerDisplay(message=args.message, command=args.command)
+    sys.exit(spinner.run())
 
 
 if __name__ == "__main__":

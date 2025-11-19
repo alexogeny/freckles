@@ -1,3 +1,4 @@
+/* Freckles GTK4 palette (inlined to avoid shared includes). */
 @define-color freckles_bg #0d1018;
 @define-color freckles_surface #10131a;
 @define-color freckles_surface_alt #141926;
@@ -11,6 +12,20 @@
 @define-color freckles_warning #ffd26f;
 @define-color freckles_success #6fe2b3;
 @define-color freckles_selection rgba(125, 178, 255, 0.25);
+
+/* Legacy GTK color slots some apps still reference (e.g., Nautilus). */
+@define-color theme_bg_color @freckles_bg;
+@define-color theme_fg_color @freckles_text;
+@define-color theme_base_color @freckles_surface;
+@define-color theme_text_color @freckles_text;
+@define-color theme_selected_bg_color @freckles_accent;
+@define-color theme_selected_fg_color @freckles_accent_fg;
+@define-color insensitive_fg_color @freckles_text_muted;
+@define-color insensitive_bg_color @freckles_surface_alt;
+@define-color osd_bg_color rgba(16, 19, 26, 0.92);
+@define-color osd_fg_color @freckles_text;
+@define-color titlebar_bg_color @freckles_surface;
+@define-color titlebar_fg_color @freckles_text;
 
 @define-color accent_color @freckles_accent;
 @define-color accent_bg_color @freckles_accent;
@@ -31,11 +46,46 @@ textview text {
 
 .navigation-sidebar,
 .sidebar,
+.navigation-sidebar .view,
+.navigation-sidebar listview,
+.navigation-sidebar treeview,
+.sidebar .view,
+.sidebar listview,
+.sidebar treeview,
 paned > separator,
 .pane-separator {
   background-color: @freckles_surface;
   color: @freckles_text_muted;
   border-color: @freckles_border;
+}
+
+.navigation-sidebar listview,
+.navigation-sidebar treeview,
+.sidebar listview,
+.sidebar treeview {
+  border-radius: 16px;
+  padding: 6px;
+}
+
+.navigation-sidebar row,
+.navigation-sidebar listview row,
+.navigation-sidebar treeview row,
+.sidebar row,
+.sidebar listview row,
+.sidebar treeview row {
+  background-color: transparent;
+  color: @freckles_text_muted;
+}
+
+.navigation-sidebar row:selected,
+.navigation-sidebar listview row:selected,
+.navigation-sidebar treeview row:selected,
+.sidebar row:selected,
+.sidebar listview row:selected,
+.sidebar treeview row:selected {
+  background-color: @freckles_surface_highlight;
+  color: @freckles_text;
+  border-color: @freckles_accent;
 }
 
 headerbar,
@@ -46,6 +96,21 @@ headerbar.default-decoration,
   color: @freckles_text;
   border-bottom: 1px solid @freckles_border;
   box-shadow: none;
+}
+
+.titlebar button.titlebutton,
+headerbar button.titlebutton {
+  background-color: @freckles_surface_alt;
+  color: @freckles_text;
+  border-radius: 999px;
+  border: 1px solid @freckles_border;
+  min-height: 28px;
+}
+
+.titlebar button.titlebutton:hover,
+headerbar button.titlebutton:hover {
+  background-color: @freckles_surface_highlight;
+  border-color: @freckles_accent;
 }
 
 .titlebar button,

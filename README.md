@@ -35,6 +35,14 @@ uv run setup.py
 - syncs the freckles shell helpers such as the fuzzy `nn` navigator and keeps
   the workstation ready for daily development
 
+### Terminal experience
+
+Provisioning now uses a lightweight CLI spinner for sub-commands and an inline
+GNOME/TTY dashboard while `setup.py` runs. The dashboard keeps the checklist of
+phases pinned to the top of the terminal and streams contextual log lines for
+the active task beneath it (similar to Docker builds). When running in a
+non-interactive environment the legacy log stream remains available.
+
 Ubuntu specific:
 
 - removes snap
@@ -47,6 +55,18 @@ Firefox is now managed through templates in `firefox/policies.json` and
 restore the curated performance defaults. Edit the templates directly if you
 want to tweak caching behaviour, enable specific features, or relax any of the
 locked preferences.
+
+## Development
+
+Install [uv](https://github.com/astral-sh/uv) and then run:
+
+```shell
+uv run python -m pytest
+```
+
+That command exercises the spinner, SSH config helpers, reporter dashboard, and
+GNOME automation logic. Use `uv run setup.py -- --help` to inspect the CLI,
+and see `docs/` for subsystem-specific details.
 
 ## TODO
 

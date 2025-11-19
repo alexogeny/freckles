@@ -3,7 +3,8 @@ import pwd
 import re
 import sys
 from contextlib import contextmanager
-from typing import Dict, List, Optional
+from dataclasses import dataclass
+from typing import Callable, Dict, List, Optional
 
 from utils.avatar import manage_avatar
 from utils.bun import install_bun
@@ -140,6 +141,14 @@ software_list = [
         check_name="mozillavpn",
     ),
 ]
+
+
+@dataclass(frozen=True)
+class Phase:
+    """Represents a provisioning phase surfaced to the StepReporter."""
+
+    name: str
+    handler: Callable[[StepReporter], None]
 
 _docker_repo = _docker_repository_definition()
 if _docker_repo:
@@ -380,27 +389,29 @@ def configure_firefox_phase(reporter: StepReporter) -> None:
                 apply_firefox_handlers(profile)
 
 
+def _build_phases() -> List[Phase]:
+    return [
+        Phase("APT refresh", refresh_apt_phase),
+        Phase("Base packages", install_base_packages_phase),
+        Phase("Ubuntu cleanup", ubuntu_cleanup_phase),
+        Phase("Remove stock software", remove_unwanted_packages_phase),
+        Phase("Curated software", install_curated_software_phase),
+        Phase("Developer tooling", configure_developer_tooling_phase),
+        Phase("Shell and terminal", configure_shell_terminal_phase),
+        Phase("GNOME setup", configure_gnome_phase),
+        Phase("Avatar management", manage_avatar_phase),
+        Phase("Calibre setup", configure_calibre_phase),
+        Phase("Debian bookworm upgrade", upgrade_bookworm_phase),
+        Phase("Firefox configuration", configure_firefox_phase),
+    ]
+
+
 def main() -> None:
+    """Entry point for provisioning a workstation."""
     if not is_debian_like():
         sys.exit("Freckles currently supports Debian and Ubuntu systems only.")
 
-    phases = [
-        ("APT refresh", refresh_apt_phase),
-        ("Base packages", install_base_packages_phase),
-        ("Ubuntu cleanup", ubuntu_cleanup_phase),
-        ("Remove stock software", remove_unwanted_packages_phase),
-        ("Curated software", install_curated_software_phase),
-        ("Developer tooling", configure_developer_tooling_phase),
-        ("Shell and terminal", configure_shell_terminal_phase),
-        ("GNOME setup", configure_gnome_phase),
-        ("Avatar management", manage_avatar_phase),
-        ("Calibre setup", configure_calibre_phase),
-        ("Debian bookworm upgrade", upgrade_bookworm_phase),
-        ("Firefox configuration", configure_firefox_phase),
-    ]
-
-    # Swap the ``theme`` argument to experiment with alternative colour palettes
-    # while reusing the same reporting infrastructure.
+    phases = _build_phases()
     reporter = StepReporter(
         total_top_level=len(phases),
         min_step_duration=0.35,
@@ -409,9 +420,9 @@ def main() -> None:
     )
     try:
         with reporter:
-            for label, phase in phases:
-                with managed_step(reporter, label):
-                    phase(reporter)
+            for phase in phases:
+                with managed_step(reporter, phase.name):
+                    phase.handler(reporter)
     except Exception:
         if reporter.needs_final_summary:
             emit_summary(reporter.summary())

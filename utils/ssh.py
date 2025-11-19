@@ -23,12 +23,20 @@ github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okW
 github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=
 github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+VTTvDP6mHBL9j1aNUkY4Ue1gvwnGLVlOhGeYrnZaMgRK6+PKCUXaDbC7qtbW8gIkhL7aGCsOr/C56SJMy/BCZfxd1nWzAOxSDPgVsmerOBYfNqltV9/hWCqBywINIR+5dIg6JTJ72pcEpEjcYgXkE2YEFXV1JHnsKgbLWNlhScqb2UmyRkQyytRLtL+38TGxkxCflmO+5Z8CSSNY7GidjMIZ7Q4zMjA2n1nGrlTDkzwDCsw+wqFPGQA179cnfGWOWRVruj16z6XyvxvjJwbz0wQZ75XK5tKSb7FNyeIEs4TT4jk+S4dhPeAUC5y+bDYirYgM4GC7uEnztnZyaVWQ7B381AK4Qdrwt51ZqExKbQpTUNn+EjqoTwvqNj4kqx5QUCI0ThS/YkOxJCXmPUWZbhjpCg56i+2aB6CmK2JGhn57K5mj0MNdBXA4/WnwH6XoPWJzK5Nyu2zB3nAZp+S5hpQs+p1vN1/wsjk=
 """)
+
+
 def write_known_hosts() -> None:
-    if not KNOWN_HOSTS.exists():
-        KNOWN_HOSTS.write_text(known_hosts_content)
+    """Ensure GitHub/GitLab host keys exist locally to avoid interactive prompts."""
+    if KNOWN_HOSTS.exists():
+        return
+    KNOWN_HOSTS.write_text(known_hosts_content)
+
+
+IDENTITY_PATTERN = re.compile(r"^(\s*)IdentityFile\s+(.+)$", re.IGNORECASE)
 
 
 def _format_identity_path(path: Path) -> str:
+    """Render a human-friendly identity path relative to ``HOME`` when possible."""
     try:
         return f"~/{path.relative_to(HOME).as_posix()}"
     except ValueError:
@@ -36,6 +44,7 @@ def _format_identity_path(path: Path) -> str:
 
 
 def _render_host_block(account: GitAccount, identity_file: Path) -> str:
+    """Return a canonical ``Host`` block for the provided account."""
     identity = _format_identity_path(identity_file)
     block = textwrap.dedent(
         f"""
@@ -49,115 +58,127 @@ def _render_host_block(account: GitAccount, identity_file: Path) -> str:
     return block
 
 
+def _host_pattern(alias: str) -> re.Pattern[str]:
+    return re.compile(rf"(^Host {re.escape(alias)}\n(?:[\t ].*\n?)*)", re.MULTILINE)
+
+
+def _canonical_identity_line(path: Path) -> str:
+    return f"    IdentityFile {_format_identity_path(path)}"
+
+
+def _normalize_block(block: str, identity_line: str, slug_fragment: str) -> Tuple[str, bool]:
+    """Ensure the host block contains the canonical IdentityFile line."""
+    normalized = block if block.endswith("\n") else f"{block}\n"
+    lines = normalized.rstrip("\n").split("\n")
+    header, *rest = lines
+    new_rest = []
+    identity_present = False
+
+    for line in rest:
+        match = IDENTITY_PATTERN.match(line)
+        if not match:
+            new_rest.append(line)
+            continue
+
+        indent, value = match.groups()
+        cleaned = value.strip().strip('"\'' )
+        canonical_value = identity_line.split(None, 1)[1]
+        if cleaned == canonical_value or slug_fragment in cleaned:
+            identity_present = True
+            new_rest.append(f"{indent}IdentityFile {canonical_value}")
+        else:
+            new_rest.append(line)
+
+    if not identity_present:
+        new_rest.append(identity_line)
+
+    updated = "\n".join([header] + new_rest)
+    if not updated.endswith("\n"):
+        updated += "\n"
+    return updated, updated != normalized
+
+
 def _ensure_config_entry(
     account: GitAccount,
     existing_config: str,
     *,
     identity_file: Optional[Path] = None,
 ) -> Tuple[str, bool]:
-    host_alias = account.ssh_alias
+    """Insert or update the SSH config block for ``account``."""
     identity_path = identity_file or (SSH_DIR / f"{account.slug}.{account.provider}")
     new_block = _render_host_block(account, identity_path)
-    pattern = re.compile(
-        rf"(^Host {re.escape(host_alias)}\n(?:[\t ].*\n?)*)",
-        re.MULTILINE,
-    )
+    pattern = _host_pattern(account.ssh_alias)
     match = pattern.search(existing_config)
     if match:
         current_block = match.group(1)
-        normalized_current = current_block
-        if not normalized_current.endswith("\n"):
-            normalized_current += "\n"
-
-        identity_line = f"    IdentityFile {_format_identity_path(identity_path)}"
-        identity_value = identity_line.split(None, 1)[1]
+        identity_line = _canonical_identity_line(identity_path)
         slug_fragment = f"{account.slug}.{account.provider}"
-        identity_pattern = re.compile(r"^(\s*)IdentityFile\s+(.+)$", re.IGNORECASE)
-
-        lines = normalized_current.rstrip("\n").split("\n")
-        header, *rest = lines
-        new_rest = []
-        identity_present = False
-
-        for line in rest:
-            match_identity = identity_pattern.match(line)
-            if not match_identity:
-                new_rest.append(line)
-                continue
-
-            indent, value = match_identity.groups()
-            value = value.strip()
-            unquoted = value.strip('"\'')
-
-            if unquoted == identity_value:
-                identity_present = True
-                new_rest.append(f"{indent}IdentityFile {identity_value}")
-                continue
-
-            if slug_fragment in unquoted:
-                identity_present = True
-                if unquoted != identity_value:
-                    new_rest.append(f"{indent}IdentityFile {identity_value}")
-                else:
-                    new_rest.append(line)
-                continue
-
-            new_rest.append(line)
-
-        if not identity_present:
-            new_rest.append(identity_line)
-
-        updated_block = "\n".join([header] + new_rest)
-        if not updated_block.endswith("\n"):
-            updated_block += "\n"
-
-        if updated_block == normalized_current:
+        updated_block, changed = _normalize_block(current_block, identity_line, slug_fragment)
+        if not changed:
             return existing_config, False
-
         updated = existing_config[: match.start()] + updated_block + existing_config[match.end() :]
         return updated, True
 
-    updated_config = existing_config
-    if updated_config and not updated_config.endswith("\n"):
+    updated_config = existing_config.rstrip("\n")
+    if updated_config:
         updated_config += "\n"
     updated_config += new_block
     return updated_config, True
 
 
-def configure_ssh():
+def configure_ssh() -> None:
+    """Provision the shared SSH identity and update user config."""
     write_known_hosts()
     interactive = sys.stdin.isatty()
     config = get_account_config(interactive=interactive)
-    existing_config = SSH_CONFIG.read_text() if SSH_CONFIG.exists() else ""
-    default_account = config.get_default()
-    shared_material = ensure_shared_ssh_key(default_account.email)
+    shared_material = ensure_shared_ssh_key(config.get_default().email)
     if shared_material is None:
         print("Skipping shared SSH setup because the key could not be generated.")
         return
 
-    config_changed = False
+    config_text = _load_ssh_config()
+    config_text, changed = _synchronise_accounts(config, config_text, shared_material.private_key_path)
+    if changed:
+        _write_ssh_config(config_text)
+
+    _add_key_to_agent(shared_material.private_key_path)
+    outputs = publish_public_material(shared_material, None)
+    _print_summary(config, outputs, shared_material)
+
+
+def _load_ssh_config() -> str:
+    if not SSH_CONFIG.exists():
+        return ""
+    return SSH_CONFIG.read_text()
+
+
+def _write_ssh_config(config_text: str) -> None:
+    cleaned = config_text if config_text.endswith("\n") else f"{config_text}\n"
+    SSH_DIR.mkdir(parents=True, exist_ok=True)
+    SSH_CONFIG.write_text(cleaned)
+
+
+def _synchronise_accounts(config, existing_config: str, identity_path: Path) -> Tuple[str, bool]:
+    changed = False
     for account in config.accounts:
-        existing_config, changed = _ensure_config_entry(
+        existing_config, updated = _ensure_config_entry(
             account,
             existing_config,
-            identity_file=shared_material.private_key_path,
+            identity_file=identity_path,
         )
-        config_changed = config_changed or changed
+        changed = changed or updated
+    return existing_config, changed
 
-    if config_changed:
-        if existing_config and not existing_config.endswith("\n"):
-            existing_config += "\n"
-        SSH_DIR.mkdir(parents=True, exist_ok=True)
-        SSH_CONFIG.write_text(existing_config)
 
-    add_result = run(
-        f"ssh-add {shlex.quote(shared_material.private_key_path.as_posix())}"
-    )
-    if add_result.returncode != 0:
-        message = add_result.stderr.strip() or add_result.stdout.strip() or "unknown error"
-        print(f"Failed to add shared SSH key to ssh-agent: {message}")
+def _add_key_to_agent(identity_path: Path) -> None:
+    add_result = run(f"ssh-add {shlex.quote(identity_path.as_posix())}")
+    if add_result.returncode == 0:
+        return
+    message = add_result.stderr.strip() or add_result.stdout.strip() or "unknown error"
+    print(f"Failed to add shared SSH key to ssh-agent: {message}")
 
-    outputs = publish_public_material(shared_material, None)
+
+def _print_summary(config, outputs, shared_material) -> None:
     public_path = outputs.get("ssh_public")
     fingerprint_path = outputs.get("ssh_fingerprint")
     summary = [
@@ -171,5 +192,3 @@ def configure_ssh():
         summary.append(f"  Fingerprint file: {fingerprint_path}")
     summary.append("Upload this public key to your Git hosting services.")
     print("\n".join(summary))
-
-
