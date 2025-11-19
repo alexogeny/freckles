@@ -13,6 +13,13 @@ from typing import Callable, Deque, Dict, List, Optional, Tuple
 
 from shell import nailpolish
 
+ALT_SCREEN_ON = "\033[?1049h"
+ALT_SCREEN_OFF = "\033[?1049l"
+HIDE_CURSOR = "\033[?25l"
+SHOW_CURSOR = "\033[?25h"
+
+LogEntry = Tuple[Tuple[str, ...], str]
+
 
 @dataclass(frozen=True)
 class Theme:
@@ -230,6 +237,10 @@ class Step:
 class StepReporter:
     """Collects hierarchical step information and renders progress messages."""
 
+    _LOG_HISTORY = 200
+    _LOG_WINDOW = 40
+    _SCROLLED_ICONS = {"•", "?"}
+
     def __init__(
         self,
         printer: Callable[[str], None] | None = None,
@@ -245,25 +256,16 @@ class StepReporter:
         self._root = Step(name="__root__", depth=-1)
         self._stack: List[Step] = [self._root]
         self._min_step_duration = max(min_step_duration, 0.0)
-        self._structured_display = bool(
-            printer is None and getattr(sys.stdout, "isatty", lambda: False)()
-        )
-        self._use_alt_screen = self._structured_display
-        animation_enabled = (
-            not self._structured_display and printer is None and enable_animation
-        )
-        self._animator = (
-            None
-            if not animation_enabled
-            else StatusAnimator(self._theme, pulse_enabled=enable_pulse)
+        self._structured_display = self._should_use_structured_display(printer)
+        self._animator = self._build_animator(
+            enable_animation=enable_animation, enable_pulse=enable_pulse, printer=printer
         )
         self._total_top_level = total_top_level or 0
         self._completed_top_level = 0
         self._animator_finalized = False
         self._input_patch_depth = 0
         self._original_input: Optional[Callable[[str], str]] = None
-        self._log_buffer: Deque[Tuple[Tuple[str, ...], str]] = deque(maxlen=200)
-        self._log_window = 40
+        self._log_buffer: Deque[LogEntry] = deque(maxlen=self._LOG_HISTORY)
         self._scene_active = False
 
     def __enter__(self) -> "StepReporter":
@@ -291,17 +293,34 @@ class StepReporter:
     def needs_final_summary(self) -> bool:
         return not self._structured_display
 
+    def _should_use_structured_display(self, printer: Optional[Callable[[str], None]]) -> bool:
+        if printer is not None:
+            return False
+        stream = getattr(sys.stdout, "isatty", None)
+        return bool(stream and stream())
+
+    def _build_animator(
+        self,
+        *,
+        enable_animation: bool,
+        enable_pulse: bool,
+        printer: Optional[Callable[[str], None]],
+    ) -> Optional[StatusAnimator]:
+        if not enable_animation or printer is not None or self._structured_display:
+            return None
+        return StatusAnimator(self._theme, pulse_enabled=enable_pulse)
+
     def _activate_scene(self) -> None:
-        if not self._use_alt_screen or self._scene_active:
+        if self._scene_active:
             return
-        sys.stdout.write("\033[?1049h\033[?25l")
+        sys.stdout.write(f"{ALT_SCREEN_ON}{HIDE_CURSOR}")
         sys.stdout.flush()
         self._scene_active = True
 
     def _deactivate_scene(self, final_message: Optional[str]) -> None:
         if not self._scene_active:
             return
-        sys.stdout.write("\033[?25h\033[?1049l")
+        sys.stdout.write(f"{SHOW_CURSOR}{ALT_SCREEN_OFF}")
         sys.stdout.flush()
         self._scene_active = False
         if final_message:
@@ -418,8 +437,10 @@ class StepReporter:
         if not self._structured_display:
             self._print(colored)
             return
-        if icon in {"•", "?"}:
-            self._log_buffer.append((self._active_path(), colored))
+        if icon in self._SCROLLED_ICONS:
+            path = self._active_path()
+            if path:
+                self._log_buffer.append((path, colored))
         self._render_scene()
 
     @staticmethod
@@ -430,28 +451,30 @@ class StepReporter:
     def _active_path(self) -> Tuple[str, ...]:
         return tuple(step.name for step in self._stack[1:])
 
+    def _scoped_logs(self, active_path: Tuple[str, ...]) -> List[str]:
+        if not active_path:
+            return []
+        scoped = [line for path, line in self._log_buffer if path == active_path]
+        return scoped[-self._LOG_WINDOW :]
+
+    def _log_placeholder(self, active_path: Tuple[str, ...]) -> str:
+        if active_path:
+            path_text = " › ".join(active_path)
+            message = f"Working on {path_text}…"
+        else:
+            message = "Awaiting next step…"
+        return self._colorize(self._theme.log, message)
+
     def _render_scene(self) -> None:
         if not self._structured_display:
             return
         board_lines = self._build_board_lines()
         active_path = self._active_path()
-        if not active_path:
-            log_lines: List[str] = []
-        else:
-            scoped = [line for path, line in self._log_buffer if path == active_path]
-            log_lines = scoped[-self._log_window :]
+        log_lines = self._scoped_logs(active_path)
         output: List[str] = ["\033[H\033[J"]
         output.extend(board_lines)
         output.append("")
-        if log_lines:
-            output.extend(log_lines)
-        else:
-            if active_path:
-                path_text = " › ".join(active_path)
-                placeholder = self._colorize(self._theme.log, f"Working on {path_text}…")
-            else:
-                placeholder = self._colorize(self._theme.log, "Awaiting next step…")
-            output.append(placeholder)
+        output.extend(log_lines or [self._log_placeholder(active_path)])
         scene = "\n".join(output)
         sys.stdout.write(scene)
         sys.stdout.write("\n")
