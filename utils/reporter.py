@@ -4,11 +4,12 @@ import builtins
 import sys
 import threading
 import time
+from collections import deque
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from enum import Enum
 from itertools import cycle
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Deque, Dict, List, Optional, Tuple
 
 from shell import nailpolish
 
@@ -50,20 +51,14 @@ class StatusAnimator:
     _FRAMES = tuple("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏")
     _INTERVAL = 0.1
 
-    _SINGLE_SEGMENT_PULSE = (
+    _PULSE_WAVE = (
         nailpolish.DIM,
         nailpolish.DIM,
         nailpolish.NORMAL,
-        nailpolish.NORMAL,
         nailpolish.BRIGHT,
         nailpolish.BRIGHT,
         nailpolish.NORMAL,
-        nailpolish.NORMAL,
-    )
-
-    _NEIGHBOUR_STYLES = (
-        nailpolish.BRIGHT,
-        nailpolish.NORMAL,
+        nailpolish.DIM,
         nailpolish.DIM,
     )
 
@@ -81,7 +76,7 @@ class StatusAnimator:
         self._pulse_enabled = pulse_enabled
         self._glow_index = 0
         self._glow_tick = 0
-        self._single_pulse_index = 0
+        self._pulse_phase = 0
 
     def pause(self) -> None:
         if not self.enabled or self._thread is None:
@@ -99,7 +94,7 @@ class StatusAnimator:
             self._status = status
             self._glow_index = 0
             self._glow_tick = 0
-            self._single_pulse_index = 0
+            self._pulse_phase = 0
         self._paused.clear()
         if self._thread is None:
             self._stop.clear()
@@ -113,7 +108,7 @@ class StatusAnimator:
             self._status = status
             self._glow_index = 0
             self._glow_tick = 0
-            self._single_pulse_index = 0
+            self._pulse_phase = 0
 
     def stop(self, final_status: Optional[str] = None) -> None:
         if not self.enabled:
@@ -160,36 +155,48 @@ class StatusAnimator:
             return status.raw
         segment_count = len(status.segments)
         if segment_count == 1:
-            style = StatusAnimator._SINGLE_SEGMENT_PULSE[self._single_pulse_index]
-            segment = f"{style}{status.segments[0]}{nailpolish.RESET}"
+            segment = self._pulse_segment(status.segments[0])
             return f"{status.prefix}{segment}"
         parts: List[str] = []
         for index, segment in enumerate(status.segments):
             distance = (index - self._glow_index) % segment_count
             if distance == 0:
-                style = StatusAnimator._NEIGHBOUR_STYLES[0]
+                parts.append(self._pulse_segment(segment))
             elif distance == 1 or distance == segment_count - 1:
-                style = StatusAnimator._NEIGHBOUR_STYLES[1]
+                parts.append(self._wrap_segment(segment, nailpolish.NORMAL))
             else:
-                style = StatusAnimator._NEIGHBOUR_STYLES[2]
-            parts.append(f"{style}{segment}{nailpolish.RESET}")
+                parts.append(self._wrap_segment(segment, nailpolish.DIM))
         return f"{status.prefix}{' › '.join(parts)}"
+
+    def _pulse_segment(self, segment: str) -> str:
+        if not segment:
+            return segment
+        pieces: List[str] = [self._theme.accent]
+        wave = StatusAnimator._PULSE_WAVE
+        wave_length = len(wave)
+        for offset, char in enumerate(segment):
+            pieces.append(wave[(self._pulse_phase + offset) % wave_length])
+            pieces.append(char)
+        pieces.append(nailpolish.RESET)
+        return "".join(pieces)
+
+    def _wrap_segment(self, segment: str, intensity: str) -> str:
+        if not segment:
+            return segment
+        return "".join((self._theme.accent, intensity, segment, nailpolish.RESET))
 
     def _advance_glow(self) -> None:
         if not self._pulse_enabled or self._status is None:
             return
+        self._pulse_phase = (self._pulse_phase + 1) % len(StatusAnimator._PULSE_WAVE)
         segment_count = len(self._status.segments)
         if segment_count == 0:
             return
-        if segment_count == 1:
-            self._single_pulse_index = (
-                self._single_pulse_index + 1
-            ) % len(StatusAnimator._SINGLE_SEGMENT_PULSE)
-            return
-        self._glow_tick += 1
-        if self._glow_tick >= StatusAnimator._GLOW_HOLD_TICKS:
-            self._glow_tick = 0
-            self._glow_index = (self._glow_index + 1) % segment_count
+        if segment_count > 1:
+            self._glow_tick += 1
+            if self._glow_tick >= StatusAnimator._GLOW_HOLD_TICKS:
+                self._glow_tick = 0
+                self._glow_index = (self._glow_index + 1) % segment_count
 
 
 class StepStatus(str, Enum):
@@ -238,9 +245,16 @@ class StepReporter:
         self._root = Step(name="__root__", depth=-1)
         self._stack: List[Step] = [self._root]
         self._min_step_duration = max(min_step_duration, 0.0)
+        self._structured_display = bool(
+            printer is None and getattr(sys.stdout, "isatty", lambda: False)()
+        )
+        self._use_alt_screen = self._structured_display
+        animation_enabled = (
+            not self._structured_display and printer is None and enable_animation
+        )
         self._animator = (
             None
-            if printer or not enable_animation
+            if not animation_enabled
             else StatusAnimator(self._theme, pulse_enabled=enable_pulse)
         )
         self._total_top_level = total_top_level or 0
@@ -248,8 +262,14 @@ class StepReporter:
         self._animator_finalized = False
         self._input_patch_depth = 0
         self._original_input: Optional[Callable[[str], str]] = None
+        self._log_buffer: Deque[Tuple[Tuple[str, ...], str]] = deque(maxlen=200)
+        self._log_window = 40
+        self._scene_active = False
 
     def __enter__(self) -> "StepReporter":
+        if self._structured_display:
+            self._activate_scene()
+            self._render_scene()
         return self
 
     def __exit__(self, exc_type, exc, tb) -> bool:
@@ -262,7 +282,37 @@ class StepReporter:
                     step.error = message
         if self._animator and not self._animator_finalized:
             self._finalize_animation()
+        if self._structured_display and self._scene_active:
+            message = self._final_scene_line(success=exc_type is None)
+            self._deactivate_scene(message)
         return False
+
+    @property
+    def needs_final_summary(self) -> bool:
+        return not self._structured_display
+
+    def _activate_scene(self) -> None:
+        if not self._use_alt_screen or self._scene_active:
+            return
+        sys.stdout.write("\033[?1049h\033[?25l")
+        sys.stdout.flush()
+        self._scene_active = True
+
+    def _deactivate_scene(self, final_message: Optional[str]) -> None:
+        if not self._scene_active:
+            return
+        sys.stdout.write("\033[?25h\033[?1049l")
+        sys.stdout.flush()
+        self._scene_active = False
+        if final_message:
+            self._print(final_message)
+
+    def _final_scene_line(self, *, success: bool) -> Optional[str]:
+        if success and all(child.status is StepStatus.SUCCESS for child in self._root.children):
+            return self._colorize(self._theme.success, "✔ Freckles setup complete")
+        if success:
+            return self._colorize(self._theme.log, "⚠ Freckles setup finished with partial progress")
+        return self._colorize(self._theme.failure, "✖ Freckles setup interrupted")
 
     # Public API ---------------------------------------------------------
     def start_step(self, name: str) -> None:
@@ -278,8 +328,7 @@ class StepReporter:
         animator_enabled = bool(getattr(self._animator, "enabled", False)) if self._animator else False
         if not animator_enabled:
             self._before_output()
-            line = f"{'  ' * step.depth}▶ {name}"
-            self._print(self._colorize(self._theme.accent, line))
+            self._emit_story_line("▶", name, step.depth, self._theme.accent)
         self._after_step_change()
 
     def finish_step(self, name: str) -> None:
@@ -289,8 +338,7 @@ class StepReporter:
         step.status = StepStatus.SUCCESS
         self._ensure_min_duration(step)
         self._before_output()
-        line = f"{'  ' * step.depth}✔ {name}"
-        self._print(self._colorize(self._theme.success, line))
+        self._emit_story_line("✔", name, step.depth, self._theme.success)
         if step.depth == 0:
             self._completed_top_level += 1
         self._after_step_change()
@@ -301,8 +349,8 @@ class StepReporter:
         step.error = str(error)
         self._ensure_min_duration(step)
         self._before_output()
-        line = f"{'  ' * step.depth}✖ {name}: {step.error}"
-        self._print(self._colorize(self._theme.failure, line))
+        message = f"{name}: {step.error}"
+        self._emit_story_line("✖", message, step.depth, self._theme.failure)
         if self._animator:
             failure_status = f"✖ {self._format_path([s.name for s in self._stack[1:]] + [name])}"
             self._animator.stop(self._colorize(self._theme.failure, failure_status))
@@ -311,8 +359,7 @@ class StepReporter:
     def log(self, message: str) -> None:
         indent_level = max(len(self._stack) - 2, 0)
         self._before_output()
-        line = f"{'  ' * indent_level}- {message}"
-        self._print(self._colorize(self._theme.log, line))
+        self._emit_story_line("•", message, indent_level, self._theme.log)
         self._after_step_change()
 
     @contextmanager
@@ -364,6 +411,79 @@ class StepReporter:
         if not colour:
             return message
         return f"{colour}{message}{nailpolish.RESET}"
+
+    def _emit_story_line(self, icon: str, message: str, depth: int, colour: str) -> None:
+        line = self._format_story_line(icon, message, depth)
+        colored = self._colorize(colour, line)
+        if not self._structured_display:
+            self._print(colored)
+            return
+        if icon in {"•", "?"}:
+            self._log_buffer.append((self._active_path(), colored))
+        self._render_scene()
+
+    @staticmethod
+    def _format_story_line(icon: str, message: str, depth: int) -> str:
+        indent = "  " * depth
+        return f"{indent}{icon} {message}"
+
+    def _active_path(self) -> Tuple[str, ...]:
+        return tuple(step.name for step in self._stack[1:])
+
+    def _render_scene(self) -> None:
+        if not self._structured_display:
+            return
+        board_lines = self._build_board_lines()
+        active_path = self._active_path()
+        if not active_path:
+            log_lines: List[str] = []
+        else:
+            scoped = [line for path, line in self._log_buffer if path == active_path]
+            log_lines = scoped[-self._log_window :]
+        output: List[str] = ["\033[H\033[J"]
+        output.extend(board_lines)
+        output.append("")
+        if log_lines:
+            output.extend(log_lines)
+        else:
+            if active_path:
+                path_text = " › ".join(active_path)
+                placeholder = self._colorize(self._theme.log, f"Working on {path_text}…")
+            else:
+                placeholder = self._colorize(self._theme.log, "Awaiting next step…")
+            output.append(placeholder)
+        scene = "\n".join(output)
+        sys.stdout.write(scene)
+        sys.stdout.write("\n")
+        sys.stdout.flush()
+
+    def _build_board_lines(self) -> List[str]:
+        lines: List[str] = []
+        progress = ""
+        if self._total_top_level:
+            progress = f"[{self._completed_top_level}/{self._total_top_level}] "
+        lines.append(self._colorize(self._theme.accent, f"{progress}Freckles setup checklist"))
+        if not self._root.children:
+            lines.append(self._colorize(self._theme.log, "Waiting for phases to start…"))
+            return lines
+        for child in self._root.children:
+            lines.append(self._format_board_entry(child))
+        return lines
+
+    def _format_board_entry(self, step: Step) -> str:
+        if any(active is step for active in self._stack[1:]):
+            icon = "▸"
+            colour = self._theme.accent
+        elif step.status is StepStatus.SUCCESS:
+            icon = "✔"
+            colour = self._theme.success
+        elif step.status is StepStatus.FAILED:
+            icon = "✖"
+            colour = self._theme.failure
+        else:
+            icon = "○"
+            colour = self._theme.log
+        return self._colorize(colour, f"{icon} {step.name}")
 
     def _after_step_change(self) -> None:
         if not self._animator:
@@ -452,9 +572,8 @@ class StepReporter:
         text = str(message).rstrip()
         if text:
             indent_level = max(len(self._stack) - 2, 0)
-            indent = "  " * indent_level
             self._before_output()
-            self._print(self._colorize(self._theme.accent, f"{indent}? {text}"))
+            self._emit_story_line("?", text, indent_level, self._theme.accent)
         if self._original_input is None:
             raise RuntimeError("Interactive prompt invoked outside managed context.")
         return self._original_input("> ")

@@ -204,16 +204,16 @@ def emit_summary(summary: Dict[str, List[Dict[str, Optional[str]]]]) -> None:
     if top_level_success:
         print("Successful phases:")
         for entry in top_level_success:
-            print(f"  - {entry['name']}")
+            print(f"  ✔ {entry['name']}")
     if top_level_failures:
         print("Failed phases:")
         for entry in top_level_failures:
             error = entry.get("error", "Unknown error")
-            print(f"  - {entry['name']}: {error}")
+            print(f"  ✖ {entry['name']}: {error}")
             nested_failures = failed_descendants(entry["name"])
             for nested in nested_failures:
                 nested_error = nested.get("error", "Unknown error")
-                print(f"    * {nested['name']}: {nested_error}")
+                print(f"    • {nested['name']}: {nested_error}")
             print("    Fix the issue and rerun `python setup.py` to retry this phase.")
     else:
         print("All phases completed successfully. You're good to go!")
@@ -413,10 +413,12 @@ def main() -> None:
                 with managed_step(reporter, label):
                     phase(reporter)
     except Exception:
-        emit_summary(reporter.summary())
+        if reporter.needs_final_summary:
+            emit_summary(reporter.summary())
         raise
     else:
-        emit_summary(reporter.summary())
+        if reporter.needs_final_summary:
+            emit_summary(reporter.summary())
 
 
 if __name__ == "__main__":
