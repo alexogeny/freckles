@@ -1,0 +1,260 @@
+@define-color freckles_bg #0d1018;
+@define-color freckles_surface #10131a;
+@define-color freckles_surface_alt #141926;
+@define-color freckles_surface_highlight #171d2c;
+@define-color freckles_border #202736;
+@define-color freckles_shadow #05070c;
+@define-color freckles_text #eae8fc;
+@define-color freckles_text_muted #9aa4c0;
+@define-color freckles_accent #7db2ff;
+@define-color freckles_accent_fg #10131a;
+@define-color freckles_warning #ffd26f;
+@define-color freckles_success #6fe2b3;
+@define-color freckles_selection rgba(125, 178, 255, 0.25);
+
+@define-color accent_color @freckles_accent;
+@define-color accent_bg_color @freckles_accent;
+@define-color accent_fg_color @freckles_accent_fg;
+@define-color window_bg_color @freckles_bg;
+@define-color window_fg_color @freckles_text;
+
+window,
+.background,
+.view,
+.card,
+.content-view,
+.scrolledwindow viewport,
+textview text {
+  background-color: @freckles_bg;
+  color: @freckles_text;
+}
+
+.navigation-sidebar,
+.sidebar,
+paned > separator,
+.pane-separator {
+  background-color: @freckles_surface;
+  color: @freckles_text_muted;
+  border-color: @freckles_border;
+}
+
+headerbar,
+headerbar.default-decoration,
+.titlebar,
+.titlebar:not(.tiled):not(.maximized) {
+  background-color: @freckles_surface;
+  color: @freckles_text;
+  border-bottom: 1px solid @freckles_border;
+  box-shadow: none;
+}
+
+.titlebar button,
+headerbar button {
+  border-radius: 8px;
+  padding: 4px 10px;
+}
+
+button,
+.button,
+spinbutton,
+toolbar button.image-button,
+entry,
+.entry,
+combobox,
+.menu,
+.menuitem,
+.panel-button,
+.tab,
+notebook tab {
+  background-color: @freckles_surface_alt;
+  color: @freckles_text;
+  border: 1px solid @freckles_border;
+  border-radius: 10px;
+  box-shadow: none;
+  min-height: 32px;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+entry,
+.entry,
+textview,
+.text,
+.view {
+  background-color: @freckles_surface;
+  color: @freckles_text;
+}
+
+button:hover,
+.button:hover,
+entry:hover,
+.entry:hover,
+toolbar button.image-button:hover,
+.panel-button:hover {
+  background-color: @freckles_surface;
+  border-color: @freckles_accent;
+}
+
+button:checked,
+button:active,
+.button:checked,
+.button:active,
+.tab:checked,
+notebook tab:checked,
+.panel-button:checked {
+  background-color: @freckles_accent;
+  color: @freckles_accent_fg;
+  border-color: @freckles_accent;
+  box-shadow: 0 0 0 1px @freckles_accent;
+}
+
+button:disabled,
+.button:disabled,
+.panel-button:disabled {
+  background-color: @freckles_surface;
+  color: @freckles_text_muted;
+  border-color: @freckles_border;
+  box-shadow: none;
+}
+
+entry:focus,
+.entry:focus,
+textview:focus-within {
+  border-color: @freckles_accent;
+  box-shadow: 0 0 0 2px rgba(125, 178, 255, 0.35);
+}
+
+switch {
+  background-color: @freckles_surface_alt;
+  border-radius: 999px;
+  border: 1px solid @freckles_border;
+  padding: 1px;
+}
+
+switch:checked {
+  background-color: @freckles_accent;
+}
+
+progressbar,
+scale,
+levelbar {
+  color: @freckles_accent;
+}
+
+scale trough,
+levelbar trough,
+progressbar trough {
+  background-color: @freckles_surface_alt;
+  border-radius: 999px;
+  border: 1px solid @freckles_border;
+}
+
+scale highlight,
+progressbar progress,
+levelbar block.filled {
+  background-color: @freckles_accent;
+  border-radius: 999px;
+}
+
+.outline,
+.list,
+listview row,
+row,
+.popover,
+popover,
+popover > contents {
+  border-radius: 10px;
+  background-color: @freckles_surface;
+  color: @freckles_text;
+}
+
+.popover,
+popover {
+  border: 1px solid @freckles_border;
+  box-shadow: 0 10px 30px rgba(5, 7, 12, 0.55);
+}
+
+.menu,
+.menuitem,
+popover modelbutton {
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.menuitem:hover,
+popover modelbutton:hover,
+listview row:selected,
+row:selected {
+  background-color: @freckles_surface_highlight;
+  border-color: @freckles_accent;
+}
+
+.listview:selected,
+.view:selected,
+textview text selection {
+  background-color: @freckles_selection;
+  color: @freckles_text;
+}
+
+.badge,
+.suggested-action {
+  background-color: @freckles_accent;
+  color: @freckles_accent_fg;
+}
+
+.warning {
+  color: @freckles_warning;
+}
+
+.success {
+  color: @freckles_success;
+}
+
+tooltip {
+  background-color: @freckles_surface_highlight;
+  color: @freckles_text;
+  border: 1px solid @freckles_border;
+  border-radius: 8px;
+}
+
+notebook,
+.tabbar,
+.tabbar tab {
+  background-color: @freckles_surface;
+  border-color: @freckles_border;
+}
+
+.tabbar tab:hover,
+notebook tab:hover {
+  background-color: @freckles_surface_highlight;
+}
+
+.tabbar tab:checked,
+notebook tab:checked {
+  background-image: none;
+}
+
+.linked > *:not(:first-child) {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.linked > *:not(:last-child) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+scrollbar {
+  border-radius: 999px;
+  background-color: transparent;
+}
+
+scrollbar slider {
+  background-color: @freckles_surface_alt;
+  border: 1px solid @freckles_border;
+  border-radius: 999px;
+}
+
+scrollbar slider:hover {
+  background-color: @freckles_surface_highlight;
+  border-color: @freckles_accent;
+}

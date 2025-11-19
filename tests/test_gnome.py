@@ -39,6 +39,7 @@ def test_configure_gnome_requires_gsettings(monkeypatch):
 def test_configure_gnome_applies_curated_settings(monkeypatch):
     commands = []
     terminal_calls = []
+    gtk_calls = []
 
     def fake_apply(schema: str, key: str, value: str):
         commands.append((schema, key, value))
@@ -51,6 +52,7 @@ def test_configure_gnome_applies_curated_settings(monkeypatch):
     monkeypatch.setattr(gnome, "_preferred_gtk_theme", lambda: "Adwaita-dark")
     monkeypatch.setattr(gnome, "_preferred_icon_theme", lambda: "Papirus-Dark")
     monkeypatch.setattr(gnome, "_configure_terminal_theme", lambda: terminal_calls.append(True))
+    monkeypatch.setattr(gnome, "_apply_gtk_customizations", lambda: gtk_calls.append(True))
 
     gnome.configure_gnome()
 
@@ -111,11 +113,13 @@ def test_configure_gnome_applies_curated_settings(monkeypatch):
     )
     assert custom_list_entry in commands
     assert terminal_calls == [True]
+    assert gtk_calls == [True]
 
 
 def test_configure_gnome_uses_curated_theme_on_ubuntu(monkeypatch):
     commands = []
     monkeypatch.setattr(gnome, "_configure_terminal_theme", lambda: None)
+    monkeypatch.setattr(gnome, "_apply_gtk_customizations", lambda: None)
 
     def fake_apply(schema: str, key: str, value: str):
         commands.append((schema, key, value))
@@ -141,6 +145,7 @@ def test_configure_gnome_uses_curated_theme_on_ubuntu(monkeypatch):
 def test_configure_gnome_applies_optional_settings(monkeypatch):
     commands = []
     monkeypatch.setattr(gnome, "_configure_terminal_theme", lambda: None)
+    monkeypatch.setattr(gnome, "_apply_gtk_customizations", lambda: None)
 
     def fake_apply(schema: str, key: str, value: str):
         commands.append((schema, key, value))
@@ -203,6 +208,30 @@ def test_preferred_cursor_theme_falls_back_to_default(monkeypatch):
     monkeypatch.setattr(gnome, "ICON_SEARCH_PATHS", tuple())
 
     assert gnome._preferred_cursor_theme() == "Adwaita"
+
+
+def test_apply_gtk_customizations_writes_templates(tmp_path, monkeypatch):
+    gtk3_template = tmp_path / "gtk3.css"
+    gtk4_template = tmp_path / "gtk4.css"
+    gtk3_template.write_text("gtk3")
+    gtk4_template.write_text("gtk4")
+
+    monkeypatch.setattr(gnome, "GTK3_TEMPLATE", gtk3_template)
+    monkeypatch.setattr(gnome, "GTK4_TEMPLATE", gtk4_template)
+
+    config_root = tmp_path / "config-home"
+
+    monkeypatch.setattr(gnome.Path, "home", lambda: config_root)
+
+    gnome._apply_gtk_customizations()
+
+    gtk3_dest = config_root / ".config" / "gtk-3.0" / "gtk.css"
+    gtk4_dest = config_root / ".config" / "gtk-4.0" / "gtk.css"
+
+    assert gtk3_dest.exists()
+    assert gtk4_dest.exists()
+    assert gtk3_dest.read_text() == "gtk3"
+    assert gtk4_dest.read_text() == "gtk4"
 
 
 def test_default_terminal_profile_id_parses_output(monkeypatch):

@@ -9,6 +9,10 @@ from typing import Iterable, Sequence
 
 from .theme import FRECKLES_INTERFACE_THEME, FRECKLES_TERMINAL_THEME
 
+GNOME_THEME_DIR = Path(__file__).resolve().parents[1] / "gnome"
+GTK3_TEMPLATE = GNOME_THEME_DIR / "gtk-3.0" / "gtk.css"
+GTK4_TEMPLATE = GNOME_THEME_DIR / "gtk-4.0" / "gtk.css"
+
 BASE_GNOME_SETTINGS: Sequence[tuple[str, str, str]] = (
     ("org.gnome.desktop.interface", "clock-show-date", "true"),
     ("org.gnome.desktop.interface", "clock-show-weekday", "true"),
@@ -172,7 +176,22 @@ def configure_gnome() -> None:
             _apply_setting(schema, key, value)
 
     _configure_terminal_theme()
+    _apply_gtk_customizations()
     _configure_custom_keybindings(CUSTOM_KEYBINDINGS)
+
+
+def _apply_gtk_customizations() -> None:
+    config_root = Path.home() / ".config"
+    targets = (
+        (GTK3_TEMPLATE, config_root / "gtk-3.0" / "gtk.css"),
+        (GTK4_TEMPLATE, config_root / "gtk-4.0" / "gtk.css"),
+    )
+
+    for source, destination in targets:
+        if not source.exists():
+            continue
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
 
 
 def _build_settings() -> Sequence[tuple[str, str, str]]:
