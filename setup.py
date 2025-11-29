@@ -7,8 +7,8 @@ from typing import Dict, List, Optional
 
 from freckles.domain.provisioning import Phase
 from freckles.infrastructure.command import configure_runner
-from utils.avatar import manage_avatar
-from utils.debian import (
+from freckles.desktop.avatar import manage_avatar
+from freckles.system.debian import (
     DebFile,
     DebRepository,
     get_version_codename,
@@ -20,14 +20,14 @@ from utils.debian import (
     run_apt_update_and_upgrade,
 )
 from utils.reporter import StepReporter
-from utils.web import install_software_list
+from freckles.system.web import install_software_list
 from freckles.application.packages_service import (
     install_base_packages,
     refresh_package_lists,
     remove_unwanted_packages,
 )
 from freckles.application.app_setup.developer_tools import configure_developer_tooling
-from utils.ubuntu import purge_snapd
+from freckles.system.ubuntu import purge_snapd
 from freckles.application.app_setup.firefox_setup import configure_firefox
 from freckles.application.app_setup.shell_terminal import configure_shell_terminal
 from freckles.application.app_setup.gnome_setup import configure_gnome_desktop

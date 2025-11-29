@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from utils.debian import check_if_installed, run
+from freckles.system.debian import check_if_installed, run
 
 
 def _bun_binary_path() -> Path:

@@ -8,4 +8,3 @@ def configure_calibre_library(reporter) -> None:
     with step(reporter, "Configure Calibre"):
         with reporter.interactive_section():
             configure_calibre()
-

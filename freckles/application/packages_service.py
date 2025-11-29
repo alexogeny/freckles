@@ -2,15 +2,13 @@ from __future__ import annotations
 
 from typing import Iterable, Set
 
-from utils.debian import (
+from freckles.system.debian import (
     DebFile,
     DebRepository,
-    ensure_repositories_configured,
-    install_with_apt,
-    purge_unwanted_packages,
-    refresh_repository_keys,
     run,
 )
+from freckles.system.web import ensure_repositories_configured, refresh_repository_keys
+from freckles.system.debian import install_with_apt, purge_unwanted_packages
 
 
 def refresh_package_lists(software_list: list[DebFile | DebRepository], reporter) -> None:
@@ -48,4 +46,3 @@ def install_base_packages(packages: Iterable[str]) -> None:
 
 def remove_unwanted_packages(packages: Iterable[str]) -> None:
     purge_unwanted_packages(list(packages))
-

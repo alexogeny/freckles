@@ -23,7 +23,7 @@ import sys
 from dataclasses import dataclass
 from typing import List, Sequence
 
-from utils.debian import run
+from freckles.system.debian import run
 
 
 class GitError(RuntimeError):

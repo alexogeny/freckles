@@ -8,7 +8,7 @@ from json import JSONDecodeError
 from pathlib import Path
 from typing import Iterable, Sequence, Tuple
 
-from utils.debian import run
+from freckles.system.debian import run
 
 DEFAULT_HOST_CHOICES: Tuple[str, ...] = ("github", "gitlab")
 DEFAULT_CONTEXT_CHOICES: Tuple[str, ...] = ("private", "work")

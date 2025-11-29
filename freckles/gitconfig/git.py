@@ -11,7 +11,7 @@ from freckles.identity.accounts import (
     ensure_account_config,
     get_account_config as _get_account_config,
 )
-from utils.debian import run
+from freckles.system.debian import run
 from utils.meta import HOME
 from freckles.identity.shared_identity import ensure_gpg_materials, publish_public_materials
 
@@ -178,4 +178,3 @@ def get_account_config() -> AccountConfig:
     """Backwards compatible shim for account configuration access."""
 
     return _get_account_config(interactive=False)
-

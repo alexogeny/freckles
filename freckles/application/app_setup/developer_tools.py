@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from freckles.application.helpers import step
 from freckles.application.identity_service import configure_identity
-from utils.bun import install_bun
-from utils.vscode import configure_vscode
+from freckles.runtime.bun import install_bun
+from freckles.desktop.vscode import configure_vscode
 
 
 def configure_developer_tooling(reporter) -> None:

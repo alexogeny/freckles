@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Tuple
 
-from utils.debian import run
+from freckles.system.debian import run
 
 
 @dataclass
@@ -117,4 +117,3 @@ def export_gpg_material(key_id: str) -> Optional[GpgMaterial]:
         public_key=(public_result.stdout or "").strip(),
         private_key=(private_result.stdout or "").strip(),
     )
-

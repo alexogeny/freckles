@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import shutil
 
-from utils.debian import run
+from freckles.system.debian import run
 
 
 def get_firefox_version():
@@ -88,4 +88,3 @@ def purge_esr_profiles():
             print(f"Removed profile directory: {profile_dir_path}")
         except Exception as e:
             print(f"Error removing profile directory: {e}")
-

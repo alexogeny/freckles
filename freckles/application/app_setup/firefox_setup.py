@@ -18,8 +18,8 @@ from freckles.firefox import (
     purge_firefox_esr,
     setup_mozilla_repo,
 )
-from utils.ubuntu import ensure_firefox_from_apt
-from utils.debian import is_ubuntu
+from freckles.system.ubuntu import ensure_firefox_from_apt
+from freckles.system.debian import is_ubuntu
 
 
 def configure_firefox(reporter) -> None:

@@ -6,7 +6,7 @@ import webbrowser
 from pathlib import Path
 from typing import Optional
 
-from utils.debian import run
+from freckles.system.debian import run
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:

@@ -3,8 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Dict
 
-from utils.debian import run
-from utils.web import download_file
+from freckles.system.debian import run
+from freckles.system.web import download_file
 from .profiles import find_firefox_profile
 
 EXTENSIONS_TO_INSTALL = {
@@ -67,4 +67,3 @@ def install_firefox_extension(extension_id: str) -> bool:
     finally:
         if xpi_path is not None:
             xpi_path.unlink(missing_ok=True)
-

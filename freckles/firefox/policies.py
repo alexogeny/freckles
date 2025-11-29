@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import shlex
 
-from utils.debian import run
+from freckles.system.debian import run
 from .templates import POLICIES_TEMPLATE, read_template
 
 
@@ -23,4 +23,3 @@ def apply_firefox_policies() -> None:
         print("Failed to apply Firefox policies.")
         return
     print("Applied Firefox enterprise policies template.")
-

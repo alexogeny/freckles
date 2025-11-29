@@ -4,7 +4,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from utils.debian import run
+from freckles.system.debian import run
 
 
 def manage_avatar(github_user_id: str = "6896115"):

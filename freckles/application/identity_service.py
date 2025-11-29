@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 
-from utils.git import configure_git
+from freckles.gitconfig.git import configure_git
 from utils.ssh import configure_ssh
 
 

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from freckles.application.helpers import step
-from utils.shell import configure_shell
-from utils.terminal import configure_terminal
+from freckles.desktop.shell import configure_shell
+from freckles.desktop.terminal import configure_terminal
 
 
 def configure_shell_terminal(reporter) -> None:
@@ -10,4 +10,3 @@ def configure_shell_terminal(reporter) -> None:
         configure_shell()
     with step(reporter, "Configure terminal"):
         configure_terminal()
-
