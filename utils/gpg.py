@@ -56,10 +56,10 @@ def generate_secret_key(name: str, email: str) -> Optional[Tuple[str, str]]:
     """Generate a new secret key for the supplied identity."""
 
     template = """
-Key-Type: RSA
-Key-Length: 4096
-Subkey-Type: RSA
-Subkey-Length: 4096
+Key-Type: eddsa
+Key-Curve: ed25519
+Subkey-Type: cv25519
+Subkey-Curve: cv25519
 Name-Real: {name}
 Name-Email: {email}
 Expire-Date: 0
@@ -117,4 +117,3 @@ def export_gpg_material(key_id: str) -> Optional[GpgMaterial]:
         public_key=(public_result.stdout or "").strip(),
         private_key=(private_result.stdout or "").strip(),
     )
-

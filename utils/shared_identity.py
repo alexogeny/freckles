@@ -1,13 +1,14 @@
-"""Helpers for provisioning shared SSH and GPG identity material."""
+"""Helpers for provisioning per-account SSH and GPG identity material."""
 
 from __future__ import annotations
 
+import re
 import shlex
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
-from .accounts import AccountConfig, save_account_config
+from .accounts import AccountConfig, GitAccount, save_account_config
 from .debian import run
 from .gpg import GpgMaterial, discover_secret_key, export_gpg_material, generate_secret_key
 from .meta import CONFIG_DIR, HOME, SSH_DIR
@@ -15,14 +16,13 @@ from .meta import CONFIG_DIR, HOME, SSH_DIR
 
 IDENTITY_DIR = CONFIG_DIR / "identity"
 PUBLIC_EXPORT_DIR = HOME / "Public" / "git-keys"
-SHARED_SSH_KEY_PATH = SSH_DIR / "id_freckles_shared"
-GPG_MARKER_PATH = IDENTITY_DIR / "gpg-key-id"
 
 
 @dataclass
-class SharedSshMaterial:
-    """Details about the shared SSH key that was ensured on disk."""
+class AccountSshMaterial:
+    """Details about an SSH key that was ensured for a git account."""
 
+    account_slug: str
     private_key_path: Path
     public_key_path: Path
     public_key: str
@@ -31,9 +31,10 @@ class SharedSshMaterial:
 
 
 @dataclass
-class SharedGpgMaterial:
-    """Information about the shared GPG key material."""
+class AccountGpgMaterial:
+    """Information about GPG key material for a git account."""
 
+    account_slug: str
     material: GpgMaterial
     created: bool
 
@@ -74,12 +75,27 @@ def _fingerprint_for_public_key(public_path: Path) -> str:
     return stdout[0]
 
 
-def ensure_shared_ssh_key(email: str) -> Optional[SharedSshMaterial]:
-    """Ensure an SSH key exists for the supplied email address."""
+def _slugify_token(value: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+    return slug or "id"
+
+
+def _ssh_key_paths(account: GitAccount) -> Tuple[Path, Path]:
+    host_token = _slugify_token(account.ssh_host or account.provider)
+    basename = f"{account.alias_slug}.{host_token}.id_ed25519"
+    key_path = SSH_DIR / basename
+    return key_path, key_path.with_suffix(".pub")
+
+
+def _gpg_marker_path(account: GitAccount) -> Path:
+    return IDENTITY_DIR / f"{account.slug}.gpg-key-id"
+
+
+def ensure_account_ssh_key(account: GitAccount) -> Optional[AccountSshMaterial]:
+    """Ensure an SSH key exists for the supplied git account."""
 
     _ensure_directory(SSH_DIR)
-    key_path = SHARED_SSH_KEY_PATH
-    public_path = key_path.with_suffix(".pub")
+    key_path, public_path = _ssh_key_paths(account)
     created = False
 
     if not key_path.exists() or not public_path.exists():
@@ -89,7 +105,7 @@ def ensure_shared_ssh_key(email: str) -> Optional[SharedSshMaterial]:
                 "-t",
                 "ed25519",
                 "-C",
-                shlex.quote(email),
+                shlex.quote(account.email),
                 "-f",
                 shlex.quote(key_path.as_posix()),
                 "-N",
@@ -99,7 +115,7 @@ def ensure_shared_ssh_key(email: str) -> Optional[SharedSshMaterial]:
         result = run(command)
         if result.returncode != 0:
             message = result.stderr.strip() or result.stdout.strip() or "unknown error"
-            print(f"Failed to generate shared SSH key: {message}")
+            print(f"Failed to generate SSH key for {account.slug}: {message}")
             return None
         created = True
 
@@ -107,11 +123,13 @@ def ensure_shared_ssh_key(email: str) -> Optional[SharedSshMaterial]:
 
     public_key = _read_text(public_path)
     if not public_key:
+        print(f"Unable to read public SSH key for {account.slug} at {public_path}")
         return None
 
     fingerprint = _fingerprint_for_public_key(public_path)
 
-    return SharedSshMaterial(
+    return AccountSshMaterial(
+        account_slug=account.slug,
         private_key_path=key_path,
         public_key_path=public_path,
         public_key=public_key,
@@ -120,89 +138,119 @@ def ensure_shared_ssh_key(email: str) -> Optional[SharedSshMaterial]:
     )
 
 
-def ensure_shared_gpg_material(config: AccountConfig) -> Optional[SharedGpgMaterial]:
-    """Ensure a shared GPG key exists and update account configuration."""
+def ensure_ssh_materials(config: AccountConfig) -> Dict[str, AccountSshMaterial]:
+    """Ensure SSH keys exist for all configured accounts."""
 
-    if not config.accounts:
-        return None
+    materials: Dict[str, AccountSshMaterial] = {}
+    for account in config.accounts:
+        material = ensure_account_ssh_key(account)
+        if material is None:
+            print(f"Skipping SSH configuration for {account.slug} due to prior errors.")
+            continue
+        materials[account.slug] = material
+    return materials
+
+
+def ensure_account_gpg_material(account: GitAccount) -> Optional[AccountGpgMaterial]:
+    """Ensure a GPG key exists for the supplied git account."""
 
     _ensure_directory(IDENTITY_DIR)
-    default_account = config.get_default()
-    marker_key = _read_text(GPG_MARKER_PATH)
+    marker_path = _gpg_marker_path(account)
+    marker_key = _read_text(marker_path)
     created = False
     lookup: Optional[tuple[str, str]] = None
 
-    if marker_key:
+    if account.signing_key:
+        lookup = discover_secret_key(account.signing_key)
+
+    if not lookup and marker_key:
         lookup = discover_secret_key(marker_key)
         if lookup is None:
             marker_key = ""
 
     if not lookup:
-        lookup = discover_secret_key(default_account.email)
+        lookup = discover_secret_key(account.email)
 
     if not lookup:
-        lookup = generate_secret_key(default_account.display_name, default_account.email)
+        lookup = generate_secret_key(account.display_name, account.email)
         created = lookup is not None
 
     if not lookup:
-        print("Unable to locate or generate a shared GPG key for commit signing.")
+        print(f"Unable to locate or generate a GPG key for {account.slug}.")
         return None
 
     key_id, _fingerprint = lookup
     material = export_gpg_material(key_id)
     if material is None:
-        print(f"Failed to export shared GPG key material for {key_id}.")
+        print(f"Failed to export GPG key material for {key_id}.")
         return None
 
     if material.key_id and material.key_id != key_id:
         key_id = material.key_id
 
-    if material.key_id:
-        GPG_MARKER_PATH.write_text(material.key_id.strip() + "\n")
+    if key_id:
+        marker_path.write_text(key_id.strip() + "\n")
 
+    return AccountGpgMaterial(
+        account_slug=account.slug,
+        material=material,
+        created=created,
+    )
+
+
+def ensure_gpg_materials(config: AccountConfig) -> Tuple[Dict[str, AccountGpgMaterial], bool]:
+    """Ensure GPG keys exist for all configured accounts and update signing keys."""
+
+    materials: Dict[str, AccountGpgMaterial] = {}
     config_updated = False
+
     for account in config.accounts:
-        if account.signing_key != material.key_id:
-            account.signing_key = material.key_id
+        material = ensure_account_gpg_material(account)
+        if material is None:
+            print(f"Skipping GPG configuration for {account.slug} due to prior errors.")
+            continue
+        materials[account.slug] = material
+        key_id = material.material.key_id
+        if key_id and account.signing_key != key_id:
+            account.signing_key = key_id
             config_updated = True
 
     if config_updated:
         save_account_config(config)
 
-    return SharedGpgMaterial(material=material, created=created)
+    return materials, config_updated
 
 
-def publish_public_material(
-    ssh_material: Optional[SharedSshMaterial],
-    gpg_material: Optional[SharedGpgMaterial],
-) -> Dict[str, Path]:
+def publish_public_materials(
+    ssh_materials: Dict[str, AccountSshMaterial],
+    gpg_materials: Dict[str, AccountGpgMaterial],
+) -> Dict[str, Dict[str, Path]]:
     """Write exported material to a predictable directory for user access."""
 
     _ensure_directory(PUBLIC_EXPORT_DIR)
-    outputs: Dict[str, Path] = {}
+    outputs: Dict[str, Dict[str, Path]] = {}
 
-    if ssh_material:
-        ssh_public = PUBLIC_EXPORT_DIR / "ssh.pub"
+    for slug, ssh_material in ssh_materials.items():
+        slug_outputs = outputs.setdefault(slug, {})
+        ssh_public = PUBLIC_EXPORT_DIR / f"{slug}.ssh.pub"
         ssh_public.write_text(ssh_material.public_key.strip() + "\n")
-        outputs["ssh_public"] = ssh_public
+        slug_outputs["ssh_public"] = ssh_public
         if ssh_material.fingerprint:
-            ssh_fingerprint = PUBLIC_EXPORT_DIR / "ssh.fingerprint"
+            ssh_fingerprint = PUBLIC_EXPORT_DIR / f"{slug}.ssh.fingerprint"
             ssh_fingerprint.write_text(ssh_material.fingerprint.strip() + "\n")
-            outputs["ssh_fingerprint"] = ssh_fingerprint
+            slug_outputs["ssh_fingerprint"] = ssh_fingerprint
 
-    if gpg_material:
-        gpg_public = PUBLIC_EXPORT_DIR / "gpg.asc"
+    for slug, gpg_material in gpg_materials.items():
+        slug_outputs = outputs.setdefault(slug, {})
+        gpg_public = PUBLIC_EXPORT_DIR / f"{slug}.gpg.asc"
         gpg_public.write_text(gpg_material.material.public_key.strip() + "\n")
-        outputs["gpg_public"] = gpg_public
-        key_id_path = PUBLIC_EXPORT_DIR / "gpg.key-id"
+        slug_outputs["gpg_public"] = gpg_public
+        key_id_path = PUBLIC_EXPORT_DIR / f"{slug}.gpg.key-id"
         key_id_path.write_text(gpg_material.material.key_id.strip() + "\n")
-        outputs["gpg_key_id"] = key_id_path
+        slug_outputs["gpg_key_id"] = key_id_path
         if gpg_material.material.fingerprint:
-            gpg_fingerprint = PUBLIC_EXPORT_DIR / "gpg.fingerprint"
-            gpg_fingerprint.write_text(
-                gpg_material.material.fingerprint.strip() + "\n"
-            )
-            outputs["gpg_fingerprint"] = gpg_fingerprint
+            gpg_fingerprint = PUBLIC_EXPORT_DIR / f"{slug}.gpg.fingerprint"
+            gpg_fingerprint.write_text(gpg_material.material.fingerprint.strip() + "\n")
+            slug_outputs["gpg_fingerprint"] = gpg_fingerprint
 
     return outputs
-

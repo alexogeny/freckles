@@ -1,4 +1,4 @@
-"""SSH configuration helpers for shared key management."""
+"""SSH configuration helpers for per-account key management."""
 
 from __future__ import annotations
 
@@ -7,12 +7,16 @@ import shlex
 import sys
 import textwrap
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 from .accounts import GitAccount, get_account_config
 from .debian import run
 from .meta import HOME, KNOWN_HOSTS, SSH_CONFIG, SSH_DIR
-from .shared_identity import ensure_shared_ssh_key, publish_public_material
+from .shared_identity import (
+    AccountSshMaterial,
+    ensure_ssh_materials,
+    publish_public_materials,
+)
 
 known_hosts_content = textwrap.dedent("""
 gitlab.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAfuCHKVTjquxvt6CM6tdG4SLp1Btn/nOeHHE5UOzRdf
@@ -102,17 +106,16 @@ def _ensure_config_entry(
     account: GitAccount,
     existing_config: str,
     *,
-    identity_file: Optional[Path] = None,
+    identity_file: Path,
 ) -> Tuple[str, bool]:
     """Insert or update the SSH config block for ``account``."""
-    identity_path = identity_file or (SSH_DIR / f"{account.slug}.{account.provider}")
-    new_block = _render_host_block(account, identity_path)
+    new_block = _render_host_block(account, identity_file)
     pattern = _host_pattern(account.ssh_alias)
     match = pattern.search(existing_config)
     if match:
         current_block = match.group(1)
-        identity_line = _canonical_identity_line(identity_path)
-        slug_fragment = f"{account.slug}.{account.provider}"
+        identity_line = _canonical_identity_line(identity_file)
+        slug_fragment = account.alias_slug
         updated_block, changed = _normalize_block(current_block, identity_line, slug_fragment)
         if not changed:
             return existing_config, False
@@ -127,23 +130,23 @@ def _ensure_config_entry(
 
 
 def configure_ssh() -> None:
-    """Provision the shared SSH identity and update user config."""
+    """Provision per-account SSH identities and update user config."""
     write_known_hosts()
     interactive = sys.stdin.isatty()
     config = get_account_config(interactive=interactive)
-    shared_material = ensure_shared_ssh_key(config.get_default().email)
-    if shared_material is None:
-        print("Skipping shared SSH setup because the key could not be generated.")
+    materials = ensure_ssh_materials(config)
+    if not materials:
+        print("Skipping SSH setup because no keys could be generated.")
         return
 
     config_text = _load_ssh_config()
-    config_text, changed = _synchronise_accounts(config, config_text, shared_material.private_key_path)
+    config_text, changed = _synchronise_accounts(config, config_text, materials)
     if changed:
         _write_ssh_config(config_text)
 
-    _add_key_to_agent(shared_material.private_key_path)
-    outputs = publish_public_material(shared_material, None)
-    _print_summary(config, outputs, shared_material)
+    _add_keys_to_agent(materials)
+    outputs = publish_public_materials(materials, {})
+    _print_summary(config, outputs, materials)
 
 
 def _load_ssh_config() -> str:
@@ -158,37 +161,49 @@ def _write_ssh_config(config_text: str) -> None:
     SSH_CONFIG.write_text(cleaned)
 
 
-def _synchronise_accounts(config, existing_config: str, identity_path: Path) -> Tuple[str, bool]:
+def _synchronise_accounts(
+    config,
+    existing_config: str,
+    materials: Dict[str, AccountSshMaterial],
+) -> Tuple[str, bool]:
     changed = False
     for account in config.accounts:
+        material = materials.get(account.slug)
+        if material is None:
+            continue
         existing_config, updated = _ensure_config_entry(
             account,
             existing_config,
-            identity_file=identity_path,
+            identity_file=material.private_key_path,
         )
         changed = changed or updated
     return existing_config, changed
 
 
-def _add_key_to_agent(identity_path: Path) -> None:
-    add_result = run(f"ssh-add {shlex.quote(identity_path.as_posix())}")
-    if add_result.returncode == 0:
-        return
-    message = add_result.stderr.strip() or add_result.stdout.strip() or "unknown error"
-    print(f"Failed to add shared SSH key to ssh-agent: {message}")
+def _add_keys_to_agent(materials: Dict[str, AccountSshMaterial]) -> None:
+    for material in materials.values():
+        add_result = run(f"ssh-add {shlex.quote(material.private_key_path.as_posix())}")
+        if add_result.returncode == 0:
+            continue
+        message = add_result.stderr.strip() or add_result.stdout.strip() or "unknown error"
+        print(f"Failed to add SSH key for {material.account_slug} to ssh-agent: {message}")
 
 
-def _print_summary(config, outputs, shared_material) -> None:
-    public_path = outputs.get("ssh_public")
-    fingerprint_path = outputs.get("ssh_fingerprint")
-    summary = [
-        "\nShared SSH key configured locally.",
-        f"  Host aliases: {', '.join(account.ssh_alias for account in config.accounts)}",
-    ]
-    if public_path:
-        summary.append(f"  Public key: {public_path}")
-    if fingerprint_path and shared_material.fingerprint:
-        summary.append(f"  Fingerprint: {shared_material.fingerprint}")
-        summary.append(f"  Fingerprint file: {fingerprint_path}")
-    summary.append("Upload this public key to your Git hosting services.")
+def _print_summary(config, outputs, materials) -> None:
+    summary = ["\nSSH keys configured locally:"]
+    for account in config.accounts:
+        material = materials.get(account.slug)
+        if material is None:
+            continue
+        slug_outputs = outputs.get(account.slug, {})
+        public_path = slug_outputs.get("ssh_public")
+        fingerprint_path = slug_outputs.get("ssh_fingerprint")
+        summary.append(f"  - {account.ssh_alias}: {material.private_key_path}")
+        if material.fingerprint:
+            summary.append(f"    fingerprint: {material.fingerprint}")
+        if public_path:
+            summary.append(f"    public key: {public_path}")
+        if fingerprint_path:
+            summary.append(f"    fingerprint file: {fingerprint_path}")
+    summary.append("Upload these public keys to your Git hosting services.")
     print("\n".join(summary))

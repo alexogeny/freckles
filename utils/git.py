@@ -13,7 +13,7 @@ from .accounts import (
     get_account_config as _get_account_config,
 )
 from .meta import HOME
-from .shared_identity import ensure_shared_gpg_material, publish_public_material
+from .shared_identity import ensure_gpg_materials, publish_public_materials
 
 
 IDENTITY_BEGIN = "# >>> freckles global identity >>>"
@@ -143,35 +143,37 @@ def _summarise_accounts(config: AccountConfig) -> None:
     print("\n".join(message))
 
 
+def _summarise_gpg_materials(gpg_materials, outputs) -> None:
+    message = ["\nGPG signing keys configured locally:"]
+    for slug, material in gpg_materials.items():
+        slug_outputs = outputs.get(slug, {})
+        public_path = slug_outputs.get("gpg_public")
+        fingerprint_path = slug_outputs.get("gpg_fingerprint")
+        key_id_path = slug_outputs.get("gpg_key_id")
+        message.append(f"  - {slug}: {material.material.key_id}")
+        if material.material.fingerprint:
+            message.append(f"    fingerprint: {material.material.fingerprint}")
+        if public_path:
+            message.append(f"    public key: {public_path}")
+        if fingerprint_path:
+            message.append(f"    fingerprint file: {fingerprint_path}")
+        if key_id_path:
+            message.append(f"    key id file: {key_id_path}")
+    message.append("Upload these public keys to your Git hosting services to enable commit signing.")
+    print("\n".join(message))
+
+
 def configure_git() -> AccountConfig:
     download_git_files()
     config = ensure_account_config()
-    shared_gpg = ensure_shared_gpg_material(config)
+    gpg_materials, _ = ensure_gpg_materials(config)
     _write_account_configs(config)
     _update_gitconfig(config)
     _ensure_git_user_config(config)
     _summarise_accounts(config)
-    if shared_gpg:
-        outputs = publish_public_material(None, shared_gpg)
-        public_path = outputs.get("gpg_public")
-        fingerprint_path = outputs.get("gpg_fingerprint")
-        key_id_path = outputs.get("gpg_key_id")
-        message = [
-            "\nShared GPG signing key configured locally.",
-            f"  Key ID: {shared_gpg.material.key_id}",
-        ]
-        if shared_gpg.material.fingerprint:
-            message.append(f"  Fingerprint: {shared_gpg.material.fingerprint}")
-        if public_path:
-            message.append(f"  Public key: {public_path}")
-        if fingerprint_path:
-            message.append(f"  Fingerprint file: {fingerprint_path}")
-        if key_id_path:
-            message.append(f"  Key id file: {key_id_path}")
-        message.append(
-            "Upload this public key to your Git hosting services to enable commit signing."
-        )
-        print("\n".join(message))
+    if gpg_materials:
+        outputs = publish_public_materials({}, gpg_materials)
+        _summarise_gpg_materials(gpg_materials, outputs)
     return config
 
 
@@ -179,4 +181,3 @@ def get_account_config() -> AccountConfig:
     """Backwards compatible shim for account configuration access."""
 
     return _get_account_config(interactive=False)
-
