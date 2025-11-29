@@ -12,7 +12,7 @@ from freckles.identity.accounts import (
     get_account_config as _get_account_config,
 )
 from freckles.system.debian import run
-from utils.meta import HOME
+from freckles.core.meta import HOME
 from freckles.identity.shared_identity import ensure_gpg_materials, publish_public_materials
 
 

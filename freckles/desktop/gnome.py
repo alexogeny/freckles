@@ -7,7 +7,7 @@ from shutil import which
 from subprocess import CompletedProcess, run
 from typing import Iterable, Sequence
 
-from utils.theme import FRECKLES_INTERFACE_THEME, FRECKLES_TERMINAL_THEME
+from freckles.core.theme import FRECKLES_INTERFACE_THEME, FRECKLES_TERMINAL_THEME
 
 BASE_GNOME_SETTINGS: Sequence[tuple[str, str, str]] = (
     ("org.gnome.desktop.interface", "clock-show-date", "true"),
@@ -318,4 +318,3 @@ def _apply_setting(schema: str, key: str, value: str) -> CompletedProcess[str]:
 
 
 __all__ = ["configure_gnome"]
-

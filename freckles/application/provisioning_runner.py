@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Iterable
 
 from freckles.domain.provisioning import Phase
-from utils.reporter import StepReporter
+from freckles.core.reporter import StepReporter
 
 
 def execute_phases(phases: Iterable[Phase], reporter: StepReporter) -> None:

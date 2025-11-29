@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Dict, Optional, Tuple
 
 from freckles.system.debian import run
-from utils.meta import CONFIG_DIR, HOME, SSH_DIR
+from freckles.core.meta import CONFIG_DIR, HOME, SSH_DIR
 from .accounts import AccountConfig, GitAccount, save_account_config
 from .gpg import GpgMaterial, discover_secret_key, export_gpg_material, generate_secret_key
 

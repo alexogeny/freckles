@@ -10,7 +10,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Callable, Iterable, List, Optional
 
-from utils.meta import (
+from freckles.core.meta import (
     CONFIG_DIR,
     HOME,
     GIT_ACCOUNT_CONFIG_PATH,

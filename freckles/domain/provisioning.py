@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
-from utils.reporter import StepReporter
+from freckles.core.reporter import StepReporter
 
 
 @dataclass(frozen=True)
@@ -12,4 +12,3 @@ class Phase:
 
     name: str
     handler: Callable[[StepReporter], None]
-

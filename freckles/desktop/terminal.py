@@ -7,7 +7,7 @@ from shutil import which
 from subprocess import CompletedProcess, run
 from uuid import uuid4
 
-from utils.theme import FRECKLES_TERMINAL_THEME
+from freckles.core.theme import FRECKLES_TERMINAL_THEME
 
 PROFILE_SETTINGS: dict[str, str] = {
     "audible-bell": "false",
@@ -167,4 +167,3 @@ def _strip_quotes(value: str) -> str:
 
 
 __all__ = ["configure_terminal"]
-

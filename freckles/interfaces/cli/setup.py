@@ -6,7 +6,7 @@ import sys
 from freckles.application.provisioning_runner import execute_phases
 from freckles.domain.provisioning import Phase
 from freckles.infrastructure.command import configure_runner
-from utils.reporter import StepReporter
+from freckles.core.reporter import StepReporter
 
 import setup as legacy_setup
 
