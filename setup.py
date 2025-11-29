@@ -19,7 +19,7 @@ from freckles.system.debian import (
     run,
     run_apt_update_and_upgrade,
 )
-from utils.reporter import StepReporter
+from freckles.core.reporter import StepReporter
 from freckles.system.web import install_software_list
 from freckles.application.packages_service import (
     install_base_packages,

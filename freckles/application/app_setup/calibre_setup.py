@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from freckles.application.helpers import step
-from utils.calibre import configure_calibre
+from freckles.calibre import configure_calibre
 
 
 def configure_calibre_library(reporter) -> None:

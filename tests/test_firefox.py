@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from utils import firefox
+from freckles import firefox
 
 
 class _FakeCompletedProcess:

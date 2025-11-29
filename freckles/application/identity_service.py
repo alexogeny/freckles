@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 
 from freckles.gitconfig.git import configure_git
-from utils.ssh import configure_ssh
+from freckles.ssh import configure_ssh
 
 
 def configure_identity(reporter) -> None:

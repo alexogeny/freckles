@@ -9,8 +9,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Optional
 
-from .debian import install_with_apt, run
-from .meta import CONFIG_DIR, HOME
+from freckles.system.debian import install_with_apt, run
+from freckles.core.meta import CONFIG_DIR, HOME
 
 CALIBRE_CONFIG_PATH = CONFIG_DIR / "calibre.json"
 CALIBRE_SUPPORT_DIR = CONFIG_DIR / "calibre"
@@ -249,3 +249,5 @@ def sh_quote(value: str) -> str:
     if all(c.isalnum() or c in "@%_-+=:,./" for c in value):
         return value
     return "'" + value.replace("'", "'\\''") + "'"
+
+__all__ = ["configure_calibre", "CalibreConfig", "ensure_calibre_config"]

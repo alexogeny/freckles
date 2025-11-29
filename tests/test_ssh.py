@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from utils.accounts import GitAccount
-from utils import ssh
+from freckles.identity.accounts import GitAccount
+from freckles import ssh
 
 
 def sample_account() -> GitAccount:

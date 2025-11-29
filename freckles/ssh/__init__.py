@@ -9,10 +9,10 @@ import textwrap
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
-from .accounts import GitAccount, get_account_config
-from .debian import run
-from .meta import HOME, KNOWN_HOSTS, SSH_CONFIG, SSH_DIR
-from .shared_identity import (
+from freckles.identity.accounts import GitAccount, get_account_config
+from freckles.system.debian import run
+from freckles.core.meta import HOME, KNOWN_HOSTS, SSH_CONFIG, SSH_DIR
+from freckles.identity.shared_identity import (
     AccountSshMaterial,
     ensure_ssh_materials,
     publish_public_materials,
@@ -207,3 +207,5 @@ def _print_summary(config, outputs, materials) -> None:
             summary.append(f"    fingerprint file: {fingerprint_path}")
     summary.append("Upload these public keys to your Git hosting services.")
     print("\n".join(summary))
+
+__all__ = ["configure_ssh", "write_known_hosts"]

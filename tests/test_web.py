@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from utils import web
+from freckles.system import web
 
 
 class FakeProcess:

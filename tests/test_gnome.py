@@ -5,8 +5,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from utils import gnome  # noqa: E402
-from utils.theme import (  # noqa: E402
+from freckles.desktop import gnome  # noqa: E402
+from freckles.core.theme import (  # noqa: E402
     FRECKLES_INTERFACE_THEME,
     FRECKLES_TERMINAL_THEME,
 )
