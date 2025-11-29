@@ -3,9 +3,12 @@ import re
 import subprocess
 from dataclasses import dataclass
 from functools import lru_cache
+import shlex
 from pathlib import Path
 from subprocess import CompletedProcess
-from typing import Dict, Optional, Pattern
+from typing import Dict, Optional, Pattern, Sequence, Union
+
+from freckles.infrastructure.command import run_command
 
 OS_RELEASE_PATH = Path("/etc/os-release")
 
@@ -46,11 +49,22 @@ def _ensure_non_interactive_sudo(command: str) -> str:
     return command[:prefix_len] + "sudo -n" + suffix
 
 
-def run(command: str) -> subprocess.CompletedProcess[str]:
-    """Execute ``command`` via ``subprocess.run`` with output capture enabled."""
+def _normalize_command(command: Union[str, Sequence[str]]) -> str:
+    if isinstance(command, str):
+        return command
+    return " ".join(shlex.quote(part) for part in command)
 
-    command = _ensure_non_interactive_sudo(command)
-    return subprocess.run(command, capture_output=True, text=True, shell=True)
+
+def run(
+    command: Union[str, Sequence[str]],
+    *,
+    cwd: Union[str, Path, None] = None,
+) -> subprocess.CompletedProcess[str]:
+    """Execute ``command`` via the configured command runner with output capture."""
+
+    normalized = _ensure_non_interactive_sudo(_normalize_command(command))
+    cwd_path = cwd.as_posix() if isinstance(cwd, Path) else cwd
+    return run_command(normalized, cwd=cwd_path)
 
 
 def check_if_installed(command: str) -> bool:
@@ -168,7 +182,7 @@ def replace_bookworm_with_trixie():
         return False
 
     try:
-        subprocess.run(["sudo", "cp", sources_list_path.as_posix(), backup_path.as_posix()], check=True)
+        run(["sudo", "cp", sources_list_path.as_posix(), backup_path.as_posix()])
         print(f"Backup of sources.list created at {backup_path}.")
     except Exception as e:
         print(f"Failed to create a backup: {e}")
@@ -180,11 +194,7 @@ def replace_bookworm_with_trixie():
 
         content = content.replace("bookworm", "trixie")
 
-        subprocess.run(
-            ["sudo", "tee", sources_list_path.as_posix()],
-            input=content.encode("utf-8"),
-            check=True,
-        )
+        run(f"echo {shlex.quote(content)} | sudo tee {sources_list_path.as_posix()}")
 
         print(f"Replaced 'bookworm' with 'trixie' in {sources_list_path}.")
     except subprocess.CalledProcessError as e:
@@ -198,12 +208,13 @@ def replace_bookworm_with_trixie():
 
 
 def run_apt_update_and_upgrade():
-    try:
-        subprocess.run(["sudo", "apt-get", "update"], check=True)
-        subprocess.run(["sudo", "apt-get", "full-upgrade", "-y"], check=True)
-        print("System successfully updated and upgraded.")
-    except subprocess.CalledProcessError as e:
-        print(f"An error occurred while running apt commands: {e}")
+    update = run("sudo apt-get update")
+    if update.returncode != 0:
+        print(f"An error occurred while running apt update: {update.stderr or update.stdout}")
         return False
-
+    upgrade = run("sudo apt-get full-upgrade -y")
+    if upgrade.returncode != 0:
+        print(f"An error occurred while running apt upgrade: {upgrade.stderr or upgrade.stdout}")
+        return False
+    print("System successfully updated and upgraded.")
     return True

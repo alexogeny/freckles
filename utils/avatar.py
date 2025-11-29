@@ -1,9 +1,10 @@
 import hashlib
 import os
-import subprocess
 import urllib.error
 import urllib.request
 from pathlib import Path
+
+from .debian import run
 
 
 def manage_avatar(github_user_id: str = "6896115"):
@@ -16,10 +17,8 @@ def manage_avatar(github_user_id: str = "6896115"):
         return hashlib.md5(file_path.read_bytes()).hexdigest()
 
     def update_system_avatar():
-        subprocess.run(
-            ["sudo", "cp", str(face_path), str(accounts_service_path)], check=True
-        )
-        subprocess.run(
+        run(["sudo", "cp", str(face_path), str(accounts_service_path)])
+        run(
             [
                 "sudo",
                 "dbus-send",
@@ -29,8 +28,7 @@ def manage_avatar(github_user_id: str = "6896115"):
                 f"/org/freedesktop/Accounts/User{os.getuid()}",
                 "org.freedesktop.Accounts.User.SetIconFile",
                 f"string:{accounts_service_path}",
-            ],
-            check=True,
+            ]
         )
 
     try:

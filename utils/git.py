@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import subprocess
 from pathlib import Path
 from typing import Iterable
 
+from .debian import run
 from .accounts import (
     AccountConfig,
     GitAccount,
@@ -115,18 +115,15 @@ def _update_gitconfig(config: AccountConfig) -> None:
 
 def _ensure_git_user_config(config: AccountConfig) -> None:
     default_account = config.get_default()
-    subprocess.run(
+    run(
         ["git", "config", "--global", "user.name", default_account.display_name],
-        check=False,
     )
-    subprocess.run(
+    run(
         ["git", "config", "--global", "user.email", default_account.email],
-        check=False,
     )
     if default_account.signing_key:
-        subprocess.run(
+        run(
             ["git", "config", "--global", "user.signingkey", default_account.signing_key],
-            check=False,
         )
 
 

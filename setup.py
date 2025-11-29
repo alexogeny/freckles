@@ -1,57 +1,37 @@
+import argparse
 import os
 import pwd
-import re
 import sys
 from contextlib import contextmanager
-from dataclasses import dataclass
-from typing import Callable, Dict, List, Optional
+from typing import Dict, List, Optional
 
+from freckles.domain.provisioning import Phase
+from freckles.infrastructure.command import configure_runner
 from utils.avatar import manage_avatar
-from utils.bun import install_bun
-from utils.calibre import configure_calibre
 from utils.debian import (
     DebFile,
     DebRepository,
     get_version_codename,
-    install_with_apt,
     is_debian_12_bookworm,
     is_debian_like,
     is_ubuntu,
-    purge_unwanted_packages,
     replace_bookworm_with_trixie,
     run,
     run_apt_update_and_upgrade,
 )
-from utils.firefox import (
-    EXTENSIONS_TO_INSTALL,
-    apply_firefox_policies,
-    apply_firefox_user_js,
-    apply_firefox_user_chrome,
-    apply_firefox_handlers,
-    apply_firefox_containers,
-    extension_already_installed,
-    find_firefox_profile,
-    get_extension_json,
-    install_firefox_extension,
-    install_regular_firefox,
-    is_firefox_esr_installed,
-    purge_esr_profiles,
-    purge_firefox_esr,
-    setup_mozilla_repo,
-)
-from utils.git import configure_git
-from utils.gnome import configure_gnome
 from utils.reporter import StepReporter
-from utils.shell import configure_shell
-from utils.terminal import configure_terminal
-from utils.ssh import configure_ssh
-from utils.vscode import configure_vscode
-from utils.web import (
-    ensure_repositories_configured,
-    install_software_list,
-    refresh_repository_keys,
+from utils.web import install_software_list
+from freckles.application.packages_service import (
+    install_base_packages,
+    refresh_package_lists,
+    remove_unwanted_packages,
 )
-from utils.ubuntu import ensure_firefox_from_apt, purge_snapd
+from freckles.application.app_setup.developer_tools import configure_developer_tooling
+from utils.ubuntu import purge_snapd
+from freckles.application.app_setup.firefox_setup import configure_firefox
+from freckles.application.app_setup.shell_terminal import configure_shell_terminal
+from freckles.application.app_setup.gnome_setup import configure_gnome_desktop
+from freckles.application.app_setup.calibre_setup import configure_calibre_library
 
 
 def _docker_repository_definition() -> DebRepository | None:
@@ -143,13 +123,6 @@ software_list = [
 ]
 
 
-@dataclass(frozen=True)
-class Phase:
-    """Represents a provisioning phase surfaced to the StepReporter."""
-
-    name: str
-    handler: Callable[[StepReporter], None]
-
 _docker_repo = _docker_repository_definition()
 if _docker_repo:
     software_list.append(_docker_repo)
@@ -230,39 +203,12 @@ def emit_summary(summary: Dict[str, List[Dict[str, Optional[str]]]]) -> None:
 
 def refresh_apt_phase(reporter: StepReporter) -> None:
     with managed_step(reporter, "Run apt-get update"):
-        apt_update_result = run("sudo apt-get update -qq")
-        if apt_update_result.returncode != 0:
-            combined_output = (apt_update_result.stderr or "") + (apt_update_result.stdout or "")
-            if "NO_PUBKEY" in combined_output:
-                missing_key_ids = {
-                    match.group(1).upper()
-                    for match in re.finditer(r"NO_PUBKEY\\s+([0-9A-F]+)", combined_output)
-                }
-
-                def refresh_keys() -> None:
-                    reporter.log(
-                        f"Refreshing repository keys for: {', '.join(sorted(missing_key_ids)) or 'unknown keys'}"
-                    )
-                    refreshed = refresh_repository_keys(software_list, missing_key_ids)
-                    if not refreshed:
-                        ensure_repositories_configured(software_list)
-
-                with managed_step(reporter, "Refresh repository keys"):
-                    refresh_keys()
-
-                apt_update_result = run("sudo apt-get update -qq")
-
-            if apt_update_result.returncode != 0:
-                message = (apt_update_result.stderr or "").strip() or (apt_update_result.stdout or "").strip()
-                raise RuntimeError(f"Failed to refresh apt package lists: {message}")
+        refresh_package_lists(software_list, reporter)
 
 
 def install_base_packages_phase(reporter: StepReporter) -> None:
     with managed_step(reporter, "Install required base packages"):
-        essential_install = install_with_apt(core_packages)
-        if essential_install.returncode != 0:
-            message = essential_install.stderr.strip() or essential_install.stdout.strip()
-            raise RuntimeError(f"Failed to install required base packages: {message}")
+        install_base_packages(core_packages)
 
 
 def ubuntu_cleanup_phase(reporter: StepReporter) -> None:
@@ -276,7 +222,7 @@ def ubuntu_cleanup_phase(reporter: StepReporter) -> None:
 
 def remove_unwanted_packages_phase(reporter: StepReporter) -> None:
     with managed_step(reporter, "Remove unwanted packages"):
-        purge_unwanted_packages(unwanted_software)
+        remove_unwanted_packages(unwanted_software)
 
 
 def install_curated_software_phase(reporter: StepReporter) -> None:
@@ -289,32 +235,17 @@ def install_curated_software_phase(reporter: StepReporter) -> None:
 
 def configure_developer_tooling_phase(reporter: StepReporter) -> None:
     with managed_step(reporter, "Configure developer tooling"):
-        with managed_step(reporter, "Configure VS Code"):
-            configure_vscode()
-        with managed_step(reporter, "Configure Git"):
-            if sys.stdin.isatty():
-                reporter.log(
-                    "Configuring git identities interactively. Answer the prompts that appear to continue."
-                )
-            else:
-                reporter.log("Configuring git identities (non-interactive mode).")
-            with reporter.interactive_section():
-                configure_git()
-        with managed_step(reporter, "Configure SSH"):
-            configure_ssh()
+        configure_developer_tooling(reporter)
 
 
 def configure_shell_terminal_phase(reporter: StepReporter) -> None:
     with managed_step(reporter, "Configure shell and terminal"):
-        with managed_step(reporter, "Configure shell"):
-            configure_shell()
-        with managed_step(reporter, "Configure terminal"):
-            configure_terminal()
+        configure_shell_terminal(reporter)
 
 
 def configure_gnome_phase(reporter: StepReporter) -> None:
     with managed_step(reporter, "Configure GNOME desktop"):
-        configure_gnome()
+        configure_gnome_desktop(reporter)
 
 
 def manage_avatar_phase(reporter: StepReporter) -> None:
@@ -324,8 +255,7 @@ def manage_avatar_phase(reporter: StepReporter) -> None:
 
 def configure_calibre_phase(reporter: StepReporter) -> None:
     with managed_step(reporter, "Configure Calibre"):
-        with reporter.interactive_section():
-            configure_calibre()
+        configure_calibre_library(reporter)
 
 
 def upgrade_bookworm_phase(reporter: StepReporter) -> None:
@@ -343,53 +273,10 @@ def upgrade_bookworm_phase(reporter: StepReporter) -> None:
 
 def configure_firefox_phase(reporter: StepReporter) -> None:
     with managed_step(reporter, "Configure Firefox"):
-        with managed_step(reporter, "Ensure correct Firefox variant"):
-            if is_firefox_esr_installed():
-                reporter.log("Firefox ESR detected. Purging and installing regular Firefox.")
-                with managed_step(reporter, "Purge Firefox ESR"):
-                    purge_firefox_esr()
-                with managed_step(reporter, "Configure Mozilla repository"):
-                    setup_mozilla_repo()
-                with managed_step(reporter, "Install regular Firefox"):
-                    install_regular_firefox()
-                with managed_step(reporter, "Remove ESR profiles"):
-                    purge_esr_profiles()
-            elif is_ubuntu():
-                with managed_step(reporter, "Ensure Firefox from APT"):
-                    ensure_firefox_from_apt()
-            else:
-                reporter.log("Firefox ESR not detected; no variant changes required.")
-
-        with managed_step(reporter, "Apply Firefox policies"):
-            apply_firefox_policies()
-
-        with managed_step(reporter, "Customize Firefox profile"):
-            profile = find_firefox_profile()
-            if profile is None:
-                reporter.log(
-                    "Skipping Firefox profile customization and extension installation because no profile was found."
-                )
-                reporter.log("Launch Firefox once to create a profile and rerun this phase if needed.")
-                return
-            with managed_step(reporter, "Apply user.js preferences"):
-                apply_firefox_user_js(profile)
-            with managed_step(reporter, "Apply userChrome.css"):
-                apply_firefox_user_chrome(profile)
-            with managed_step(reporter, "Apply containers.json"):
-                apply_firefox_containers(profile)
-            extension_data = get_extension_json(profile)
-            with managed_step(reporter, "Install Firefox extensions"):
-                for extension_id, extension_name in EXTENSIONS_TO_INSTALL.items():
-                    if extension_already_installed(extension_data, extension_name):
-                        reporter.log(f"Extension '{extension_name}' already installed. Skipping.")
-                        continue
-                    with managed_step(reporter, f"Install extension: {extension_name}"):
-                        install_firefox_extension(extension_id)
-            with managed_step(reporter, "Apply handlers.json"):
-                apply_firefox_handlers(profile)
+        configure_firefox(reporter)
 
 
-def _build_phases() -> List[Phase]:
+def build_phases() -> List[Phase]:
     return [
         Phase("APT refresh", refresh_apt_phase),
         Phase("Base packages", install_base_packages_phase),
@@ -408,10 +295,15 @@ def _build_phases() -> List[Phase]:
 
 def main() -> None:
     """Entry point for provisioning a workstation."""
+    parser = argparse.ArgumentParser(description="Provision a Freckles workstation.")
+    parser.add_argument("--noop", action="store_true", help="Log actions without executing shell commands.")
+    args, _ = parser.parse_known_args()
+    configure_runner("noop" if args.noop else "real")
+
     if not is_debian_like():
         sys.exit("Freckles currently supports Debian and Ubuntu systems only.")
 
-    phases = _build_phases()
+    phases = build_phases()
     reporter = StepReporter(
         total_top_level=len(phases),
         min_step_duration=0.35,

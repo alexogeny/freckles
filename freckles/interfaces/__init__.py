@@ -1,0 +1,2 @@
+"""CLI interfaces for Freckles."""
+

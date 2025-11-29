@@ -19,10 +19,11 @@ The helpers offer three commands:
 from __future__ import annotations
 
 import argparse
-import subprocess
 import sys
 from dataclasses import dataclass
 from typing import List, Sequence
+
+from utils.debian import run
 
 
 class GitError(RuntimeError):
@@ -41,18 +42,13 @@ def _run_git(
     capture_output: bool = True,
     check: bool = True,
 ) -> CommandResult:
-    process = subprocess.run(
-        ["git", *args],
-        capture_output=capture_output,
-        text=True,
-        check=False,
-    )
-    if check and process.returncode != 0:
-        message = (process.stderr or process.stdout or "").strip()
+    result = run(["git", *args])
+    if check and result.returncode != 0:
+        message = (result.stderr or result.stdout or "").strip()
         raise GitError(message or "git command failed")
-    stdout = (process.stdout or "").strip()
-    stderr = (process.stderr or "").strip()
-    return CommandResult(stdout, stderr, process.returncode)
+    stdout = (result.stdout or "").strip()
+    stderr = (result.stderr or "").strip()
+    return CommandResult(stdout, stderr, result.returncode)
 
 
 def _default_branch_from_remote_show(remote: str) -> str | None:

@@ -1,8 +1,10 @@
 import json
 import os
 import shutil
-import subprocess
 import time
+import shlex
+
+from .debian import run
 
 
 TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "firefox")
@@ -29,18 +31,15 @@ def apply_firefox_policies():
     policies_dir = "/etc/firefox/policies"
     policies_path = os.path.join(policies_dir, "policies.json")
 
-    try:
-        subprocess.run(["sudo", "install", "-d", "-m", "0755", policies_dir], check=True)
-        subprocess.run(
-            ["sudo", "tee", policies_path],
-            input=template_contents.encode("utf-8"),
-            stdout=subprocess.DEVNULL,
-            check=True,
-        )
-        subprocess.run(["sudo", "chmod", "0644", policies_path], check=True)
-        print("Applied Firefox enterprise policies template.")
-    except subprocess.CalledProcessError as error:
-        print(f"Failed to apply Firefox policies: {error}")
+    create_dir = run(["sudo", "install", "-d", "-m", "0755", policies_dir])
+    write_policy = run(
+        f"echo {shlex.quote(template_contents)} | sudo tee {policies_path}"
+    )
+    set_perms = run(["sudo", "chmod", "0644", policies_path])
+    if any(result.returncode != 0 for result in (create_dir, write_policy, set_perms)):
+        print("Failed to apply Firefox policies.")
+        return
+    print("Applied Firefox enterprise policies template.")
 
 
 def apply_firefox_user_js(profile_dir):
@@ -123,33 +122,27 @@ EXTENSIONS_TO_INSTALL = {
 
 # https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/addon-ublock-origin-latest.xpi
 def get_firefox_version():
-    try:
-        result = subprocess.run(
-            ["firefox", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
-        )
-        version_output = result.stdout.decode().strip()
-        version = version_output.split("Mozilla Firefox ")[1]
-        return version
-    except Exception as e:
-        print(f"Error checking Firefox version: {e}")
-    return None
+    result = run(["firefox", "--version"])
+    if result.returncode != 0:
+        print(f"Error checking Firefox version: {result.stderr or result.stdout}")
+        return None
+    version_output = (result.stdout or "").strip()
+    if "Mozilla Firefox " not in version_output:
+        return None
+    return version_output.split("Mozilla Firefox ")[1]
 
 
 def is_firefox_esr_installed():
-    try:
-        result = subprocess.run(["dpkg", "-s", "firefox-esr"], capture_output=True)
-        return result.returncode == 0
-    except Exception:
-        pass
-    return False
+    result = run(["dpkg", "-s", "firefox-esr"])
+    return result.returncode == 0
 
 
 def purge_firefox_esr():
-    try:
-        subprocess.run(["sudo", "apt", "purge", "-y", "firefox-esr"], check=True)
-        print("Firefox ESR purged.")
-    except subprocess.CalledProcessError as e:
-        print(f"Error purging Firefox ESR: {e}")
+    result = run(["sudo", "apt", "purge", "-y", "firefox-esr"])
+    if result.returncode != 0:
+        print(f"Error purging Firefox ESR: {result.stderr or result.stdout}")
+        return
+    print("Firefox ESR purged.")
 
 
 def setup_mozilla_repo():
@@ -168,38 +161,31 @@ def setup_mozilla_repo():
     ]
 
     for cmd in commands:
-        try:
-            subprocess.run(cmd, shell=True, check=True, stderr=subprocess.PIPE)
+        result = run(cmd)
+        if result.returncode != 0:
+            print(f"Failed to execute: {cmd}: {result.stderr or result.stdout}")
+        else:
             print(f"Successfully executed: {cmd}")
-        except subprocess.CalledProcessError as e:
-            print(f"Error output: {e.stderr.decode()}")
 
 
 def install_regular_firefox():
     install_command = ["sudo", "apt", "install", "-y", "firefox"]
 
-    try:
-        subprocess.run(install_command, check=True, stdout=subprocess.DEVNULL)
+    result = run(install_command)
+    if result.returncode == 0:
         print("Firefox installed.")
         return
-    except subprocess.CalledProcessError as e:
-        print(f"Error installing Firefox: {e}")
 
     print("Attempting to repair APT dependencies and retry Firefox installation.")
-
-    try:
-        subprocess.run(
-            ["sudo", "apt-get", "install", "-y", "--fix-broken"],
-            check=True,
-            stdout=subprocess.DEVNULL,
-        )
-        subprocess.run(install_command, check=True, stdout=subprocess.DEVNULL)
+    repair = run(["sudo", "apt-get", "install", "-y", "--fix-broken"])
+    if repair.returncode != 0:
+        print("Failed to repair dependencies for Firefox installation.")
+        return
+    retry = run(install_command)
+    if retry.returncode == 0:
         print("Firefox installed after repairing dependencies.")
-    except subprocess.CalledProcessError as repair_error:
-        print(
-            "Failed to repair dependencies for Firefox installation: "
-            f"{repair_error}"
-        )
+    else:
+        print("Failed to install Firefox after repairing dependencies.")
 
 
 def purge_esr_profiles():
@@ -308,17 +294,11 @@ def install_firefox_extension(extension_id):
             xpi_path.as_posix(),
         ]
 
-        subprocess.run(
-            install_command,
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-        print(f"Extension {extension_id} installed.")
-        return True
-    except subprocess.CalledProcessError as error:
-        error_output = (error.stderr or error.stdout or str(error)).strip()
+        result = run(" ".join(install_command))
+        if result.returncode == 0:
+            print(f"Extension {extension_id} installed.")
+            return True
+        error_output = (result.stderr or result.stdout or "").strip()
         print(f"Error installing extension {extension_id}: {error_output}")
         return False
     except Exception as error:

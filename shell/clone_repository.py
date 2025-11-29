@@ -3,11 +3,12 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import subprocess
 import sys
 from json import JSONDecodeError
 from pathlib import Path
 from typing import Iterable, Sequence, Tuple
+
+from utils.debian import run
 
 DEFAULT_HOST_CHOICES: Tuple[str, ...] = ("github", "gitlab")
 DEFAULT_CONTEXT_CHOICES: Tuple[str, ...] = ("private", "work")
@@ -150,7 +151,9 @@ def _destination_path(repository: str, *, host: str, context: str, override: str
 
 
 def _run_git(args: list[str], *, cwd: Path | None = None) -> None:
-    subprocess.run(["git", *args], check=True, cwd=cwd)
+    result = run(["git", *args], cwd=cwd)
+    if result.returncode != 0:
+        raise SystemExit(f"git command failed: {result.stderr or result.stdout}")
 
 
 def clone_repository(argv: list[str] | None = None) -> int:

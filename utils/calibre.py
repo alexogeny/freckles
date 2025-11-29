@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import json
 import os
-import subprocess
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Optional
 
-from .debian import install_with_apt
+from .debian import install_with_apt, run
 from .meta import CONFIG_DIR, HOME
 
 CALIBRE_CONFIG_PATH = CONFIG_DIR / "calibre.json"
@@ -206,15 +205,15 @@ WantedBy=default.target
 
 
 def _reload_systemd_daemon() -> None:
-    subprocess.run(["systemctl", "--user", "daemon-reload"], check=False)
+    run(["systemctl", "--user", "daemon-reload"])
 
 
 def _enable_mount_service() -> None:
-    subprocess.run(["systemctl", "--user", "enable", "--now", "calibre-library.service"], check=False)
+    run(["systemctl", "--user", "enable", "--now", "calibre-library.service"])
 
 
 def _disable_mount_service() -> None:
-    subprocess.run(["systemctl", "--user", "disable", "--now", "calibre-library.service"], check=False)
+    run(["systemctl", "--user", "disable", "--now", "calibre-library.service"])
 
 
 def configure_calibre(interactive: bool = True) -> CalibreConfig:

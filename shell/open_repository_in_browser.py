@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import argparse
-import subprocess
 import sys
 import webbrowser
 from pathlib import Path
 from typing import Optional
+
+from utils.debian import run
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -18,9 +19,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def _run_git(args: list[str]) -> Optional[str]:
-    try:
-        result = subprocess.run(["git", *args], check=True, capture_output=True, text=True)
-    except (FileNotFoundError, subprocess.CalledProcessError):
+    result = run(["git", *args])
+    if result.returncode != 0:
         return None
     return (result.stdout or "").strip()
 
