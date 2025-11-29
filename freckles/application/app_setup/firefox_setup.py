@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from freckles.application.helpers import step
-from utils.firefox import (
+from freckles.firefox import (
     EXTENSIONS_TO_INSTALL,
     apply_firefox_containers,
     apply_firefox_handlers,
@@ -64,4 +64,3 @@ def configure_firefox(reporter) -> None:
                 install_firefox_extension(extension_id)
         with step(reporter, "Apply handlers.json"):
             apply_firefox_handlers(profile)
-
